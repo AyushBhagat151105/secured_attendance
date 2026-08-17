@@ -1,49 +1,76 @@
-# secured_attendance
+# Secured Attendance System
 
-This project was created with [Better Fullstack](https://github.com/Marve10s/Better-Fullstack) using the multi-ecosystem project graph.
+A robust, enterprise-grade attendance tracking system built for CHARUSAT. It features a dual-platform architecture with a web dashboard for teachers and admins, and a native mobile application for students, utilizing dynamically rotating QR codes and multi-factor validation (GPS, device fingerprinting, etc.) to ensure integrity.
 
-## Stack
+## 🏗️ Architecture Overview
 
-- Frontend: tanstack-router (typescript)
-- Backend: not selected
+The system is built on a modern, high-performance monorepo stack:
 
-## Project Structure
+- **Runtime & Package Manager**: Bun
+- **Backend (API)**: ElysiaJS, PostgreSQL (Prisma ORM), Redis (BullMQ, Nonce, Cache)
+- **Frontend (Web)**: React (TanStack Router, Tailwind CSS, shadcn-ui, Zustand)
+- **Frontend (Mobile)**: React Native (Expo, NativeWind, Vision Camera for QR scanning)
+- **Authentication**: Better Auth with the Organization plugin
+
+Read the full [Architecture & Implementation Plan](./architecture.md) for detailed technical decisions.
+
+## 🚀 Key Features
+
+- **Rotating QR Codes**: Server-signed QR tokens refreshed every 5-10s via WebSockets.
+- **Multi-Factor Validation Pipeline**:
+  - GPS Geofencing
+  - Device Fingerprinting & Binding
+  - Impossible Travel Detection
+  - Pluggable checks (WiFi BSSID, BLE Beacons, Device Integrity, Liveness)
+- **Live Attendance Dashboard**: Real-time counter and student feed via WebSockets.
+- **Complex Timetable Integration**: Handles multiple programs, semesters, divisions, and shared sessions.
+- **Anomaly Detection & Auditing**: Comprehensive alerts for suspicious attendance behavior.
+
+## 📂 Project Structure
 
 ```text
 secured_attendance/
 ├── apps/
-│   ├── web/         # Frontend application
-└── package.json     # Root scripts for the generated graph
+│   ├── web/         # Teacher/Admin Web Dashboard (TanStack Router + React)
+│   ├── native/      # Student Mobile Application (Expo + React Native)
+│   └── server/      # Backend API Gateway (ElysiaJS)
+├── packages/
+│   ├── auth/        # Better Auth configuration
+│   ├── db/          # Prisma schema and client
+│   └── env/         # Environment variable validation
 ```
 
-## Local Development
+## 🛠️ Local Development
 
-Install the JavaScript workspace dependencies first. If you created the project with `--no-install`, this step has not run yet.
+Ensure you have [Bun](https://bun.sh) and Docker installed.
 
-```sh
-bun install
-```
+1. **Install Dependencies**
+   ```sh
+   bun install
+   ```
 
-Database-backed backend selections expect a local postgres database or a matching `DATABASE_URL` in the backend environment before you start the server. Copy the backend `.env.example` to `.env` and adjust it for your machine.
+2. **Setup Database & Redis**
+   ```sh
+   docker compose -f packages/db/docker-compose.yml up -d
+   bun db:push
+   ```
 
-Run the generated apps in separate terminals so each ecosystem keeps its native watcher and logs.
+3. **Environment Variables**
+   Copy `.env.example` to `.env` in the respective directories and fill in the required values (e.g., Database URL, Better Auth secret, QR signing secret).
 
-```sh
-bun dev:web
-```
+4. **Start Development Servers**
+   Run the generated apps in separate terminals to maintain their native watchers and logs.
 
-```sh
-bun dev:native
-```
+   ```sh
+   # Start the backend server
+   bun dev:server
+   
+   # Start the web dashboard
+   bun dev:web
+   
+   # Start the mobile app
+   bun dev:native
+   ```
 
-## Root Scripts
-
-- `dev` starts the primary generated workspace for graph projects.
-- `dev:web` starts the frontend workspace.
-- `dev:native` starts the React Native/Expo workspace.
-
-## Compatibility Notes
-
-- TypeScript frontends can be generated with Elixir Phoenix backends; Phoenix runs on port 4000 and exposes `/api/health`.
-- Astro frontends can be generated with Rust backends; Rust web servers run on port 3000 and expose `/health`.
-- Cross-ecosystem graph projects share an HTTP boundary. Framework-specific API clients such as tRPC are not assumed across language boundaries; the scaffold wires the frontend to the backend base URL and health endpoint.
+## 📜 Maintenance
+Please refer to `AGENTS.md` for AI assistant instructions regarding project context and technology stacks.
