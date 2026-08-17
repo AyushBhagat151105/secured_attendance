@@ -19,5 +19,21 @@ services:
       retries: 5
     restart: unless-stopped
 
+  redis:
+    image: redis:7.2-alpine
+    container_name: secured_attendance_redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - secured_attendance_redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
 volumes:
   secured_attendance_postgres_data:
+  secured_attendance_redis_data:
