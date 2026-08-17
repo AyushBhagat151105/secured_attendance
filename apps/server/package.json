@@ -16,10 +16,11 @@
     "@secured_attendance/db": "workspace:*",
     "@secured_attendance/env": "workspace:*",
     "better-auth": "catalog:",
-    "bullmq": "^5.81.2",
+    "bullmq": "^6.1.2",
     "cloudinary": "^2.10.0",
     "dotenv": "catalog:",
     "elysia": "^1.4.29",
+    "ioredis": "^6.0.0",
     "winston": "^3.19.0",
     "zod": "catalog:"
   },

@@ -1,0 +1,58 @@
+model StudentProfile {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollmentNo  String   @unique  // "26msit006"
+  programCode   String   // "msit"
+  admissionYear Int      // 2026
+  rollNumber    String   // "006"
+  divisionId    String?
+  division      Division? @relation(fields: [divisionId], references: [id])
+
+  // Device binding
+  deviceId      String?  // Hardware fingerprint
+  deviceModel   String?  // "Samsung Galaxy S24"
+  deviceOs      String?  // "Android 15"
+  deviceBound   Boolean  @default(false)
+  deviceBoundAt DateTime?
+  biometricEnabled Boolean @default(false)
+
+  // Status
+  status        String   @default("pending") // pending, active, suspended
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  attendances   Attendance[]
+
+  @@index([divisionId])
+  @@map("student_profile")
+}
+
+model TeacherProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code        String   @unique  // "HMP", "NV"
+  department  String?  // "Computer Science"
+
+  teachingAssignments TeachingAssignment[]
+  sessions            AttendanceSession[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("teacher_profile")
+}
+
+model TeachingAssignment {
+  id               String   @id @default(uuid())
+  teacherProfileId String
+  teacherProfile   TeacherProfile @relation(fields: [teacherProfileId], references: [id])
+  subjectId        String
+  subject          Subject  @relation(fields: [subjectId], references: [id])
+  divisionId       String
+  division         Division @relation(fields: [divisionId], references: [id])
+
+  @@unique([teacherProfileId, subjectId, divisionId])
+  @@map("teaching_assignment")
+}

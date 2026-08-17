@@ -1,100 +1,48 @@
-import { Queue, type ConnectionOptions } from "bullmq";
+import { Queue, Worker, type Job } from "bullmq";
+import Redis from "ioredis";
+import { env } from "@secured_attendance/env/server";
 
-export const connection: ConnectionOptions = {
-  host: process.env.REDIS_HOST || "localhost",
-  port: Number(process.env.REDIS_PORT) || 6379,
-  password: process.env.REDIS_PASSWORD || undefined,
-  maxRetriesPerRequest: null,
-};
+export const queueRedis = new Redis({
+  host: env.REDIS_HOST,
+  port: env.REDIS_PORT,
+  password: env.REDIS_PASSWORD,
+  maxRetriesPerRequest: null, 
+});
 
-/**
- * Example queue for background job processing
- * @see https://docs.bullmq.io/
- */
-export const emailQueue = new Queue("email", { connection });
-export const notificationQueue = new Queue("notification", { connection });
 
-// Define job data types
+export const connection = queueRedis;
+
 export interface EmailJobData {
   to: string;
   subject: string;
-  body: string;
+  body?: string;
   templateId?: string;
 }
 
 export interface NotificationJobData {
   userId: string;
-  type: "push" | "in-app" | "sms";
-  title: string;
-  message: string;
-  data?: Record<string, unknown>;
+  type: string;
+  title?: string;
+  message?: string;
+  data?: any;
 }
 
-/**
- * Add an email job to the queue
- */
-export async function queueEmail(
-  data: EmailJobData,
-  options?: { delay?: number; priority?: number },
-) {
-  return emailQueue.add("send-email", data, {
-    delay: options?.delay,
-    priority: options?.priority,
-    attempts: 3,
-    backoff: {
-      type: "exponential",
-      delay: 1000,
-    },
-  });
-}
+export const auditQueue = new Queue("audit-log", {
+  connection: queueRedis,
+});
 
-/**
- * Add a notification job to the queue
- */
-export async function queueNotification(data: NotificationJobData, options?: { delay?: number }) {
-  return notificationQueue.add("send-notification", data, {
-    delay: options?.delay,
-    attempts: 3,
-    backoff: {
-      type: "exponential",
-      delay: 1000,
-    },
-  });
-}
+export const auditWorker = new Worker(
+  "audit-log",
+  async (job: Job) => {
+    console.log(`Processing audit log: ${job.id}`, job.data);
+  },
+  { connection: queueRedis }
+);
 
-/**
- * Schedule a recurring job (cron-style)
- * @example scheduleRecurringJob(emailQueue, "daily-report", { type: "report" }, "0 9 * * *")
- */
-export async function scheduleRecurringJob<T>(
-  queue: Queue,
-  name: string,
-  data: T,
-  pattern: string, // Cron pattern
-) {
-  return queue.upsertJobScheduler(name, { pattern }, { name, data: data as object });
-}
+auditWorker.on("completed", (job: Job) => {
+  console.log(`Job ${job.id} has completed!`);
+});
 
-/**
- * Get queue statistics
- */
-export async function getQueueStats(queue: Queue) {
-  const [waiting, active, completed, failed, delayed] = await Promise.all([
-    queue.getWaitingCount(),
-    queue.getActiveCount(),
-    queue.getCompletedCount(),
-    queue.getFailedCount(),
-    queue.getDelayedCount(),
-  ]);
-
-  return { waiting, active, completed, failed, delayed };
-}
-
-/**
- * Gracefully close all queues and connections
- * Call this during application shutdown
- */
-export async function closeQueues() {
-  await emailQueue.close();
-  await notificationQueue.close();
-}
+auditWorker.on("failed", (job: Job | undefined, err: Error) => {
+  console.error(`Job ${job?.id} has failed with ${err.message}`);
+});

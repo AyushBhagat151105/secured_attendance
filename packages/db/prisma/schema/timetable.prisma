@@ -1,0 +1,51 @@
+model Subject {
+  id        String   @id @default(uuid())
+  code      String   // "CAUC506"
+  name      String   // "Enterprise Computing using Java EE"
+  shortName String?  // "ECJ"
+  programId String
+  program   Program  @relation(fields: [programId], references: [id])
+  createdAt DateTime @default(now())
+
+  teachingAssignments TeachingAssignment[]
+  timetableEntries    TimetableEntry[]
+  sessions            AttendanceSession[]
+
+  @@unique([code])
+  @@map("subject")
+}
+
+model TimetableEntry {
+  id                String   @id @default(uuid())
+  programSemesterId String
+  programSemester   ProgramSemester @relation(fields: [programSemesterId], references: [id])
+  academicYearId    String
+  academicYear      AcademicYear @relation(fields: [academicYearId], references: [id])
+  subjectId         String
+  subject           Subject  @relation(fields: [subjectId], references: [id])
+  roomId            String
+  room              Room     @relation(fields: [roomId], references: [id])
+  dayOfWeek         Int      // 0=Monday, 1=Tuesday, ... 5=Saturday
+  startTime         String   // "09:10" (HH:mm)
+  endTime           String   // "10:10"
+  type              String   @default("lecture") // lecture, lab, tutorial
+  teacherCodes      String[] // ["HMP", "NV"] — multiple teachers possible
+
+  // Divisions attending this entry (for combined/shared classes)
+  divisions         TimetableEntryDivision[]
+
+  createdAt         DateTime @default(now())
+
+  @@map("timetable_entry")
+}
+
+model TimetableEntryDivision {
+  id               String   @id @default(uuid())
+  timetableEntryId String
+  timetableEntry   TimetableEntry @relation(fields: [timetableEntryId], references: [id], onDelete: Cascade)
+  divisionId       String
+  division         Division @relation(fields: [divisionId], references: [id])
+
+  @@unique([timetableEntryId, divisionId])
+  @@map("timetable_entry_division")
+}

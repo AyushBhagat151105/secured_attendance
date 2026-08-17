@@ -10,6 +10,9 @@ model User {
   accounts      Account[]
   members       Member[]
   invitations   Invitation[] @relation("inviterInvitations")
+  role          String    @default("student") // super_admin, admin, teacher, student
+  studentProfile StudentProfile?
+  teacherProfile TeacherProfile?
 
   @@unique([email])
   @@map("user")

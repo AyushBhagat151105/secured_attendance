@@ -1,0 +1,60 @@
+model AcademicYear {
+  id        String   @id @default(uuid())
+  name      String   // "2026-2027"
+  startDate DateTime
+  endDate   DateTime
+  isCurrent Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  programs  ProgramSemester[]
+  timetableEntries TimetableEntry[]
+  sessions  AttendanceSession[]
+
+  @@unique([name])
+  @@map("academic_year")
+}
+
+model Program {
+  id        String   @id @default(uuid())
+  name      String   // "Master of Computer Applications"
+  code      String   // "MCA"
+  shortName String   // "MCA"
+  createdAt DateTime @default(now())
+
+  semesters ProgramSemester[]
+  subjects  Subject[]
+
+  @@unique([code])
+  @@map("program")
+}
+
+model ProgramSemester {
+  id             String   @id @default(uuid())
+  programId      String
+  program        Program  @relation(fields: [programId], references: [id])
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  semester       Int      // 1, 2, 3...
+  orgSlug        String   // "mca-sem-1-2026" → maps to Better Auth Organization
+
+  divisions      Division[]
+  timetableEntries TimetableEntry[]
+
+  @@unique([programId, academicYearId, semester])
+  @@map("program_semester")
+}
+
+model Division {
+  id                String   @id @default(uuid())
+  name              String   // "Div-I", "Div-II"
+  programSemesterId String
+  programSemester   ProgramSemester @relation(fields: [programSemesterId], references: [id])
+
+  students                StudentProfile[]
+  timetableEntryDivisions TimetableEntryDivision[]
+  sessionDivisions        SessionDivision[]
+  teachingAssignments     TeachingAssignment[]
+
+  @@unique([programSemesterId, name])
+  @@map("division")
+}

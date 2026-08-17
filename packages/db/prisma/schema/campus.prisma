@@ -1,0 +1,34 @@
+model Building {
+  id        String   @id @default(uuid())
+  name      String   // "CMPICA Building"
+  code      String   @unique // "CMPICA"
+  gpsLat    Float    // 22.5966
+  gpsLng    Float    // 72.8198
+  radiusMeters Int   @default(100) // Geofence radius
+  createdAt DateTime @default(now())
+
+  rooms     Room[]
+
+  @@map("building")
+}
+
+model Room {
+  id          String   @id @default(uuid())
+  name        String   // "Class-9"
+  type        String   // "classroom", "lab", "auditorium", "tutorial_room"
+  buildingId  String
+  building    Building @relation(fields: [buildingId], references: [id])
+  floor       Int?
+  capacity    Int?
+
+  // Future: WiFi + BLE
+  bssidWhitelist String[] @default([])  // WiFi AP MACs
+  beaconUuid     String?                // BLE beacon UUID
+
+  timetableEntries TimetableEntry[]
+  sessions         AttendanceSession[]
+  createdAt        DateTime @default(now())
+
+  @@unique([buildingId, name])
+  @@map("room")
+}

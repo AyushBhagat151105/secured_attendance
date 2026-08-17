@@ -1,0 +1,87 @@
+model AttendanceSession {
+  id               String   @id @default(uuid())
+  academicYearId   String
+  academicYear     AcademicYear @relation(fields: [academicYearId], references: [id])
+  subjectId        String
+  subject          Subject  @relation(fields: [subjectId], references: [id])
+  roomId           String
+  room             Room     @relation(fields: [roomId], references: [id])
+  teacherProfileId String
+  teacherProfile   TeacherProfile @relation(fields: [teacherProfileId], references: [id])
+
+  // Session timing (teacher-controlled)
+  startTime        DateTime
+  endTime          DateTime
+  status           String   @default("active") // active, closed
+  closedAt         DateTime?
+
+  // Security
+  sessionSecret    Bytes    // HKDF-derived per-session signing key
+
+  // Divisions attending (for combined classes)
+  sessionDivisions SessionDivision[]
+
+  attendances      Attendance[]
+  qrTokens         QrToken[]
+
+  createdAt        DateTime @default(now())
+
+  @@map("attendance_session")
+}
+
+model SessionDivision {
+  id         String   @id @default(uuid())
+  sessionId  String
+  session    AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  divisionId String
+  division   Division @relation(fields: [divisionId], references: [id])
+
+  @@unique([sessionId, divisionId])
+  @@map("session_division")
+}
+
+model QrToken {
+  id        String   @id @default(uuid())
+  sessionId String
+  session   AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  nonce     String   // base64url(16 random bytes)
+  issuedAt  DateTime
+  expiresAt DateTime
+  usedAt    DateTime?
+  usedBy    String?  // studentProfileId
+
+  @@unique([sessionId, nonce])
+  @@index([sessionId])
+  @@map("qr_token")
+}
+
+model Attendance {
+  id               String   @id @default(uuid())
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id])
+  sessionId        String
+  session          AttendanceSession @relation(fields: [sessionId], references: [id])
+
+  // Submitted data
+  timestamp        DateTime @default(now())
+  gpsLat           Float?
+  gpsLng           Float?
+  bssidSeen        String?
+  beaconRssi       Int?
+
+  // Verification results
+  gpsWithinGeofence  Boolean @default(false)
+  bssidValid         Boolean?
+  beaconValid        Boolean?
+  integrityPass      Boolean?
+  mockLocationFlag   Boolean @default(false)
+  livenessScore      Float?
+
+  // Anomaly tracking
+  anomalyFlags       String[] @default([])
+
+  @@unique([studentProfileId, sessionId])
+  @@index([sessionId])
+  @@index([studentProfileId])
+  @@map("attendance")
+}

@@ -1,0 +1,16 @@
+model AuditLog {
+  id        String   @id @default(uuid())
+  eventType String   // "session.opened", "attendance.submitted", "attendance.rejected", "device.rebound"
+  actor     String?  // userId
+  actorRole String?  // "teacher", "student", "admin"
+  targetId  String?  // affected entity ID
+  details   Json?    // additional context
+  ipAddress String?
+  userAgent String?
+  timestamp DateTime @default(now())
+
+  @@index([eventType])
+  @@index([actor])
+  @@index([timestamp])
+  @@map("audit_log")
+}
