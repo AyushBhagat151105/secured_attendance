@@ -1229,25 +1229,25 @@ services:
 > All Phase 1 work must be complete before any other phase begins.
 
 #### Tasks
-- [ ] Extend Prisma schema with all domain models (academic, campus, timetable, attendance, audit)
-- [ ] Run migrations, verify schema
-- [ ] Add `role` field to User model
-- [ ] Super admin seed script (from .env)
-- [ ] Redis dual-connection setup (attendance Redis + BullMQ Redis)
-- [ ] Crypto utilities: HMAC-SHA256, HKDF session key derivation
-- [ ] Server env updates: QR_SIGNING_SECRET, REDIS config
-- [ ] Refactor BullMQ queues/workers for audit logging
+- [x] Extend Prisma schema with all domain models (academic, campus, timetable, attendance, audit)
+- [x] Run migrations, verify schema
+- [x] Add `role` field to User model
+- [x] Super admin seed script (from .env)
+- [x] Redis dual-connection setup (attendance Redis + BullMQ Redis)
+- [x] Crypto utilities: HMAC-SHA256, HKDF session key derivation
+- [x] Server env updates: QR_SIGNING_SECRET, REDIS config
+- [x] Refactor BullMQ queues/workers for audit logging
 
 ---
 
 ### Phase 2: Auth & User Management
 
 #### Tasks
-- [ ] Auth guards/middleware: `requireAuth`, `requireRole(roles[])`
-- [ ] Device binding endpoint + logic
-- [ ] Admin user CRUD API (create, list, update, suspend)
-- [ ] CSV bulk import API for students (parse enrollment_no, auto-detect program)
-- [ ] CSV bulk import API for teachers (with code/initials)
+- [x] Auth guards/middleware: `requireAuth`, `requireRole(roles[])`
+- [x] Device binding endpoint + logic
+- [x] Admin user CRUD API (create, list, update, suspend)
+- [x] CSV bulk import API for students (parse enrollment_no, auto-detect program)
+- [x] CSV bulk import API for teachers (with code/initials)
 - [ ] Admin web UI: User management page
 - [ ] Admin web UI: Bulk import page (file upload + preview + confirm)
 - [ ] Device re-binding admin endpoint
