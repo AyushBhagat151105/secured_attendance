@@ -29,47 +29,34 @@
 
 ## 1. System Overview
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              CHARUSAT CAMPUS                                │
-│                                                                             │
-│  ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────────┐   │
-│  │  Classroom        │    │  Teacher's        │    │  Student's Phone      │   │
-│  │  Projector        │    │  Laptop/Dashboard │    │  (Android)            │   │
-│  │                   │    │                   │    │                       │   │
-│  │  ┌─────────────┐ │    │  Opens session    │    │  Scans QR code        │   │
-│  │  │ Rotating QR │ │    │  via web dashboard│    │  via Vision Camera    │   │
-│  │  │ (5-10s)     │ │    │                   │    │  Collects GPS         │   │
-│  │  └─────────────┘ │    │  70% QR | 30%     │    │  Submits attendance   │   │
-│  │                   │    │  Live counter     │    │                       │   │
-│  └──────────────────┘    └────────┬──────────┘    └───────────┬───────────┘   │
-│                                   │                            │               │
-└───────────────────────────────────┼────────────────────────────┼───────────────┘
-                                    │ WebSocket                  │ REST
-                                    ▼                            ▼
-                    ┌─────────────────────────────────────────────────────┐
-                    │              ElysiaJS API (Bun Runtime)             │
-                    │                                                     │
-                    │  ┌─────────┐ ┌──────────┐ ┌───────────┐ ┌───────┐ │
-                    │  │ Auth    │ │ Sessions │ │ Attendance│ │ WS    │ │
-                    │  │ Module  │ │ Manager  │ │ Validator │ │ Gate  │ │
-                    │  └─────────┘ └──────────┘ └───────────┘ └───────┘ │
-                    │  ┌─────────┐ ┌──────────┐ ┌───────────┐ ┌───────┐ │
-                    │  │ Admin   │ │ Timetable│ │ Anomaly   │ │ Audit │ │
-                    │  │ Module  │ │ Manager  │ │ Detector  │ │ Logger│ │
-                    │  └─────────┘ └──────────┘ └───────────┘ └───────┘ │
-                    └──────────┬──────────────────────────┬──────────────┘
-                               │                          │
-                    ┌──────────▼──────┐       ┌───────────▼──────────┐
-                    │   PostgreSQL     │       │   Redis               │
-                    │   (Primary DB)   │       │   ┌─ Nonce Store      │
-                    │                  │       │   ├─ Rate Limiter     │
-                    │   Users, Sessions│       │   ├─ Session Cache    │
-                    │   Attendance,    │       │   └─ BullMQ Queues   │
-                    │   Timetable,     │       │                      │
-                    │   Audit Log      │       │   (Separate conn     │
-                    └──────────────────┘       │    from BullMQ)      │
-                                               └──────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Campus["CHARUSAT CAMPUS"]
+        direction LR
+        Proj["Classroom Projector<br>Rotating QR (5-10s)"]
+        Teacher["Teacher's Laptop/Dashboard<br>Opens session via web dashboard<br>70% QR | 30% Live counter"]
+        Student["Student's Phone (Android)<br>Scans QR code via Vision Camera<br>Collects GPS<br>Submits attendance"]
+    end
+
+    subgraph Server["ElysiaJS API (Bun Runtime)"]
+        direction TB
+        Auth["Auth Module"]
+        Sessions["Sessions Manager"]
+        Attendance["Attendance Validator"]
+        WS["WS Gate"]
+        Admin["Admin Module"]
+        Timetable["Timetable Manager"]
+        Anomaly["Anomaly Detector"]
+        Audit["Audit Logger"]
+    end
+
+    DB["PostgreSQL (Primary DB)<br>Users, Sessions, Attendance, Timetable, Audit Log"]
+    RedisNode["Redis<br>Nonce Store, Rate Limiter, Session Cache, BullMQ Queues"]
+
+    Teacher -- "WebSocket" --> WS
+    Student -- "REST" --> Attendance
+    Server --> DB
+    Server --> RedisNode
 ```
 
 ---
@@ -945,26 +932,24 @@ apps/web/src/routes/
 
 ### 9.2 Teacher QR Display Page Layout
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  ECJ - Enterprise Computing using Java EE  │  Session Active    │
-│  Room: Class-9  │  Started: 09:10 AM       │  ⏱ 00:23:45       │
-├───────────────────────────────────┬─────────────────────────────┤
-│                                   │  Present: 23/50             │
-│                                   │                             │
-│         ┌─────────────────┐       │  ✅ 26msit001 - Rahul P.   │
-│         │                 │       │  ✅ 26msit002 - Priya S.   │
-│         │   QR CODE       │       │  ✅ 26msit003 - Amit K.    │
-│         │   (rotating     │       │  ✅ 26msit004 - Sara M.    │
-│         │    every 5-10s) │       │  ...                        │
-│         │                 │       │                             │
-│         └─────────────────┘       │                             │
-│                                   │                             │
-│          70% width                │  30% width                  │
-│                                   │  (scrollable list)          │
-├───────────────────────────────────┴─────────────────────────────┤
-│  [End Session]                                                   │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    Header["ECJ - Enterprise Computing using Java EE | Session Active<br>Room: Class-9 | Started: 09:10 AM | ⏱ 00:23:45"]
+    
+    QR["QR CODE<br>(rotating every 5-10s)<br><br>70% width"]
+    List["Present: 23/50<br><br>✅ 26msit001 - Rahul P.<br>✅ 26msit002 - Priya S.<br>✅ 26msit003 - Amit K.<br>...<br><br>30% width (scrollable)"]
+    
+    Footer["[End Session]"]
+
+    Header --- QR
+    Header --- List
+    QR --- Footer
+    List --- Footer
+
+    style Header fill:#f4f4f5,stroke:#a1a1aa
+    style QR fill:#fff,stroke:#a1a1aa
+    style List fill:#fff,stroke:#a1a1aa
+    style Footer fill:#fee2e2,stroke:#fca5a5
 ```
 
 ### 9.3 Admin Building Map (shadcn-map)
@@ -1043,33 +1028,24 @@ apps/native/app/
 
 ### 10.4 Student Home Screen
 
-```
-┌──────────────────────────────┐
-│  Good Morning, Ayush! 👋     │
-│  MCA Sem-1 • Div-I           │
-│                              │
-│  🔥 Attendance Streak: 12    │
-│                              │
-│  ── Today's Schedule ──       │
-│  ┌────────────────────────┐  │
-│  │ 09:10 │ CC    │ Lab-11 │  │
-│  │ ✅    │       │        │  │
-│  ├────────────────────────┤  │
-│  │ 11:10 │ WDOST │ Cls-9  │  │
-│  │ ⏳    │       │ (next) │  │
-│  ├────────────────────────┤  │
-│  │ 13:10 │ ECJ   │ Lab-1  │  │
-│  │ ◻     │       │        │  │
-│  └────────────────────────┘  │
-│                              │
-│  ── Subject Overview ──       │
-│  CC      ████████░░ 82%      │
-│  WDOST   ██████░░░░ 64%  ⚠  │
-│  ECJ     █████████░ 91%      │
-│  PNA     ███████░░░ 73%  ⚠  │
-│                              │
-└──────────────────────────────┘
-  [Home]    [Scan]    [History]
+```mermaid
+flowchart TB
+    Header["Good Morning, Ayush! 👋<br>MCA Sem-1 • Div-I<br><br>🔥 Attendance Streak: 12"]
+    
+    Schedule["-- Today's Schedule --<br>✅ 09:10 | CC | Lab-11<br>⏳ 11:10 | WDOST | Cls-9 (next)<br>◻ 13:10 | ECJ | Lab-1"]
+    
+    Overview["-- Subject Overview --<br>CC: 82%<br>WDOST: 64% ⚠<br>ECJ: 91%<br>PNA: 73% ⚠"]
+    
+    Tabs["[Home] | [Scan] | [History]"]
+
+    Header --- Schedule
+    Schedule --- Overview
+    Overview --- Tabs
+
+    style Header fill:#f4f4f5,stroke:#a1a1aa
+    style Schedule fill:#fff,stroke:#a1a1aa
+    style Overview fill:#fff,stroke:#a1a1aa
+    style Tabs fill:#e0e7ff,stroke:#818cf8
 ```
 
 ---
