@@ -8,13 +8,15 @@
     "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
     "test": "vitest run --passWithNoTests",
     "dev": "bun run --hot src/index.ts",
-    "start": "bun run dist/index.js"
+    "start": "bun run dist/index.js",
+    "db:seed": "bun run src/modules/auth/seed.ts"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.2",
     "@secured_attendance/auth": "workspace:*",
     "@secured_attendance/db": "workspace:*",
     "@secured_attendance/env": "workspace:*",
+    "@sinclair/typebox": "^0.34.52",
     "better-auth": "catalog:",
     "bullmq": "^6.1.2",
     "cloudinary": "^2.10.0",
@@ -27,6 +29,7 @@
   "devDependencies": {
     "@secured_attendance/config": "workspace:*",
     "@types/bun": "catalog:",
+    "@types/papaparse": "^5.5.2",
     "@vitest/coverage-v8": "catalog:",
     "@vitest/ui": "catalog:",
     "jsdom": "catalog:",

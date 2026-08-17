@@ -44,6 +44,7 @@
     "db:watch": "turbo -F @secured_attendance/db db:watch",
     "db:stop": "turbo -F @secured_attendance/db db:stop",
     "db:down": "turbo -F @secured_attendance/db db:down",
+    "db:seed": "bun run --filter server db:seed",
     "test": "bun run --filter web test && bun run --filter server test",
     "lint:eslint": "eslint .",
     "format:prettier": "prettier --write .",
