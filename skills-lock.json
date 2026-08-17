@@ -25,6 +25,12 @@
       "skillPath": "plugins/expo/skills/expo-tailwind-setup/SKILL.md",
       "computedHash": "fe7cb21735243b2701a3a1e35be6fbfd7cff6a146447200d4b14d225b619a46d"
     },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "4eabc66183767153e404b39d1b839b1c37f2d82d86f0a0d7e880a579d8d62336"
+    },
     "grill-me": {
       "source": "mattpocock/skills",
       "sourceType": "github",
