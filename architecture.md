@@ -945,11 +945,6 @@ flowchart TB
     Header --- List
     QR --- Footer
     List --- Footer
-
-    style Header fill:#f4f4f5,stroke:#a1a1aa
-    style QR fill:#fff,stroke:#a1a1aa
-    style List fill:#fff,stroke:#a1a1aa
-    style Footer fill:#fee2e2,stroke:#fca5a5
 ```
 
 ### 9.3 Admin Building Map (shadcn-map)
@@ -1042,10 +1037,6 @@ flowchart TB
     Schedule --- Overview
     Overview --- Tabs
 
-    style Header fill:#f4f4f5,stroke:#a1a1aa
-    style Schedule fill:#fff,stroke:#a1a1aa
-    style Overview fill:#fff,stroke:#a1a1aa
-    style Tabs fill:#e0e7ff,stroke:#818cf8
 ```
 
 ---
