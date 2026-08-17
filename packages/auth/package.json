@@ -1,0 +1,30 @@
+{
+  "name": "@secured_attendance/auth",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@better-auth/expo": "catalog:",
+    "@better-auth/prisma-adapter": "^1.6.22",
+    "@secured_attendance/db": "workspace:*",
+    "@secured_attendance/env": "workspace:*",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@secured_attendance/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "@secured_attendance/db",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit --declaration false --declarationMap false --composite false",
+    "postinstall": "prisma generate",
+    "db:push": "prisma db push",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:start": "docker compose up -d",
+    "db:watch": "docker compose up",
+    "db:stop": "docker compose stop",
+    "db:down": "docker compose down"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.9.1",
+    "@prisma/client": "catalog:",
+    "@secured_attendance/env": "workspace:*",
+    "dotenv": "catalog:",
+    "pg": "^8.22.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@secured_attendance/config": "workspace:*",
+    "@types/pg": "^8.21.0",
+    "prisma": "^7.9.1",
+    "typescript": "catalog:"
+  }
+}

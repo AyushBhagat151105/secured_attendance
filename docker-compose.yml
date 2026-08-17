@@ -1,0 +1,65 @@
+# Docker Compose for secured_attendance
+# Full-stack container orchestration
+
+name: secured_attendance
+
+services:
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: secured_attendance-web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - VITE_API_URL=http://server:3001
+    restart: unless-stopped
+    depends_on:
+      - server
+    networks:
+      - secured_attendance-network
+
+  server:
+    build:
+      context: ./apps/server
+      dockerfile: Dockerfile
+    container_name: secured_attendance-server
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://postgres:password@db:5432/secured_attendance
+    restart: unless-stopped
+    depends_on:
+      - db
+    networks:
+      - secured_attendance-network
+
+  db:
+    image: postgres:16-alpine
+    container_name: secured_attendance-postgres
+    environment:
+      POSTGRES_DB: secured_attendance
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - secured_attendance_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - secured_attendance-network
+
+networks:
+  secured_attendance-network:
+    driver: bridge
+
+volumes:
+  secured_attendance_postgres_data:

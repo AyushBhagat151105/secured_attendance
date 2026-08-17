@@ -1,0 +1,72 @@
+{
+  "name": "secured_attendance",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
+    "catalog": {
+      "dotenv": "^17.4.2",
+      "zod": "^4.4.3",
+      "typescript": "^6.0.3",
+      "@types/bun": "^1.3.14",
+      "better-auth": "^1.6.22",
+      "vitest": "4.1.8",
+      "@vitest/ui": "4.1.8",
+      "@vitest/coverage-v8": "4.1.8",
+      "jsdom": "^29.1.1",
+      "tailwind-merge": "^3.6.0",
+      "react": "^19.2.8",
+      "react-dom": "^19.2.8",
+      "zustand": "^5.0.14",
+      "motion": "^12.43.0",
+      "@types/node": "^26.2.0",
+      "@types/react": "^19.2.18",
+      "tailwindcss": "^4.3.3",
+      "@better-auth/expo": "^1.6.22",
+      "@prisma/client": "^7.9.1"
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "check-types": "turbo check-types",
+    "dev:web": "turbo -F web dev",
+    "dev:native": "turbo -F native dev",
+    "dev:server": "turbo -F server dev",
+    "db:push": "turbo -F @secured_attendance/db db:push",
+    "db:studio": "turbo -F @secured_attendance/db db:studio",
+    "db:generate": "turbo -F @secured_attendance/db db:generate",
+    "db:migrate": "turbo -F @secured_attendance/db db:migrate",
+    "db:start": "turbo -F @secured_attendance/db db:start",
+    "db:watch": "turbo -F @secured_attendance/db db:watch",
+    "db:stop": "turbo -F @secured_attendance/db db:stop",
+    "db:down": "turbo -F @secured_attendance/db db:down",
+    "test": "bun run --filter web test && bun run --filter server test",
+    "lint:eslint": "eslint .",
+    "format:prettier": "prettier --write .",
+    "format:prettier:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@secured_attendance/env": "workspace:*",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@secured_attendance/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "eslint": "^10.8.1",
+    "globals": "^17.9.0",
+    "prettier": "^3.9.6",
+    "turbo": "^2.10.0",
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.66.0"
+  },
+  "overrides": {
+    "kysely": "0.28.17"
+  },
+  "packageManager": "bun@1.3.14"
+}
