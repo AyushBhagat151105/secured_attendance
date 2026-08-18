@@ -86,7 +86,10 @@ export class TimetableService {
         }
       }
       if (data.roomId && entry.roomId === data.roomId) {
-        throw new Error(`Room is already occupied during this time.`);
+        const typeStr = entry.room?.type ? entry.room.type.replace("_", " ") : "Room";
+        const roomName = entry.room?.name || "The selected room";
+        const capitalizedType = typeStr.charAt(0).toUpperCase() + typeStr.slice(1);
+        throw new Error(`${capitalizedType} '${roomName}' is already occupied during this time.`);
       }
       if (data.divisionIds) {
         const entryDivs = entry.divisions.map((d) => d.divisionId);
