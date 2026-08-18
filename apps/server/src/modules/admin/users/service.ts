@@ -1,7 +1,8 @@
 import prisma from "@secured_attendance/db";
 import { logger } from "../../../lib/logger";
-import type { UpdateUserType, UsersListQueryType } from "./model";
+import type { UpdateUserType, UsersListQueryType, CreateTeacherType } from "./model";
 import { status } from "elysia";
+import { auth } from "@secured_attendance/auth";
 
 export class AdminUsersService {
   static async listUsers(query: UsersListQueryType) {
@@ -108,6 +109,47 @@ export class AdminUsersService {
     }
 
     return user;
+  }
+
+  static async createTeacher(data: CreateTeacherType) {
+    const existing = await prisma.user.findFirst({ where: { email: data.email } });
+    if (existing) {
+      return status(400, { message: "User with this email already exists" });
+    }
+
+    try {
+      const result = await auth.api.signUpEmail({
+        body: {
+          email: data.email,
+          password: "Charusat@123",
+          name: data.name,
+          requiresPasswordChange: true,
+        },
+        asResponse: false,
+      });
+
+      if (!result?.user) {
+         return status(500, { message: "Failed to create user account" });
+      }
+
+      await prisma.user.update({
+        where: { id: result.user.id },
+        data: { role: "teacher" },
+      });
+
+      await prisma.teacherProfile.create({
+        data: {
+          userId: result.user.id,
+          code: data.teacherCode,
+          department: data.department,
+        },
+      });
+
+      return result.user;
+    } catch (error) {
+      logger.error("Failed to create teacher", { error, data });
+      return status(500, { message: "Internal Server Error" });
+    }
   }
 
   static async updateUser(id: string, body: UpdateUserType) {

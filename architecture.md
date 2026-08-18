@@ -1266,10 +1266,10 @@ services:
 - [x] Teacher profile + teaching assignment CRUD API
 - [x] Timetable CRUD API
 - [x] Timetable CSV/JSON import API (parse your actual timetable format)
-- [ ] Admin web UI: Academic management pages (programs, semesters, divisions)
-- [ ] Admin web UI: Campus page (buildings + rooms + shadcn-map for GPS)
-- [ ] Admin web UI: Subject management
-- [ ] Admin web UI: Timetable management + import
+- [x] Admin web UI: Academic management pages (programs, semesters, divisions)
+- [x] Admin web UI: Campus page (buildings + rooms + shadcn-map for GPS)
+- [x] Admin web UI: Subject management
+- [x] Admin web UI: Timetable management + import
 
 ---
 

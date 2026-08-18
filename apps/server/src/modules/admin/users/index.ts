@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import { requireRole } from "../../auth/guards";
-import { UpdateUserBody, UserIdParam, UsersListQuery } from "./model";
+import { UpdateUserBody, UserIdParam, UsersListQuery, CreateTeacherBody } from "./model";
 import { AdminUsersService } from "./service";
 import { logger } from "../../../lib/logger";
 
@@ -24,6 +24,12 @@ export const adminUsersModule = new Elysia({ prefix: "/users" })
     "/:id",
     async ({ params: { id } }) => AdminUsersService.getUser(id),
     { params: UserIdParam },
+  )
+
+  .post(
+    "/teacher",
+    async ({ body }) => AdminUsersService.createTeacher(body),
+    { body: CreateTeacherBody },
   )
 
   .patch(

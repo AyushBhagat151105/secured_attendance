@@ -3,7 +3,7 @@ import prisma from "@secured_attendance/db";
 import { env } from "@secured_attendance/env/server";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { organization } from "better-auth/plugins";
+import { organization, admin } from "better-auth/plugins";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -24,6 +24,11 @@ export const auth = betterAuth({
     additionalFields: {
       role: {
         type: "string",
+        required: false,
+      },
+      requiresPasswordChange: {
+        type: "boolean",
+        required: false,
       },
     },
   },
@@ -34,5 +39,5 @@ export const auth = betterAuth({
       httpOnly: true,
     },
   },
-  plugins: [organization(), expo()],
+  plugins: [organization(), admin(), expo()],
 });

@@ -29,9 +29,13 @@ export const Route = createFileRoute("/admin")({
     if (!session.data) {
       throw redirect({ to: "/login" });
     }
-    const role = (session.data.user as { role?: string }).role;
+    const user = session.data.user as { role?: string; requiresPasswordChange?: boolean };
+    const role = user.role;
     if (!role || !["admin", "super_admin"].includes(role)) {
       throw redirect({ to: "/" });
+    }
+    if (user.requiresPasswordChange) {
+      throw redirect({ to: "/reset-password" });
     }
     return { session: session.data };
   },

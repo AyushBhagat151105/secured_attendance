@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { IconCalendarEvent, IconUsersGroup, IconQrcode } from "@tabler/icons-react";
 
 import { authClient } from "@/lib/auth-client";
@@ -6,6 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/dashboard")({
+  beforeLoad: async () => {
+    const session = await authClient.getSession();
+    if (!session.data) {
+      throw redirect({ to: "/login" });
+    }
+    const user = session.data.user as { role?: string; requiresPasswordChange?: boolean };
+    if (user.requiresPasswordChange) {
+      throw redirect({ to: "/reset-password" });
+    }
+  },
   component: RouteComponent,
 });
 

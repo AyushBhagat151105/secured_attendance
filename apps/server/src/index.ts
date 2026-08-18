@@ -5,6 +5,7 @@ import { env } from "@secured_attendance/env/server";
 import { Elysia } from "elysia";
 
 import { adminModule } from "./modules/admin";
+import { authModule } from "./modules/auth";
 
 const app = new Elysia()
   .use(
@@ -35,6 +36,7 @@ const app = new Elysia()
     })
   )
   .use(adminModule)
+  .use(authModule)
   .get("/", () => "OK")
   .listen(3000, () => {
     console.log("Server is running on http://localhost:3000");

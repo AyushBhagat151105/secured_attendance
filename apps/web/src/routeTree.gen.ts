@@ -14,6 +14,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DownloadAppRouteImport } from './routes/download-app'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAcademicProgramsRouteImport } from './routes/admin/academic/programs'
 import { Route as AdminAcademicSubjectsRouteImport } from './routes/admin/academic/subjects'
@@ -47,6 +48,11 @@ const DownloadAppRoute = DownloadAppRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/download-app': typeof DownloadAppRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/academic/programs': typeof AdminAcademicProgramsRoute
   '/admin/academic/subjects': typeof AdminAcademicSubjectsRoute
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/download-app': typeof DownloadAppRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AdminIndexRoute
   '/admin/academic/programs': typeof AdminAcademicProgramsRoute
   '/admin/academic/subjects': typeof AdminAcademicSubjectsRoute
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/download-app': typeof DownloadAppRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/academic/programs': typeof AdminAcademicProgramsRoute
   '/admin/academic/subjects': typeof AdminAcademicSubjectsRoute
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/download-app'
     | '/login'
+    | '/reset-password'
     | '/admin/'
     | '/admin/academic/programs'
     | '/admin/academic/subjects'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/download-app'
     | '/login'
+    | '/reset-password'
     | '/admin'
     | '/admin/academic/programs'
     | '/admin/academic/subjects'
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/download-app'
     | '/login'
+    | '/reset-password'
     | '/admin/'
     | '/admin/academic/programs'
     | '/admin/academic/subjects'
@@ -199,6 +211,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DownloadAppRoute: typeof DownloadAppRoute
   LoginRoute: typeof LoginRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -236,6 +249,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -336,6 +356,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DownloadAppRoute: DownloadAppRoute,
   LoginRoute: LoginRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

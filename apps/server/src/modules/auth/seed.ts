@@ -28,11 +28,14 @@ export async function seedSuperAdmin() {
         email,
         password,
         name,
-        role: "super_admin",
       },
     });
 
-    if (newUser) {
+    if (newUser?.user) {
+      await db.user.update({
+        where: { id: newUser.user.id },
+        data: { role: "super_admin" }
+      });
       console.log(`Successfully created Super Admin account for ${name} (${email})`);
     }
   } catch (error) {

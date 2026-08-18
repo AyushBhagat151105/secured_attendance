@@ -11,6 +11,10 @@ model User {
   members       Member[]
   invitations   Invitation[] @relation("inviterInvitations")
   role          String    @default("student") // super_admin, admin, teacher, student
+  requiresPasswordChange Boolean @default(true)
+  banned        Boolean?
+  banReason     String?
+  banExpires    DateTime?
   studentProfile StudentProfile?
   teacherProfile TeacherProfile?
 
