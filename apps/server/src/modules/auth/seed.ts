@@ -28,19 +28,26 @@ export async function seedSuperAdmin() {
         email,
         password,
         name,
+        role: "super_admin",
       },
     });
 
     if (newUser) {
-      // Ensure the created user gets the super_admin role
-      // Since Better Auth might default to a basic role, we explicitly update it
-      await db.user.update({
-        where: { email },
-        data: { role: "super_admin" },
-      });
       console.log(`Successfully created Super Admin account for ${name} (${email})`);
     }
   } catch (error) {
     console.error("Failed to seed Super Admin via Better Auth:", error);
   }
+}
+
+if (import.meta.main) {
+  seedSuperAdmin()
+    .then(() => {
+      console.log("Seed script execution completed.");
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error("Seed script failed:", error);
+      process.exit(1);
+    });
 }

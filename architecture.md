@@ -1248,9 +1248,9 @@ services:
 - [x] Admin user CRUD API (create, list, update, suspend)
 - [x] CSV bulk import API for students (parse enrollment_no, auto-detect program)
 - [x] CSV bulk import API for teachers (with code/initials)
-- [ ] Admin web UI: User management page
-- [ ] Admin web UI: Bulk import page (file upload + preview + confirm)
-- [ ] Device re-binding admin endpoint
+- [x] Admin web UI: User management page
+- [x] Admin web UI: Bulk import page (file upload + preview + confirm)
+- [x] Device re-binding admin endpoint
 
 ---
 

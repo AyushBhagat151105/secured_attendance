@@ -1,8 +1,9 @@
-import { HeadContent, Outlet, createRootRouteWithContext } from "@tanstack/react-router";
+import { HeadContent, Outlet, createRootRouteWithContext, useLocation } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 import Header from "@/components/header";
 import { ThemeProvider } from "@/components/theme-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 
 import "../index.css";
@@ -31,6 +32,9 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 });
 
 function RootComponent() {
+  const location = useLocation();
+  const hideHeader = location.pathname.startsWith("/admin");
+
   return (
     <>
       <HeadContent />
@@ -41,11 +45,15 @@ function RootComponent() {
         disableTransitionOnChange
         storageKey="vite-ui-theme"
       >
-        <div className="grid grid-rows-[auto_1fr] h-svh">
-          <Header />
-          <Outlet />
-        </div>
-        <Toaster richColors />
+        <TooltipProvider>
+          <div className="flex flex-col min-h-svh w-full bg-background text-foreground">
+            {!hideHeader && <Header />}
+            <main className="flex flex-col flex-1 w-full">
+              <Outlet />
+            </main>
+          </div>
+          <Toaster richColors />
+        </TooltipProvider>
       </ThemeProvider>
 
       <TanStackRouterDevtools position="bottom-left" />

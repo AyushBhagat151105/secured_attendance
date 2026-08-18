@@ -13,10 +13,13 @@
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.2",
+    "@elysiajs/eden": "^1.4.9",
     "@secured_attendance/auth": "workspace:*",
     "@secured_attendance/db": "workspace:*",
     "@secured_attendance/env": "workspace:*",
     "@sinclair/typebox": "^0.34.52",
+    "@tanstack/react-query": "^5.101.4",
+    "@tanstack/react-query-devtools": "^5.101.4",
     "better-auth": "catalog:",
     "bullmq": "^6.1.2",
     "cloudinary": "^2.10.0",
