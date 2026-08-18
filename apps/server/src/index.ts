@@ -1,4 +1,5 @@
 import { cors } from "@elysiajs/cors";
+import { openapi } from "@elysiajs/openapi";
 import { auth } from "@secured_attendance/auth";
 import { env } from "@secured_attendance/env/server";
 import { Elysia } from "elysia";
@@ -21,6 +22,18 @@ const app = new Elysia()
     }
     return status(405);
   })
+  .use(
+    openapi({
+      provider: "scalar",
+      path: "/scalar",
+      documentation: {
+        info: {
+          title: "Secured Attendance API",
+          version: "1.0.0",
+        },
+      },
+    })
+  )
   .use(adminModule)
   .get("/", () => "OK")
   .listen(3000, () => {
