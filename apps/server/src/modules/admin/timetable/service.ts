@@ -15,7 +15,17 @@ export class TimetableService {
       include: {
         subject: true,
         room: true,
-        divisions: { include: { division: true } },
+        divisions: { 
+          include: { 
+            division: {
+              include: {
+                programSemester: {
+                  include: { program: true }
+                }
+              }
+            } 
+          } 
+        },
       },
       orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
     });
@@ -27,15 +37,78 @@ export class TimetableService {
       include: {
         subject: true,
         room: true,
-        divisions: { include: { division: true } },
+        divisions: { 
+          include: { 
+            division: {
+              include: {
+                programSemester: {
+                  include: { program: true }
+                }
+              }
+            } 
+          } 
+        },
       },
     });
     if (!entry) return status(404, { message: "Timetable Entry not found" });
     return entry;
   }
 
+  private static async checkConflicts(data: {
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+    teacherCodes?: string[];
+    roomId?: string;
+    divisionIds?: string[];
+    excludeEntryId?: string;
+  }) {
+    const overlapping = await prisma.timetableEntry.findMany({
+      where: {
+        dayOfWeek: data.dayOfWeek,
+        id: data.excludeEntryId ? { not: data.excludeEntryId } : undefined,
+        AND: [
+          { startTime: { lt: data.endTime } },
+          { endTime: { gt: data.startTime } },
+        ],
+      },
+      include: {
+        divisions: true,
+        room: true,
+      },
+    });
+
+    for (const entry of overlapping) {
+      if (data.teacherCodes && entry.teacherCodes) {
+        const sharedTeachers = data.teacherCodes.filter((c) => entry.teacherCodes.includes(c));
+        if (sharedTeachers.length > 0) {
+          throw new Error(`Teacher(s) ${sharedTeachers.join(", ")} are already booked for another class during this time.`);
+        }
+      }
+      if (data.roomId && entry.roomId === data.roomId) {
+        throw new Error(`Room is already occupied during this time.`);
+      }
+      if (data.divisionIds) {
+        const entryDivs = entry.divisions.map((d) => d.divisionId);
+        const sharedDivs = data.divisionIds.filter((id) => entryDivs.includes(id));
+        if (sharedDivs.length > 0) {
+          throw new Error(`One or more divisions are already scheduled for another class during this time.`);
+        }
+      }
+    }
+  }
+
   static async createTimetableEntry(data: CreateTimetableEntryType) {
     const { divisionIds, ...entryData } = data;
+
+    await this.checkConflicts({
+      dayOfWeek: data.dayOfWeek,
+      startTime: data.startTime,
+      endTime: data.endTime,
+      teacherCodes: data.teacherCodes,
+      roomId: data.roomId,
+      divisionIds: data.divisionIds,
+    });
 
     const entry = await prisma.timetableEntry.create({
       data: {
@@ -51,6 +124,19 @@ export class TimetableService {
 
   static async updateTimetableEntry(id: string, data: UpdateTimetableEntryType) {
     const { divisionIds, ...updateData } = data;
+
+    const existing = await prisma.timetableEntry.findUnique({ where: { id } });
+    if (!existing) throw new Error("Entry not found");
+
+    await this.checkConflicts({
+      dayOfWeek: data.dayOfWeek ?? existing.dayOfWeek,
+      startTime: data.startTime ?? existing.startTime,
+      endTime: data.endTime ?? existing.endTime,
+      teacherCodes: data.teacherCodes ?? existing.teacherCodes,
+      roomId: data.roomId ?? existing.roomId,
+      divisionIds: data.divisionIds, // Assuming if null, we don't check.
+      excludeEntryId: id,
+    });
 
     // If updating divisions, delete existing and recreate
     if (divisionIds) {
@@ -88,6 +174,11 @@ export class TimetableService {
     let invalidCount = 0;
 
     for (const row of parsedRows as any[]) {
+      // Skip empty periods/breaks where subjectCode is literally empty or a dash
+      if (!row.subjectCode || row.subjectCode.trim() === "—" || row.subjectCode.trim() === "-" || row.subjectCode.trim() === "") {
+        continue;
+      }
+
       const errors: string[] = [];
 
       // Expected columns: programCode, academicYear, semester, division, subjectCode, roomName, dayOfWeek, startTime, endTime, teacherCode, type
@@ -96,6 +187,7 @@ export class TimetableService {
       if (!row.semester) errors.push("Missing semester");
       if (!row.division) errors.push("Missing division");
       if (!row.subjectCode) errors.push("Missing subjectCode");
+      if (!row.subjectName) errors.push("Missing subjectName");
       if (!row.roomName) errors.push("Missing roomName");
       if (!row.dayOfWeek) errors.push("Missing dayOfWeek (0-6)");
       if (!row.startTime) errors.push("Missing startTime");
@@ -124,21 +216,44 @@ export class TimetableService {
     const errors: string[] = [];
 
     for (const [index, row] of data.rows.entries()) {
+      if (!row.subjectCode || row.subjectCode.trim() === "—" || row.subjectCode.trim() === "-" || row.subjectCode.trim() === "") {
+        skipped++;
+        continue;
+      }
+
       try {
-        // 1. Resolve Academic Year
-        const academicYear = await prisma.academicYear.findUnique({
+        // 1. Resolve or Create Academic Year
+        let academicYear = await prisma.academicYear.findUnique({
           where: { name: row.academicYear },
         });
-        if (!academicYear) throw new Error(`Academic year '${row.academicYear}' not found`);
+        if (!academicYear) {
+          const currentYear = new Date().getFullYear();
+          academicYear = await prisma.academicYear.create({
+            data: {
+              name: row.academicYear,
+              startDate: new Date(`${currentYear}-06-01T00:00:00.000Z`),
+              endDate: new Date(`${currentYear + 1}-05-31T23:59:59.999Z`),
+              isCurrent: false,
+            },
+          });
+        }
 
-        // 2. Resolve Program
-        const program = await prisma.program.findUnique({
+        // 2. Resolve or Create Program
+        let program = await prisma.program.findUnique({
           where: { code: row.programCode },
         });
-        if (!program) throw new Error(`Program code '${row.programCode}' not found`);
+        if (!program) {
+          program = await prisma.program.create({
+            data: {
+              code: row.programCode,
+              name: row.programCode.toUpperCase(),
+              shortName: row.programCode.toUpperCase(),
+            },
+          });
+        }
 
-        // 3. Resolve ProgramSemester
-        const programSemester = await prisma.programSemester.findUnique({
+        // 3. Resolve or Create ProgramSemester
+        let programSemester = await prisma.programSemester.findUnique({
           where: {
             programId_academicYearId_semester: {
               programId: program.id,
@@ -147,10 +262,20 @@ export class TimetableService {
             },
           },
         });
-        if (!programSemester) throw new Error(`ProgramSemester not found for ${program.code} Sem ${row.semester}`);
+        if (!programSemester) {
+          const orgSlug = `${program.shortName.toLowerCase()}-sem-${row.semester}-${academicYear.name.toLowerCase().replace(/\s+/g, '-')}`;
+          programSemester = await prisma.programSemester.create({
+            data: {
+              programId: program.id,
+              academicYearId: academicYear.id,
+              semester: parseInt(row.semester, 10),
+              orgSlug,
+            },
+          });
+        }
 
-        // 4. Resolve Division
-        const division = await prisma.division.findUnique({
+        // 4. Resolve or Create Division
+        let division = await prisma.division.findUnique({
           where: {
             programSemesterId_name: {
               programSemesterId: programSemester.id,
@@ -158,19 +283,61 @@ export class TimetableService {
             },
           },
         });
-        if (!division) throw new Error(`Division '${row.division}' not found`);
+        if (!division) {
+          division = await prisma.division.create({
+            data: {
+              name: row.division,
+              programSemesterId: programSemester.id,
+            },
+          });
+        }
 
-        // 5. Resolve Subject
-        const subject = await prisma.subject.findUnique({
+        // 5. Resolve or Create Subject
+        let subject = await prisma.subject.findUnique({
           where: { code: row.subjectCode },
         });
-        if (!subject) throw new Error(`Subject '${row.subjectCode}' not found`);
+        if (!subject) {
+          subject = await prisma.subject.create({
+            data: {
+              code: row.subjectCode,
+              name: row.subjectName || row.subjectCode,
+              shortName: row.subjectCode,
+              programId: program.id,
+            },
+          });
+        }
 
-        // 6. Resolve Room
-        const room = await prisma.room.findFirst({
+        // 6. Resolve or Create Room
+        let room = await prisma.room.findFirst({
           where: { name: row.roomName },
         });
-        if (!room) throw new Error(`Room '${row.roomName}' not found`);
+        if (!room) {
+          let defaultBuilding = await prisma.building.findFirst();
+          if (!defaultBuilding) {
+            defaultBuilding = await prisma.building.create({
+              data: {
+                name: "Main Campus",
+                code: "MAIN",
+                gpsLat: 0,
+                gpsLng: 0,
+                radiusMeters: 500,
+              },
+            });
+          }
+
+          const lowerName = row.roomName.toLowerCase();
+          let roomType = "classroom";
+          if (lowerName.includes("lab")) roomType = "lab";
+          else if (lowerName.includes("auditorium")) roomType = "auditorium";
+
+          room = await prisma.room.create({
+            data: {
+              name: row.roomName,
+              type: roomType,
+              buildingId: defaultBuilding.id,
+            },
+          });
+        }
 
         // 7. Parse dayOfWeek and teachers
         const dayOfWeek = parseInt(row.dayOfWeek, 10);

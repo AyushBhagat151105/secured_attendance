@@ -20,6 +20,55 @@ export const useTimetableEntries = () =>
     },
   });
 
+export const useCreateTimetableEntry = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: Parameters<typeof api.admin.timetable.entries.post>[0]) => {
+      const { data, error } = await api.admin.timetable.entries.post(body);
+      if (error) throw new Error((error.value as any)?.message || "Failed to create timetable entry");
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Class scheduled");
+      queryClient.invalidateQueries({ queryKey: timetableKeys.all });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};
+
+export const useUpdateTimetableEntry = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, body }: { id: string; body: any }) => {
+      const { data, error } = await api.admin.timetable.entries({ id }).patch(body);
+      if (error) throw new Error((error.value as any)?.message || "Failed to update timetable entry");
+      return data;
+    },
+    onSuccess: (_, { id }) => {
+      toast.success("Class updated");
+      queryClient.invalidateQueries({ queryKey: timetableKeys.all });
+      queryClient.invalidateQueries({ queryKey: timetableKeys.detail(id) });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};
+
+export const useDeleteTimetableEntry = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await api.admin.timetable.entries({ id }).delete();
+      if (error) throw new Error((error.value as any)?.message || "Failed to delete timetable entry");
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Class removed");
+      queryClient.invalidateQueries({ queryKey: timetableKeys.all });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};
+
 // ─── Bulk Import ──────────────────────────────────────────────────────────────
 export const usePreviewTimetableImport = () => {
   return useMutation({

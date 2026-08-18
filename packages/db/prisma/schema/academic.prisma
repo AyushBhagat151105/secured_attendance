@@ -31,7 +31,7 @@ model Program {
 model ProgramSemester {
   id             String   @id @default(uuid())
   programId      String
-  program        Program  @relation(fields: [programId], references: [id])
+  program        Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
   academicYearId String
   academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
   semester       Int      // 1, 2, 3...
@@ -48,7 +48,7 @@ model Division {
   id                String   @id @default(uuid())
   name              String   // "Div-I", "Div-II"
   programSemesterId String
-  programSemester   ProgramSemester @relation(fields: [programSemesterId], references: [id])
+  programSemester   ProgramSemester @relation(fields: [programSemesterId], references: [id], onDelete: Cascade)
 
   students                StudentProfile[]
   timetableEntryDivisions TimetableEntryDivision[]

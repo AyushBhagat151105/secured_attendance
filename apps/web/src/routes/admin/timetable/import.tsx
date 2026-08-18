@@ -35,7 +35,7 @@ export const Route = createFileRoute("/admin/timetable/import")({
 type Step = "upload" | "preview" | "done";
 
 const CSV_FORMAT =
-  "programCode,academicYear,semester,division,subjectCode,roomName,dayOfWeek,startTime,endTime,teacherCode,type\nmsit,2026-2027,1,Div-I,MSIT101,Lab 1,1,09:10,10:10,HMP,lecture";
+  "programCode,academicYear,semester,division,subjectCode,subjectName,roomName,dayOfWeek,startTime,endTime,teacherCode,type\nmsit,2026-2027,1,Div-I,MSIT101,Computer Networks,Lab 1,1,09:10,10:10,HMP,lecture";
 
 function TimetableImportPage() {
   const [step, setStep] = useState<Step>("upload");

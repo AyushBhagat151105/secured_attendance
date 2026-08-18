@@ -4,7 +4,7 @@ model Subject {
   name      String   // "Enterprise Computing using Java EE"
   shortName String?  // "ECJ"
   programId String
-  program   Program  @relation(fields: [programId], references: [id])
+  program   Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   teachingAssignments TeachingAssignment[]
@@ -18,11 +18,11 @@ model Subject {
 model TimetableEntry {
   id                String   @id @default(uuid())
   programSemesterId String
-  programSemester   ProgramSemester @relation(fields: [programSemesterId], references: [id])
+  programSemester   ProgramSemester @relation(fields: [programSemesterId], references: [id], onDelete: Cascade)
   academicYearId    String
   academicYear      AcademicYear @relation(fields: [academicYearId], references: [id])
   subjectId         String
-  subject           Subject  @relation(fields: [subjectId], references: [id])
+  subject           Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   roomId            String
   room              Room     @relation(fields: [roomId], references: [id])
   dayOfWeek         Int      // 0=Monday, 1=Tuesday, ... 5=Saturday
@@ -44,7 +44,7 @@ model TimetableEntryDivision {
   timetableEntryId String
   timetableEntry   TimetableEntry @relation(fields: [timetableEntryId], references: [id], onDelete: Cascade)
   divisionId       String
-  division         Division @relation(fields: [divisionId], references: [id])
+  division         Division @relation(fields: [divisionId], references: [id], onDelete: Cascade)
 
   @@unique([timetableEntryId, divisionId])
   @@map("timetable_entry_division")

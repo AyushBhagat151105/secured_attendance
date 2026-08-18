@@ -102,6 +102,22 @@ export const useUpdateProgram = () => {
   });
 };
 
+export const useDeleteProgram = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await api.admin.academic.programs({ id }).delete();
+      if (error) throw new Error((error.value as any)?.message || "Failed to delete program");
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Program deleted");
+      queryClient.invalidateQueries({ queryKey: programKeys.all });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};
+
 // ─── Program Semesters ────────────────────────────────────────────────────────
 export const semesterKeys = {
   all: ["semesters"] as const,
@@ -192,6 +208,39 @@ export const useCreateSubject = () => {
     },
     onSuccess: () => {
       toast.success("Subject created");
+      queryClient.invalidateQueries({ queryKey: subjectKeys.all });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};
+
+export const useUpdateSubject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, body }: { id: string; body: any }) => {
+      const { data, error } = await api.admin.academic.subjects({ id }).patch(body);
+      if (error) throw new Error((error.value as any)?.message || "Failed to update subject");
+      return data;
+    },
+    onSuccess: (_, { id }) => {
+      toast.success("Subject updated");
+      queryClient.invalidateQueries({ queryKey: subjectKeys.all });
+      queryClient.invalidateQueries({ queryKey: subjectKeys.detail(id) });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};
+
+export const useDeleteSubject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await api.admin.academic.subjects({ id }).delete();
+      if (error) throw new Error((error.value as any)?.message || "Failed to delete subject");
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Subject deleted");
       queryClient.invalidateQueries({ queryKey: subjectKeys.all });
     },
     onError: (err) => toast.error(err.message),
