@@ -1,5 +1,5 @@
 import * as React from "react"
-import { IconChartBar, IconLayoutDashboard, IconShield, IconUsers, IconShieldCheck } from "@tabler/icons-react"
+import { IconChartBar, IconLayoutDashboard, IconShield, IconUsers, IconShieldCheck, IconBook, IconMapPin, IconCalendarTime } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
@@ -29,6 +29,47 @@ const data = {
         {
           title: "Users",
           url: "/admin/users",
+        },
+      ],
+    },
+    {
+      title: "Academic",
+      url: "#",
+      icon: <IconBook />,
+      items: [
+        {
+          title: "Programs",
+          url: "/admin/academic/programs",
+        },
+        {
+          title: "Subjects",
+          url: "/admin/academic/subjects",
+        },
+      ],
+    },
+    {
+      title: "Campus",
+      url: "#",
+      icon: <IconMapPin />,
+      items: [
+        {
+          title: "Buildings & Rooms",
+          url: "/admin/campus",
+        },
+      ],
+    },
+    {
+      title: "Timetable",
+      url: "#",
+      icon: <IconCalendarTime />,
+      items: [
+        {
+          title: "Weekly View",
+          url: "/admin/timetable",
+        },
+        {
+          title: "Bulk Import",
+          url: "/admin/timetable/import",
         },
       ],
     },

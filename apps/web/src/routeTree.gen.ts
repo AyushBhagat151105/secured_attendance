@@ -15,6 +15,11 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DownloadAppRouteImport } from './routes/download-app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminAcademicProgramsRouteImport } from './routes/admin/academic/programs'
+import { Route as AdminAcademicSubjectsRouteImport } from './routes/admin/academic/subjects'
+import { Route as AdminCampusIndexRouteImport } from './routes/admin/campus/index'
+import { Route as AdminTimetableIndexRouteImport } from './routes/admin/timetable/index'
+import { Route as AdminTimetableImportRouteImport } from './routes/admin/timetable/import'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin/users/$userId'
 import { Route as AdminUsersImportRouteImport } from './routes/admin/users/import'
@@ -49,6 +54,31 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAcademicProgramsRoute = AdminAcademicProgramsRouteImport.update({
+  id: '/academic/programs',
+  path: '/academic/programs',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAcademicSubjectsRoute = AdminAcademicSubjectsRouteImport.update({
+  id: '/academic/subjects',
+  path: '/academic/subjects',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCampusIndexRoute = AdminCampusIndexRouteImport.update({
+  id: '/campus/',
+  path: '/campus/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTimetableIndexRoute = AdminTimetableIndexRouteImport.update({
+  id: '/timetable/',
+  path: '/timetable/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTimetableImportRoute = AdminTimetableImportRouteImport.update({
+  id: '/timetable/import',
+  path: '/timetable/import',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminUsersIndexRoute = AdminUsersIndexRouteImport.update({
   id: '/users/',
   path: '/users/',
@@ -72,8 +102,13 @@ export interface FileRoutesByFullPath {
   '/download-app': typeof DownloadAppRoute
   '/login': typeof LoginRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/academic/programs': typeof AdminAcademicProgramsRoute
+  '/admin/academic/subjects': typeof AdminAcademicSubjectsRoute
+  '/admin/timetable/import': typeof AdminTimetableImportRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/admin/users/import': typeof AdminUsersImportRoute
+  '/admin/campus/': typeof AdminCampusIndexRoute
+  '/admin/timetable/': typeof AdminTimetableIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
 }
 export interface FileRoutesByTo {
@@ -82,8 +117,13 @@ export interface FileRoutesByTo {
   '/download-app': typeof DownloadAppRoute
   '/login': typeof LoginRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/academic/programs': typeof AdminAcademicProgramsRoute
+  '/admin/academic/subjects': typeof AdminAcademicSubjectsRoute
+  '/admin/timetable/import': typeof AdminTimetableImportRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/admin/users/import': typeof AdminUsersImportRoute
+  '/admin/campus': typeof AdminCampusIndexRoute
+  '/admin/timetable': typeof AdminTimetableIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
 }
 export interface FileRoutesById {
@@ -94,8 +134,13 @@ export interface FileRoutesById {
   '/download-app': typeof DownloadAppRoute
   '/login': typeof LoginRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/academic/programs': typeof AdminAcademicProgramsRoute
+  '/admin/academic/subjects': typeof AdminAcademicSubjectsRoute
+  '/admin/timetable/import': typeof AdminTimetableImportRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/admin/users/import': typeof AdminUsersImportRoute
+  '/admin/campus/': typeof AdminCampusIndexRoute
+  '/admin/timetable/': typeof AdminTimetableIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
 }
 export interface FileRouteTypes {
@@ -107,8 +152,13 @@ export interface FileRouteTypes {
     | '/download-app'
     | '/login'
     | '/admin/'
+    | '/admin/academic/programs'
+    | '/admin/academic/subjects'
+    | '/admin/timetable/import'
     | '/admin/users/$userId'
     | '/admin/users/import'
+    | '/admin/campus/'
+    | '/admin/timetable/'
     | '/admin/users/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -117,8 +167,13 @@ export interface FileRouteTypes {
     | '/download-app'
     | '/login'
     | '/admin'
+    | '/admin/academic/programs'
+    | '/admin/academic/subjects'
+    | '/admin/timetable/import'
     | '/admin/users/$userId'
     | '/admin/users/import'
+    | '/admin/campus'
+    | '/admin/timetable'
     | '/admin/users'
   id:
     | '__root__'
@@ -128,8 +183,13 @@ export interface FileRouteTypes {
     | '/download-app'
     | '/login'
     | '/admin/'
+    | '/admin/academic/programs'
+    | '/admin/academic/subjects'
+    | '/admin/timetable/import'
     | '/admin/users/$userId'
     | '/admin/users/import'
+    | '/admin/campus/'
+    | '/admin/timetable/'
     | '/admin/users/'
   fileRoutesById: FileRoutesById
 }
@@ -185,6 +245,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/academic/programs': {
+      id: '/admin/academic/programs'
+      path: '/academic/programs'
+      fullPath: '/admin/academic/programs'
+      preLoaderRoute: typeof AdminAcademicProgramsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/academic/subjects': {
+      id: '/admin/academic/subjects'
+      path: '/academic/subjects'
+      fullPath: '/admin/academic/subjects'
+      preLoaderRoute: typeof AdminAcademicSubjectsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/campus/': {
+      id: '/admin/campus/'
+      path: '/campus'
+      fullPath: '/admin/campus/'
+      preLoaderRoute: typeof AdminCampusIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/timetable/': {
+      id: '/admin/timetable/'
+      path: '/timetable'
+      fullPath: '/admin/timetable/'
+      preLoaderRoute: typeof AdminTimetableIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/timetable/import': {
+      id: '/admin/timetable/import'
+      path: '/timetable/import'
+      fullPath: '/admin/timetable/import'
+      preLoaderRoute: typeof AdminTimetableImportRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/users/': {
       id: '/admin/users/'
       path: '/users'
@@ -211,15 +306,25 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminAcademicProgramsRoute: typeof AdminAcademicProgramsRoute
+  AdminAcademicSubjectsRoute: typeof AdminAcademicSubjectsRoute
+  AdminTimetableImportRoute: typeof AdminTimetableImportRoute
   AdminUsersUserIdRoute: typeof AdminUsersUserIdRoute
   AdminUsersImportRoute: typeof AdminUsersImportRoute
+  AdminCampusIndexRoute: typeof AdminCampusIndexRoute
+  AdminTimetableIndexRoute: typeof AdminTimetableIndexRoute
   AdminUsersIndexRoute: typeof AdminUsersIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
+  AdminAcademicProgramsRoute: AdminAcademicProgramsRoute,
+  AdminAcademicSubjectsRoute: AdminAcademicSubjectsRoute,
+  AdminTimetableImportRoute: AdminTimetableImportRoute,
   AdminUsersUserIdRoute: AdminUsersUserIdRoute,
   AdminUsersImportRoute: AdminUsersImportRoute,
+  AdminCampusIndexRoute: AdminCampusIndexRoute,
+  AdminTimetableIndexRoute: AdminTimetableIndexRoute,
   AdminUsersIndexRoute: AdminUsersIndexRoute,
 }
 

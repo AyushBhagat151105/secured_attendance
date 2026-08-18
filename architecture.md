@@ -1257,15 +1257,15 @@ services:
 ### Phase 3: Academic Structure & Timetable
 
 #### Tasks
-- [ ] Academic year CRUD API
-- [ ] Program CRUD API
-- [ ] Program semester + division CRUD API
-- [ ] Subject CRUD API
-- [ ] Building CRUD API (with GPS coordinates + radius)
-- [ ] Room CRUD API
-- [ ] Teacher profile + teaching assignment CRUD API
-- [ ] Timetable CRUD API
-- [ ] Timetable CSV/JSON import API (parse your actual timetable format)
+- [x] Academic year CRUD API
+- [x] Program CRUD API
+- [x] Program semester + division CRUD API
+- [x] Subject CRUD API
+- [x] Building CRUD API (with GPS coordinates + radius)
+- [x] Room CRUD API
+- [x] Teacher profile + teaching assignment CRUD API
+- [x] Timetable CRUD API
+- [x] Timetable CSV/JSON import API (parse your actual timetable format)
 - [ ] Admin web UI: Academic management pages (programs, semesters, divisions)
 - [ ] Admin web UI: Campus page (buildings + rooms + shadcn-map for GPS)
 - [ ] Admin web UI: Subject management
