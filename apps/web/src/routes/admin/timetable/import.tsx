@@ -25,7 +25,7 @@ import { BulkImportDropzone } from "@/features/admin/users/components/bulk-impor
 import {
   useConfirmTimetableImport,
   usePreviewTimetableImport,
-} from "@/features/admin/timetable/queries/timetable.queries";
+} from "@/hooks/use-admin-timetable";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/timetable/import")({

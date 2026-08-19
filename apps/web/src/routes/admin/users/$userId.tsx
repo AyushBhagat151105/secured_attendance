@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DeviceRebindDialog } from "@/features/admin/users/components/device-rebind-dialog";
 import { EditUserDialog } from "@/features/admin/users/components/edit-user-dialog";
-import { useUserQuery } from "@/features/admin/users/queries/users.queries";
+import { useUser } from "@/hooks/use-admin-users";
 import type { UserRow } from "@/features/admin/users/components/user-columns";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/admin/users/$userId")({
 
 function UserDetailPage() {
   const { userId } = Route.useParams();
-  const { data: user, isLoading } = useUserQuery(userId);
+  const { data: user, isLoading } = useUser(userId);
   const [editOpen, setEditOpen] = useState(false);
   const [rebindOpen, setRebindOpen] = useState(false);
 

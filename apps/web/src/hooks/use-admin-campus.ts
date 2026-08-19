@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client";
 import { toast } from "sonner";
-
-const api = apiClient.api;
+import { adminCampusApi } from "@/api/admin-campus";
 
 // ─── Buildings ────────────────────────────────────────────────────────────────
 export const buildingKeys = {
@@ -13,21 +11,13 @@ export const buildingKeys = {
 export const useBuildings = () =>
   useQuery({
     queryKey: buildingKeys.all,
-    queryFn: async () => {
-      const { data, error } = await api.admin.campus.buildings.get();
-      if (error) throw new Error((error.value as any)?.message || "Failed to fetch buildings");
-      return data;
-    },
+    queryFn: adminCampusApi.getBuildings,
   });
 
 export const useCreateBuilding = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: Parameters<typeof api.admin.campus.buildings.post>[0]) => {
-      const { data, error } = await api.admin.campus.buildings.post(body);
-      if (error) throw new Error((error.value as any)?.message || "Failed to create building");
-      return data;
-    },
+    mutationFn: adminCampusApi.createBuilding,
     onSuccess: () => {
       toast.success("Building created");
       queryClient.invalidateQueries({ queryKey: buildingKeys.all });
@@ -39,11 +29,7 @@ export const useCreateBuilding = () => {
 export const useUpdateBuilding = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, body }: { id: string; body: any }) => {
-      const { data, error } = await api.admin.campus.buildings({ id }).patch(body);
-      if (error) throw new Error((error.value as any)?.message || "Failed to update building");
-      return data;
-    },
+    mutationFn: ({ id, body }: { id: string; body: any }) => adminCampusApi.updateBuilding(id, body),
     onSuccess: (_, { id }) => {
       toast.success("Building updated");
       queryClient.invalidateQueries({ queryKey: buildingKeys.all });
@@ -62,21 +48,13 @@ export const roomKeys = {
 export const useRooms = () =>
   useQuery({
     queryKey: roomKeys.all,
-    queryFn: async () => {
-      const { data, error } = await api.admin.campus.rooms.get();
-      if (error) throw new Error((error.value as any)?.message || "Failed to fetch rooms");
-      return data;
-    },
+    queryFn: adminCampusApi.getRooms,
   });
 
 export const useCreateRoom = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: Parameters<typeof api.admin.campus.rooms.post>[0]) => {
-      const { data, error } = await api.admin.campus.rooms.post(body);
-      if (error) throw new Error((error.value as any)?.message || "Failed to create room");
-      return data;
-    },
+    mutationFn: adminCampusApi.createRoom,
     onSuccess: () => {
       toast.success("Room created");
       queryClient.invalidateQueries({ queryKey: roomKeys.all });

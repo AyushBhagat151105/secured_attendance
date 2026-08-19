@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { usePrograms } from "@/features/admin/academic/queries/academic.queries";
+import { usePrograms } from "@/hooks/use-admin-academic";
 import {
   Table,
   TableBody,
@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { useCreateProgram, useUpdateProgram, useDeleteProgram } from "@/features/admin/academic/queries/academic.queries";
+import { useCreateProgram, useUpdateProgram, useDeleteProgram } from "@/hooks/use-admin-academic";
 import { MoreHorizontal, Pencil, Trash } from "lucide-react";
 import {
   DropdownMenu,

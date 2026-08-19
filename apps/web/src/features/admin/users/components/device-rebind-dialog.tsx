@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useRebindDeviceMutation } from "@/features/admin/users/queries/users.queries";
+import { useRebindDevice } from "@/hooks/use-admin-users";
 
 interface DeviceRebindDialogProps {
   userId: string;
@@ -24,7 +24,7 @@ export function DeviceRebindDialog({
   open,
   onOpenChange,
 }: DeviceRebindDialogProps) {
-  const rebind = useRebindDeviceMutation();
+  const rebind = useRebindDevice();
 
   function handleConfirm() {
     rebind.mutate(userId, {

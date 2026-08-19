@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useForm } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useCompleteOnboarding } from "@/hooks/use-auth";
 import z from "zod";
 import { IconShieldCheck, IconLoader2 } from "@tabler/icons-react";
 
@@ -26,17 +26,7 @@ export const Route = createFileRoute("/reset-password")({
 });
 
 function ResetPasswordPage() {
-  const completeOnboardingMutation = useMutation({
-    mutationKey: ["auth", "onboarding", "complete"],
-    mutationFn: async () => {
-      // Use the Eden Treaty typed client — /api/auth-custom/complete-onboarding
-      const { data, error } = await (apiClient.api as any)["auth-custom"]["complete-onboarding"].patch();
-      if (error) {
-        throw new Error(error.value?.message ?? "Failed to complete onboarding");
-      }
-      return data;
-    },
-  });
+  const completeOnboardingMutation = useCompleteOnboarding();
 
   const form = useForm({
     defaultValues: {

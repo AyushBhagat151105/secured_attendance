@@ -24,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useUsersQuery } from "@/features/admin/users/queries/users.queries";
+import { useUsers } from "@/hooks/use-admin-users";
 import type { UserListParams, UserRole, UserStatus } from "@/services/admin/users.service";
 import { CreateUserDialog } from "./create-user-dialog";
 import { type UserRow, userColumns } from "./user-columns";
@@ -46,7 +46,7 @@ export function UserTable() {
     ...(status ? { status } : {}),
   };
 
-  const { data, isLoading, isError } = useUsersQuery(params);
+  const { data, isLoading, isError } = useUsers(params);
 
   const table = useLegacyTable<UserRow>({
     data: (data?.users as UserRow[]) ?? [],

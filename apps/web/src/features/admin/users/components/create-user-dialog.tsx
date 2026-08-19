@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCreateUserMutation } from "@/features/admin/users/queries/users.queries";
+import { useCreateUser } from "@/hooks/use-admin-users";
 
 interface CreateUserDialogProps {
   open: boolean;
@@ -35,7 +35,7 @@ const createSchema = z.object({
 });
 
 export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) {
-  const create = useCreateUserMutation();
+  const create = useCreateUser();
 
   const form = useForm({
     defaultValues: {

@@ -10,7 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useSuspendUserMutation } from "@/features/admin/users/queries/users.queries";
+import { useSuspendUser } from "@/hooks/use-admin-users";
 
 interface SuspendUserAlertProps {
   userId: string;
@@ -25,10 +25,10 @@ export function SuspendUserAlert({
   open,
   onOpenChange,
 }: SuspendUserAlertProps) {
-  const suspend = useSuspendUserMutation();
+  const suspendUser = useSuspendUser();
 
   function handleConfirm() {
-    suspend.mutate(userId, {
+    suspendUser.mutate(userId, {
       onSuccess: () => onOpenChange(false),
     });
   }
@@ -51,9 +51,9 @@ export function SuspendUserAlert({
           <AlertDialogAction
             onClick={handleConfirm}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            disabled={suspend.isPending}
+            disabled={suspendUser.isPending}
           >
-            {suspend.isPending ? "Suspending..." : "Suspend User"}
+            {suspendUser.isPending ? "Suspending..." : "Suspend User"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

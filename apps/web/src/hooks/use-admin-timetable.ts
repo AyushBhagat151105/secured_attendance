@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client";
 import { toast } from "sonner";
-
-const api = apiClient.api;
+import { adminTimetableApi } from "@/api/admin-timetable";
 
 // ─── Timetable Entries ────────────────────────────────────────────────────────
 export const timetableKeys = {
@@ -13,21 +11,13 @@ export const timetableKeys = {
 export const useTimetableEntries = () =>
   useQuery({
     queryKey: timetableKeys.all,
-    queryFn: async () => {
-      const { data, error } = await api.admin.timetable.entries.get();
-      if (error) throw new Error((error.value as any)?.message || "Failed to fetch timetable entries");
-      return data;
-    },
+    queryFn: adminTimetableApi.getEntries,
   });
 
 export const useCreateTimetableEntry = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: Parameters<typeof api.admin.timetable.entries.post>[0]) => {
-      const { data, error } = await api.admin.timetable.entries.post(body);
-      if (error) throw new Error((error.value as any)?.message || "Failed to create timetable entry");
-      return data;
-    },
+    mutationFn: adminTimetableApi.createEntry,
     onSuccess: () => {
       toast.success("Class scheduled");
       queryClient.invalidateQueries({ queryKey: timetableKeys.all });
@@ -39,11 +29,7 @@ export const useCreateTimetableEntry = () => {
 export const useUpdateTimetableEntry = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, body }: { id: string; body: any }) => {
-      const { data, error } = await api.admin.timetable.entries({ id }).patch(body);
-      if (error) throw new Error((error.value as any)?.message || "Failed to update timetable entry");
-      return data;
-    },
+    mutationFn: ({ id, body }: { id: string; body: any }) => adminTimetableApi.updateEntry(id, body),
     onSuccess: (_, { id }) => {
       toast.success("Class updated");
       queryClient.invalidateQueries({ queryKey: timetableKeys.all });
@@ -56,11 +42,7 @@ export const useUpdateTimetableEntry = () => {
 export const useDeleteTimetableEntry = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { data, error } = await api.admin.timetable.entries({ id }).delete();
-      if (error) throw new Error((error.value as any)?.message || "Failed to delete timetable entry");
-      return data;
-    },
+    mutationFn: adminTimetableApi.deleteEntry,
     onSuccess: () => {
       toast.success("Class removed");
       queryClient.invalidateQueries({ queryKey: timetableKeys.all });
@@ -72,22 +54,14 @@ export const useDeleteTimetableEntry = () => {
 // ─── Bulk Import ──────────────────────────────────────────────────────────────
 export const usePreviewTimetableImport = () => {
   return useMutation({
-    mutationFn: async (csv: string) => {
-      const { data, error } = await api.admin.timetable.entries.import.preview.post({ csv });
-      if (error) throw new Error((error.value as any)?.message || "Failed to preview import");
-      return data;
-    },
+    mutationFn: adminTimetableApi.previewImport,
   });
 };
 
 export const useConfirmTimetableImport = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (rows: any[]) => {
-      const { data, error } = await api.admin.timetable.entries.import.confirm.post({ rows });
-      if (error) throw new Error((error.value as any)?.message || "Failed to confirm import");
-      return data;
-    },
+    mutationFn: adminTimetableApi.confirmImport,
     onSuccess: (data) => {
       if (data.errors && data.errors.length > 0) {
         toast.warning(`Created ${data.created}, skipped ${data.skipped}, errors: ${data.errors.length}`);

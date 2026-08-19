@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useUpdateUserMutation } from "@/features/admin/users/queries/users.queries";
+import { useUpdateUser } from "@/hooks/use-admin-users";
 import type { UserRow } from "./user-columns";
 
 interface EditUserDialogProps {
@@ -37,7 +37,7 @@ const editSchema = z.object({
 type EditUserForm = z.infer<typeof editSchema>;
 
 export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps) {
-  const update = useUpdateUserMutation(user.id);
+  const update = useUpdateUser();
 
   const form = useForm({
     defaultValues: {
@@ -49,11 +49,11 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
       onSubmit: editSchema,
     },
     onSubmit: async ({ value }) => {
-      await update.mutateAsync({
+      await update.mutate({ id: user.id, body: {
         name: value.name,
         role: value.role,
         status: user.role === "student" ? value.status : undefined,
-      });
+      }});
       onOpenChange(false);
     },
   });

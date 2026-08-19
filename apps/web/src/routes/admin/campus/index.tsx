@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useBuildings, useRooms } from "@/features/admin/campus/queries/campus.queries";
+import { useBuildings, useRooms, useCreateBuilding, useUpdateBuilding, useCreateRoom } from "@/hooks/use-admin-campus";
 import {
   Table,
   TableBody,
@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import React, { useState } from "react";
-import { useCreateBuilding, useUpdateBuilding, useCreateRoom } from "@/features/admin/campus/queries/campus.queries";
+
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/campus/")({

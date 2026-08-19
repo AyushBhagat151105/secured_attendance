@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client";
 import { toast } from "sonner";
-
-const api = apiClient.api;
+import { adminAcademicApi } from "@/api/admin-academic";
 
 // ─── Academic Years ───────────────────────────────────────────────────────────
 export const academicYearKeys = {
@@ -13,21 +11,13 @@ export const academicYearKeys = {
 export const useAcademicYears = () =>
   useQuery({
     queryKey: academicYearKeys.all,
-    queryFn: async () => {
-      const { data, error } = await api.admin.academic.years.get();
-      if (error) throw new Error((error.value as any)?.message || "Failed to fetch academic years");
-      return data;
-    },
+    queryFn: adminAcademicApi.getYears,
   });
 
 export const useCreateAcademicYear = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: Parameters<typeof api.admin.academic.years.post>[0]) => {
-      const { data, error } = await api.admin.academic.years.post(body);
-      if (error) throw new Error((error.value as any)?.message || "Failed to create academic year");
-      return data;
-    },
+    mutationFn: adminAcademicApi.createYear,
     onSuccess: () => {
       toast.success("Academic year created");
       queryClient.invalidateQueries({ queryKey: academicYearKeys.all });
@@ -39,11 +29,7 @@ export const useCreateAcademicYear = () => {
 export const useUpdateAcademicYear = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, body }: { id: string; body: any }) => {
-      const { data, error } = await api.admin.academic.years({ id }).patch(body);
-      if (error) throw new Error((error.value as any)?.message || "Failed to update academic year");
-      return data;
-    },
+    mutationFn: ({ id, body }: { id: string; body: any }) => adminAcademicApi.updateYear(id, body),
     onSuccess: (_, { id }) => {
       toast.success("Academic year updated");
       queryClient.invalidateQueries({ queryKey: academicYearKeys.all });
@@ -62,21 +48,13 @@ export const programKeys = {
 export const usePrograms = () =>
   useQuery({
     queryKey: programKeys.all,
-    queryFn: async () => {
-      const { data, error } = await api.admin.academic.programs.get();
-      if (error) throw new Error((error.value as any)?.message || "Failed to fetch programs");
-      return data;
-    },
+    queryFn: adminAcademicApi.getPrograms,
   });
 
 export const useCreateProgram = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: Parameters<typeof api.admin.academic.programs.post>[0]) => {
-      const { data, error } = await api.admin.academic.programs.post(body);
-      if (error) throw new Error((error.value as any)?.message || "Failed to create program");
-      return data;
-    },
+    mutationFn: adminAcademicApi.createProgram,
     onSuccess: () => {
       toast.success("Program created");
       queryClient.invalidateQueries({ queryKey: programKeys.all });
@@ -88,11 +66,7 @@ export const useCreateProgram = () => {
 export const useUpdateProgram = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, body }: { id: string; body: any }) => {
-      const { data, error } = await api.admin.academic.programs({ id }).patch(body);
-      if (error) throw new Error((error.value as any)?.message || "Failed to update program");
-      return data;
-    },
+    mutationFn: ({ id, body }: { id: string; body: any }) => adminAcademicApi.updateProgram(id, body),
     onSuccess: (_, { id }) => {
       toast.success("Program updated");
       queryClient.invalidateQueries({ queryKey: programKeys.all });
@@ -105,11 +79,7 @@ export const useUpdateProgram = () => {
 export const useDeleteProgram = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { data, error } = await api.admin.academic.programs({ id }).delete();
-      if (error) throw new Error((error.value as any)?.message || "Failed to delete program");
-      return data;
-    },
+    mutationFn: adminAcademicApi.deleteProgram,
     onSuccess: () => {
       toast.success("Program deleted");
       queryClient.invalidateQueries({ queryKey: programKeys.all });
@@ -127,21 +97,13 @@ export const semesterKeys = {
 export const useProgramSemesters = () =>
   useQuery({
     queryKey: semesterKeys.all,
-    queryFn: async () => {
-      const { data, error } = await api.admin.academic.semesters.get();
-      if (error) throw new Error((error.value as any)?.message || "Failed to fetch semesters");
-      return data;
-    },
+    queryFn: adminAcademicApi.getSemesters,
   });
 
 export const useCreateProgramSemester = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: Parameters<typeof api.admin.academic.semesters.post>[0]) => {
-      const { data, error } = await api.admin.academic.semesters.post(body);
-      if (error) throw new Error((error.value as any)?.message || "Failed to create semester");
-      return data;
-    },
+    mutationFn: adminAcademicApi.createSemester,
     onSuccess: () => {
       toast.success("Semester created");
       queryClient.invalidateQueries({ queryKey: semesterKeys.all });
@@ -159,21 +121,13 @@ export const divisionKeys = {
 export const useDivisions = () =>
   useQuery({
     queryKey: divisionKeys.all,
-    queryFn: async () => {
-      const { data, error } = await api.admin.academic.divisions.get();
-      if (error) throw new Error((error.value as any)?.message || "Failed to fetch divisions");
-      return data;
-    },
+    queryFn: adminAcademicApi.getDivisions,
   });
 
 export const useCreateDivision = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: Parameters<typeof api.admin.academic.divisions.post>[0]) => {
-      const { data, error } = await api.admin.academic.divisions.post(body);
-      if (error) throw new Error(error.value?.message || "Failed to create division");
-      return data;
-    },
+    mutationFn: adminAcademicApi.createDivision,
     onSuccess: () => {
       toast.success("Division created");
       queryClient.invalidateQueries({ queryKey: divisionKeys.all });
@@ -191,21 +145,13 @@ export const subjectKeys = {
 export const useSubjects = () =>
   useQuery({
     queryKey: subjectKeys.all,
-    queryFn: async () => {
-      const { data, error } = await api.admin.academic.subjects.get();
-      if (error) throw new Error((error.value as any)?.message || "Failed to fetch subjects");
-      return data;
-    },
+    queryFn: adminAcademicApi.getSubjects,
   });
 
 export const useCreateSubject = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: Parameters<typeof api.admin.academic.subjects.post>[0]) => {
-      const { data, error } = await api.admin.academic.subjects.post(body);
-      if (error) throw new Error((error.value as any)?.message || "Failed to create subject");
-      return data;
-    },
+    mutationFn: adminAcademicApi.createSubject,
     onSuccess: () => {
       toast.success("Subject created");
       queryClient.invalidateQueries({ queryKey: subjectKeys.all });
@@ -217,11 +163,7 @@ export const useCreateSubject = () => {
 export const useUpdateSubject = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, body }: { id: string; body: any }) => {
-      const { data, error } = await api.admin.academic.subjects({ id }).patch(body);
-      if (error) throw new Error((error.value as any)?.message || "Failed to update subject");
-      return data;
-    },
+    mutationFn: ({ id, body }: { id: string; body: any }) => adminAcademicApi.updateSubject(id, body),
     onSuccess: (_, { id }) => {
       toast.success("Subject updated");
       queryClient.invalidateQueries({ queryKey: subjectKeys.all });
@@ -234,11 +176,7 @@ export const useUpdateSubject = () => {
 export const useDeleteSubject = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { data, error } = await api.admin.academic.subjects({ id }).delete();
-      if (error) throw new Error((error.value as any)?.message || "Failed to delete subject");
-      return data;
-    },
+    mutationFn: adminAcademicApi.deleteSubject,
     onSuccess: () => {
       toast.success("Subject deleted");
       queryClient.invalidateQueries({ queryKey: subjectKeys.all });

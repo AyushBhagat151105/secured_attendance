@@ -21,9 +21,9 @@ import { Separator } from "@/components/ui/separator";
 import { BulkImportDropzone } from "@/features/admin/users/components/bulk-import-dropzone";
 import { BulkImportPreview } from "@/features/admin/users/components/bulk-import-preview";
 import {
-  useBulkImportConfirmMutation,
-  useBulkImportPreviewMutation,
-} from "@/features/admin/users/queries/users.queries";
+  useConfirmUsersImport,
+  usePreviewUsersImport,
+} from "@/hooks/use-admin-users";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/users/import")({
@@ -55,8 +55,8 @@ function ImportPage() {
   const [importProgress, setImportProgress] = useState(0);
   const [finalResult, setFinalResult] = useState<{ created: number; skipped: number; errors: string[] } | null>(null);
 
-  const preview = useBulkImportPreviewMutation();
-  const confirm = useBulkImportConfirmMutation();
+  const preview = usePreviewUsersImport();
+  const confirm = useConfirmUsersImport();
 
   async function handleFileSelected(csv: string) {
     const result = await preview.mutateAsync({ type: importType, csv });

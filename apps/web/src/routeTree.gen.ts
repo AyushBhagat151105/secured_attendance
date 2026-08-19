@@ -16,6 +16,7 @@ import { Route as DownloadAppRouteImport } from './routes/download-app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as SessionSessionIdRouteImport } from './routes/session/$sessionId'
 import { Route as AdminAcademicProgramsRouteImport } from './routes/admin/academic/programs'
 import { Route as AdminAcademicSubjectsRouteImport } from './routes/admin/academic/subjects'
 import { Route as AdminCampusIndexRouteImport } from './routes/admin/campus/index'
@@ -59,6 +60,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
+} as any)
+const SessionSessionIdRoute = SessionSessionIdRouteImport.update({
+  id: '/session/$sessionId',
+  path: '/session/$sessionId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminAcademicProgramsRoute = AdminAcademicProgramsRouteImport.update({
   id: '/academic/programs',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/download-app': typeof DownloadAppRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/session/$sessionId': typeof SessionSessionIdRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/academic/programs': typeof AdminAcademicProgramsRoute
   '/admin/academic/subjects': typeof AdminAcademicSubjectsRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/download-app': typeof DownloadAppRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/session/$sessionId': typeof SessionSessionIdRoute
   '/admin': typeof AdminIndexRoute
   '/admin/academic/programs': typeof AdminAcademicProgramsRoute
   '/admin/academic/subjects': typeof AdminAcademicSubjectsRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/download-app': typeof DownloadAppRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/session/$sessionId': typeof SessionSessionIdRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/academic/programs': typeof AdminAcademicProgramsRoute
   '/admin/academic/subjects': typeof AdminAcademicSubjectsRoute
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/download-app'
     | '/login'
     | '/reset-password'
+    | '/session/$sessionId'
     | '/admin/'
     | '/admin/academic/programs'
     | '/admin/academic/subjects'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/download-app'
     | '/login'
     | '/reset-password'
+    | '/session/$sessionId'
     | '/admin'
     | '/admin/academic/programs'
     | '/admin/academic/subjects'
@@ -194,6 +205,7 @@ export interface FileRouteTypes {
     | '/download-app'
     | '/login'
     | '/reset-password'
+    | '/session/$sessionId'
     | '/admin/'
     | '/admin/academic/programs'
     | '/admin/academic/subjects'
@@ -212,6 +224,7 @@ export interface RootRouteChildren {
   DownloadAppRoute: typeof DownloadAppRoute
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SessionSessionIdRoute: typeof SessionSessionIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -264,6 +277,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/session/$sessionId': {
+      id: '/session/$sessionId'
+      path: '/session/$sessionId'
+      fullPath: '/session/$sessionId'
+      preLoaderRoute: typeof SessionSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/academic/programs': {
       id: '/admin/academic/programs'
@@ -357,6 +377,7 @@ const rootRouteChildren: RootRouteChildren = {
   DownloadAppRoute: DownloadAppRoute,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SessionSessionIdRoute: SessionSessionIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

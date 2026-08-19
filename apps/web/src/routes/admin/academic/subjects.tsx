@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useSubjects } from "@/features/admin/academic/queries/academic.queries";
+import { useSubjects } from "@/hooks/use-admin-academic";
 import {
   Table,
   TableBody,
@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
-import { useCreateSubject, useUpdateSubject, useDeleteSubject, usePrograms } from "@/features/admin/academic/queries/academic.queries";
+import { useCreateSubject, useUpdateSubject, useDeleteSubject, usePrograms } from "@/hooks/use-admin-academic";
 import { MoreHorizontal, Pencil, Trash } from "lucide-react";
 import {
   DropdownMenu,
