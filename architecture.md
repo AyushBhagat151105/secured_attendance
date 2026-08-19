@@ -1276,16 +1276,16 @@ services:
 ### Phase 4: Session & QR System (Core Feature)
 
 #### Tasks
-- [ ] Session lifecycle: open, close, auto-expire
-- [ ] QR token generation + HMAC signing
-- [ ] WebSocket gateway for QR rotation broadcast
-- [ ] Teacher API: "today's classes" from timetable
-- [ ] Teacher web UI: Dashboard (today's scheduled classes, one-click start)
-- [ ] Teacher web UI: Active session page (QR display 70% + live counter 30%)
-- [ ] QR code rendering (use `qrcode` library, render as SVG for crisp projector display)
-- [ ] WebSocket client in teacher dashboard (receive + display rotating QR)
-- [ ] Live attendance counter (WebSocket feed)
-- [ ] Session close UI + auto-close logic
+- [x] Session lifecycle: open, close, auto-expire
+- [x] QR token generation + HMAC signing
+- [x] WebSocket gateway for QR rotation broadcast
+- [x] Teacher API: "today's classes" from timetable
+- [x] Teacher web UI: Dashboard (today's scheduled classes, one-click start)
+- [x] Teacher web UI: Active session page (QR display 70% + live counter 30%)
+- [x] QR code rendering (use `qrcode` library, render as SVG for crisp projector display)
+- [x] WebSocket client in teacher dashboard (receive + display rotating QR)
+- [x] Live attendance counter (WebSocket feed)
+- [x] Session close UI + auto-close logic
 
 ---
 
