@@ -3,6 +3,8 @@ import { Elysia, t } from "elysia";
 
 import { logger } from "../../lib/logger";
 import { requireRole } from "../auth/guards";
+import { auth } from "@secured_attendance/auth";
+import { env } from "@secured_attendance/env/server";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -61,13 +63,6 @@ function parseEnrollmentNo(enrollmentNo: string): {
   };
 }
 
-function generateTempPassword(length = 12): string {
-  const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-  return Array.from(
-    { length },
-    () => chars[Math.floor(Math.random() * chars.length)],
-  ).join("");
-}
 
 // ─── CSV parsing (plain text, no external lib to keep it lightweight) ─────────
 
@@ -148,7 +143,7 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
               programCode: parsed?.programCode ?? row.program_code?.trim() ?? "",
               semester: isNaN(semester) ? 1 : semester,
               division,
-              tempPassword: row.password ?? generateTempPassword(),
+              tempPassword: row.password || env.DEFAULT_TEACHER_PASSWORD,
               errors,
             };
           });
@@ -175,7 +170,7 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
               name,
               email,
               department: row.department?.trim(),
-              tempPassword: row.password ?? generateTempPassword(),
+              tempPassword: row.password || env.DEFAULT_TEACHER_PASSWORD,
               errors,
             };
           });
@@ -217,20 +212,26 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
                 continue;
               }
 
-              // Create Better Auth user via prisma directly (admin-created accounts)
-              const parsed = parseEnrollmentNo(row.enrollmentNo);
-              const user = await prisma.user.create({
-                data: {
-                  id: crypto.randomUUID(),
-                  name: row.name,
+              // Create Better Auth user using the API
+              const result = await auth.api.signUpEmail({
+                body: {
                   email: row.email,
-                  role: "student",
-                  emailVerified: false,
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
+                  password: row.tempPassword!,
+                  name: row.name,
+                  requiresPasswordChange: true,
                 },
+                asResponse: false,
               });
 
+              if (!result?.user) throw new Error("Failed to create user via Better Auth");
+              
+              // Update role
+              const user = await prisma.user.update({
+                where: { id: result.user.id },
+                data: { role: "student" },
+              });
+
+              const parsed = parseEnrollmentNo(row.enrollmentNo);
               await prisma.studentProfile.create({
                 data: {
                   userId: user.id,
@@ -239,19 +240,6 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
                   admissionYear: parsed?.admissionYear ?? new Date().getFullYear(),
                   rollNumber: parsed?.rollNumber ?? "",
                   status: "pending",
-                },
-              });
-
-              // Create account with password for Better Auth
-              await prisma.account.create({
-                data: {
-                  id: crypto.randomUUID(),
-                  userId: user.id,
-                  accountId: user.id,
-                  providerId: "credential",
-                  password: await Bun.password.hash(row.tempPassword!, { algorithm: "bcrypt" }),
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
                 },
               });
 
@@ -271,16 +259,23 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
                 continue;
               }
 
-              const user = await prisma.user.create({
-                data: {
-                  id: crypto.randomUUID(),
-                  name: row.name,
+              // Create Better Auth user using the API
+              const result = await auth.api.signUpEmail({
+                body: {
                   email: row.email,
-                  role: "teacher",
-                  emailVerified: false,
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
+                  password: row.tempPassword!,
+                  name: row.name,
+                  requiresPasswordChange: true,
                 },
+                asResponse: false,
+              });
+
+              if (!result?.user) throw new Error("Failed to create user via Better Auth");
+              
+              // Update role
+              const user = await prisma.user.update({
+                where: { id: result.user.id },
+                data: { role: "teacher" },
               });
 
               await prisma.teacherProfile.create({
@@ -288,18 +283,6 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
                   userId: user.id,
                   code: row.code,
                   department: row.department,
-                },
-              });
-
-              await prisma.account.create({
-                data: {
-                  id: crypto.randomUUID(),
-                  userId: user.id,
-                  accountId: user.id,
-                  providerId: "credential",
-                  password: await Bun.password.hash(row.tempPassword!, { algorithm: "bcrypt" }),
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
                 },
               });
 

@@ -34,7 +34,7 @@ export async function seedSuperAdmin() {
     if (newUser?.user) {
       await db.user.update({
         where: { id: newUser.user.id },
-        data: { role: "super_admin" }
+        data: { role: "super_admin", requiresPasswordChange: false } as any,
       });
       console.log(`Successfully created Super Admin account for ${name} (${email})`);
     }

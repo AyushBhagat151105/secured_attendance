@@ -3,6 +3,7 @@ import { logger } from "../../../lib/logger";
 import type { UpdateUserType, UsersListQueryType, CreateTeacherType } from "./model";
 import { status } from "elysia";
 import { auth } from "@secured_attendance/auth";
+import { env } from "@secured_attendance/env/server";
 
 export class AdminUsersService {
   static async listUsers(query: UsersListQueryType) {
@@ -121,7 +122,7 @@ export class AdminUsersService {
       const result = await auth.api.signUpEmail({
         body: {
           email: data.email,
-          password: "Charusat@123",
+          password: env.DEFAULT_TEACHER_PASSWORD,
           name: data.name,
           requiresPasswordChange: true,
         },

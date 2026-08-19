@@ -16,6 +16,7 @@ export const env = createEnv({
     SUPER_ADMIN_EMAIL: z.string().email().optional(),
     SUPER_ADMIN_PASSWORD: z.string().min(8).optional(),
     SUPER_ADMIN_NAME: z.string().default("System Administrator"),
+    DEFAULT_TEACHER_PASSWORD: z.string().min(8).default("Charusat@123"),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

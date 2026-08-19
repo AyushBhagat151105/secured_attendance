@@ -3,7 +3,7 @@ import { authMacro } from "./guards";
 import prisma from "@secured_attendance/db";
 import { logger } from "../../lib/logger";
 
-export const authModule = new Elysia({ prefix: "/auth-custom" })
+export const authModule = new Elysia({ prefix: "/api/auth-custom" })
   .use(authMacro)
   .patch("/complete-onboarding", async ({ user, status }) => {
     try {

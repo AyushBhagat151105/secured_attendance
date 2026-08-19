@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -11,26 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-type CompleteOnboardingClient = {
-  "auth-custom": {
-    completeOnboarding: {
-      patch: () => Promise<{
-        data?: { success?: boolean };
-        error?: { value?: { message?: string } };
-      }>;
-    };
-  };
-};
-
 const getErrorMessages = (errors: readonly unknown[] | undefined) =>
   (errors ?? []).flatMap((error) => {
     if (typeof error === "string") return [error];
-
     if (error && typeof error === "object" && "message" in error) {
       const message = error.message;
       return typeof message === "string" ? [message] : [];
     }
-
     return [];
   });
 
@@ -39,18 +26,14 @@ export const Route = createFileRoute("/reset-password")({
 });
 
 function ResetPasswordPage() {
-  const navigate = useNavigate();
-
   const completeOnboardingMutation = useMutation({
     mutationKey: ["auth", "onboarding", "complete"],
     mutationFn: async () => {
-      const authRoute = apiClient.api as unknown as CompleteOnboardingClient;
-      const { data, error } = await authRoute["auth-custom"].completeOnboarding.patch();
-
+      // Use the Eden Treaty typed client — /api/auth-custom/complete-onboarding
+      const { data, error } = await (apiClient.api as any)["auth-custom"]["complete-onboarding"].patch();
       if (error) {
         throw new Error(error.value?.message ?? "Failed to complete onboarding");
       }
-
       return data;
     },
   });
@@ -63,6 +46,7 @@ function ResetPasswordPage() {
     },
     onSubmit: async ({ value }) => {
       try {
+        let changeFailed = false;
         await authClient.changePassword(
           {
             newPassword: value.newPassword,
@@ -71,11 +55,13 @@ function ResetPasswordPage() {
           },
           {
             onError: (ctx) => {
+              changeFailed = true;
               toast.error(ctx.error.message || "Failed to change password");
-              throw new Error(ctx.error.message);
             },
           }
         );
+
+        if (changeFailed) return;
 
         await completeOnboardingMutation.mutateAsync();
 
