@@ -1,4 +1,4 @@
-import { Button, ErrorView, Spinner, Surface, TextField } from "heroui-native";
+import { Button, Alert, Spinner, Surface, TextField, Label, Input } from "heroui-native";
 import { useState } from "react";
 import { Text, View } from "react-native";
 
@@ -73,19 +73,24 @@ export function SignUp() {
     <Surface variant="secondary" className="p-4 rounded-lg">
       <Text className="text-foreground font-medium mb-4">Create Account</Text>
 
-      <ErrorView isInvalid={!!error} className="mb-3">
-        {error}
-      </ErrorView>
+      {error ? (
+        <Alert status="danger" className="mb-3">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>{error}</Alert.Title>
+          </Alert.Content>
+        </Alert>
+      ) : null}
 
       <View className="gap-3">
         <TextField>
-          <TextField.Label>Name</TextField.Label>
-          <TextField.Input value={name} onChangeText={setName} placeholder="John Doe" />
+          <Label>Name</Label>
+          <Input value={name} onChangeText={setName} placeholder="John Doe" />
         </TextField>
 
         <TextField>
-          <TextField.Label>Email</TextField.Label>
-          <TextField.Input
+          <Label>Email</Label>
+          <Input
             value={email}
             onChangeText={setEmail}
             placeholder="email@example.com"
@@ -95,8 +100,8 @@ export function SignUp() {
         </TextField>
 
         <TextField>
-          <TextField.Label>Password</TextField.Label>
-          <TextField.Input
+          <Label>Password</Label>
+          <Input
             value={password}
             onChangeText={setPassword}
             placeholder="••••••••"
