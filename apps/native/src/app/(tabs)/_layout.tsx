@@ -31,10 +31,17 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="scan"
         options={{
-          title: "Explore",
-          tabBarIcon: ({ color, size }) => <Ionicons name="compass" size={size} color={color} />,
+          title: "Scan",
+          tabBarIcon: ({ color, size }) => <Ionicons name="qr-code" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="history"
+        options={{
+          title: "History",
+          tabBarIcon: ({ color, size }) => <Ionicons name="time" size={size} color={color} />,
         }}
       />
     </Tabs>

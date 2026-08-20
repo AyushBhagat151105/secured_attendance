@@ -7,6 +7,7 @@ import { Elysia } from "elysia";
 import { adminModule } from "./modules/admin";
 import { authModule } from "./modules/auth";
 import { teacherModule } from "./modules/teacher";
+import { studentModule } from "./modules/student";
 
 const app = new Elysia()
   .use(
@@ -39,6 +40,7 @@ const app = new Elysia()
   .use(adminModule)
   .use(authModule)
   .use(teacherModule)
+  .use(studentModule)
   .get("/", () => "OK")
   .listen(3000, () => {
     console.log("Server is running on http://localhost:3000");

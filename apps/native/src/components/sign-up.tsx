@@ -73,14 +73,9 @@ export function SignUp() {
     <Surface variant="secondary" className="p-4 rounded-lg">
       <Text className="text-foreground font-medium mb-4">Create Account</Text>
 
-      {error ? (
-        <Alert status="danger" className="mb-3">
-          <Alert.Indicator />
-          <Alert.Content>
-            <Alert.Title>{error}</Alert.Title>
-          </Alert.Content>
-        </Alert>
-      ) : null}
+      {error && (
+        <Text className="text-destructive mb-3 text-sm">{error}</Text>
+      )}
 
       <View className="gap-3">
         <TextField>
