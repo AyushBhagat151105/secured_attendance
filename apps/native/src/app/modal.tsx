@@ -1,37 +1,86 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { Button, Surface, useThemeColor } from "heroui-native";
-import { Text, View } from "react-native";
+import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
 
 import { Container } from "@/components/container";
 
 function Modal() {
-  const accentForegroundColor = useThemeColor("accent-foreground");
-
   function handleClose() {
     router.back();
   }
 
   return (
     <Container>
-      <View className="flex-1 justify-center items-center p-4">
-        <Surface variant="secondary" className="p-5 w-full max-w-sm rounded-lg">
-          <View className="items-center">
-            <View className="w-12 h-12 bg-accent rounded-lg items-center justify-center mb-3">
-              <Ionicons name="checkmark" size={24} color={accentForegroundColor} />
+      <View style={styles.container}>
+        <View style={styles.surface}>
+          <View style={styles.content}>
+            <View style={styles.iconContainer}>
+              <Ionicons name="checkmark" size={24} color="#111827" />
             </View>
-            <Text className="text-foreground font-medium text-lg mb-1">Modal Screen</Text>
-            <Text className="text-muted text-sm text-center mb-4">
+            <Text style={styles.title}>Modal Screen</Text>
+            <Text style={styles.subtitle}>
               This is an example modal screen for dialogs and confirmations.
             </Text>
           </View>
-          <Button onPress={handleClose} className="w-full" size="sm">
-            <Button.Label>Close</Button.Label>
-          </Button>
-        </Surface>
+          <TouchableOpacity style={styles.button} onPress={handleClose}>
+            <Text style={styles.buttonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </Container>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  surface: {
+    padding: 20,
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 8,
+    backgroundColor: '#f3f4f6', // secondary
+  },
+  content: {
+    alignItems: 'center',
+  },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    backgroundColor: '#e5e7eb', // accent 
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  title: {
+    color: '#111827', // foreground
+    fontWeight: '500',
+    fontSize: 18,
+    marginBottom: 4,
+  },
+  subtitle: {
+    color: '#6b7280', // muted
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  button: {
+    backgroundColor: '#4f46e5', // primary
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 6,
+    width: '100%',
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: '500',
+  }
+});
 
 export default Modal;

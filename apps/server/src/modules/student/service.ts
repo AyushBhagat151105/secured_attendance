@@ -1,5 +1,5 @@
 import prisma from "@secured_attendance/db";
-import { status } from "elysia";
+
 import { logger } from "../../lib/logger";
 import crypto from "crypto";
 import type { ScanAttendanceDto } from "./model";
@@ -21,6 +21,21 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
 
 export class StudentService {
   /**
+   * Fetch the student profile for a given user ID
+   */
+  static async getProfile(userId: string) {
+    const profile = await prisma.studentProfile.findUnique({
+      where: { userId },
+    });
+
+    if (!profile) {
+      throw new Error("Student profile not found");
+    }
+
+    return profile;
+  }
+
+  /**
    * Processes a QR code scan by a student to mark attendance.
    * Performs cryptographic signature validation, enrollment validation, and geofence validation.
    */
@@ -33,11 +48,11 @@ export class StudentService {
     });
 
     if (!profile) {
-      return status(404, { message: "Student profile not found" });
+      return { success: false, error: "NOT_FOUND", message: "Student profile not found" };
     }
 
     if (!profile.divisionId) {
-      return status(400, { message: "You are not assigned to any division" });
+      return { success: false, error: "BAD_REQUEST", message: "You are not assigned to any division" };
     }
 
     // 2. Fetch session and its details
@@ -52,22 +67,22 @@ export class StudentService {
     });
 
     if (!session) {
-      return status(404, { message: "Session not found" });
+      return { success: false, error: "NOT_FOUND", message: "Session not found" };
     }
 
     if (session.status !== "active") {
-      return status(400, { message: "This session is no longer active" });
+      return { success: false, error: "BAD_REQUEST", message: "This session is no longer active" };
     }
 
     // 3. Validation: Verify student's division is part of this session
     const isEnrolled = session.sessionDivisions.some(sd => sd.divisionId === profile.divisionId);
     if (!isEnrolled) {
-      return status(403, { message: "You are not enrolled in this class" });
+      return { success: false, error: "FORBIDDEN", message: "You are not enrolled in this class" };
     }
 
     // 4. Validation: Check Expiry
     if (Date.now() > expiresAt) {
-      return status(400, { message: "QR code has expired. Please scan the current code." });
+      return { success: false, error: "BAD_REQUEST", message: "QR code has expired. Please scan the current code." };
     }
 
     // 5. Validation: Cryptographic Signature
@@ -79,7 +94,7 @@ export class StudentService {
 
     if (signature !== expectedSignature) {
       logger.warn("Invalid QR signature", { userId, sessionId, nonce });
-      return status(400, { message: "Invalid QR code" });
+      return { success: false, error: "BAD_REQUEST", message: "Invalid QR code" };
     }
 
     // 6. Validation: Check if student already marked attendance
@@ -93,7 +108,7 @@ export class StudentService {
     });
 
     if (existingAttendance) {
-      return status(400, { message: "You have already marked attendance for this session" });
+      return { success: false, error: "BAD_REQUEST", message: "You have already marked attendance for this session" };
     }
 
     // 7. Validation: Replay Attack (Nonce consume)
@@ -109,11 +124,11 @@ export class StudentService {
     });
 
     if (!token) {
-      return status(400, { message: "Invalid token" });
+      return { success: false, error: "BAD_REQUEST", message: "Invalid token" };
     }
 
     if (token.usedAt) {
-      return status(400, { message: "This QR code has already been used. Please scan the next one." });
+      return { success: false, error: "BAD_REQUEST", message: "This QR code has already been used. Please scan the next one." };
     }
 
     // Atomically mark token as used
@@ -129,7 +144,7 @@ export class StudentService {
         }
       });
     } catch (e) {
-      return status(400, { message: "This QR code has already been used by someone else." });
+      return { success: false, error: "BAD_REQUEST", message: "This QR code has already been used by someone else." };
     }
 
     // 8. Validation: Geofence

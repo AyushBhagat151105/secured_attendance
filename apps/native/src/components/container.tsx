@@ -1,27 +1,26 @@
-import { cn } from "heroui-native";
 import { type PropsWithChildren } from "react";
-import { ScrollView, View, type ViewProps } from "react-native";
-import Animated, { type AnimatedProps } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ViewProps } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
-const AnimatedView = Animated.createAnimatedComponent(View);
+type Props = ViewProps & {};
 
-type Props = AnimatedProps<ViewProps> & {
-  className?: string;
-};
-
-export function Container({ children, className, ...props }: PropsWithChildren<Props>) {
+export function Container({ children, style, ...props }: PropsWithChildren<Props>) {
   const insets = useSafeAreaInsets();
+  const bgColor = "#ffffff";
 
   return (
-    <AnimatedView
-      className={cn("flex-1 bg-background", className)}
-      style={{
-        paddingBottom: insets.bottom,
-      }}
+    <SafeAreaView
+      edges={["top", "left", "right"]}
+      style={[{ flex: 1, backgroundColor: bgColor }, style]}
       {...props}
     >
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>{children}</ScrollView>
-    </AnimatedView>
+      <KeyboardAwareScrollView 
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + 20 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {children}
+      </KeyboardAwareScrollView>
+    </SafeAreaView>
   );
 }

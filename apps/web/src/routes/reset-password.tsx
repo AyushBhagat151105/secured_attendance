@@ -9,6 +9,7 @@ import { apiClient } from "@/lib/api-client";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 
 const getErrorMessages = (errors: readonly unknown[] | undefined) =>
@@ -105,9 +106,8 @@ function ResetPasswordPage() {
               return (
                 <div className="space-y-2">
                   <Label htmlFor={field.name}>Current Password (Temporary)</Label>
-                  <Input
+                  <PasswordInput
                     id={field.name}
-                    type="password"
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
@@ -126,9 +126,8 @@ function ResetPasswordPage() {
               return (
                 <div className="space-y-2">
                   <Label htmlFor={field.name}>New Password</Label>
-                  <Input
+                  <PasswordInput
                     id={field.name}
-                    type="password"
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
@@ -147,9 +146,8 @@ function ResetPasswordPage() {
               return (
                 <div className="space-y-2">
                   <Label htmlFor={field.name}>Confirm New Password</Label>
-                  <Input
+                  <PasswordInput
                     id={field.name}
-                    type="password"
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}

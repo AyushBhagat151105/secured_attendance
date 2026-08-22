@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -127,9 +128,8 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
             {(field) => (
               <div className="space-y-1.5">
                 <Label htmlFor={field.name}>Temporary Password</Label>
-                <Input
+                <PasswordInput
                   id={field.name}
-                  type="password"
                   placeholder="Min. 8 characters"
                   value={field.state.value}
                   onBlur={field.handleBlur}

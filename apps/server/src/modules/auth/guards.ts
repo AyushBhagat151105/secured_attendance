@@ -8,19 +8,28 @@ type UserRole = "student" | "teacher" | "admin" | "super_admin";
 // ─── Auth Macro Plugin ────────────────────────────────────────────────────────
 
 /**
- * `authMacro` — named plugin (deduplicated) that exposes a `requireAuth` macro.
+ * `requireAuth` — standard Elysia middleware (plugin) using `.derive`.
  *
- * Using `.macro()` with `resolve` injects `user` and `session` into the handler
- * context with full type safety — the correct Elysia pattern for auth.
+ * Using `.derive()` is the most robust way to inject `user` and `session` into the handler
+ * context with perfect type inference in Elysia.
  */
 export const authMacro = new Elysia({ name: "auth-macro" })
   .macro({
     requireAuth: {
-      resolve: async ({ request }) => {
+      resolve: async ({ request, status }) => {
+        // --- DEBUG LOGGING ---
+        console.log("==========================================");
+        console.log("[DEBUG] Incoming Request URL:", request.url);
+        console.log("[DEBUG] Incoming Headers:", Object.fromEntries(request.headers.entries()));
+        
         const session = await auth.api.getSession({ headers: request.headers });
+        
+        console.log("[DEBUG] getSession Result:", session ? `User Found: ${session.user.email}` : "NULL");
+        console.log("==========================================");
+        // ---------------------
 
         if (!session) {
-          throw status(401, { message: "Unauthorized" });
+          throw status(401, { message: "Unauthorized", debug_headers: Object.fromEntries(request.headers.entries()) });
         }
 
         return {

@@ -3,7 +3,7 @@ import prisma from "@secured_attendance/db";
 import { env } from "@secured_attendance/env/server";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { organization, admin } from "better-auth/plugins";
+import { organization, admin, bearer } from "better-auth/plugins";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -12,9 +12,9 @@ export const auth = betterAuth({
 
   trustedOrigins: [
     env.CORS_ORIGIN,
-    "mybetterfullstackapp://",
+    "native://",
     ...(env.NODE_ENV === "development"
-      ? ["exp://", "exp://**", "exp://192.168.*.*:*/**", "http://localhost:8081"]
+      ? ["exp://", "exp://**", "exp://192.168.*.*:*/**", "http://192.168.*.*:*", "http://localhost:8081"]
       : []),
   ],
   emailAndPassword: {
@@ -35,9 +35,11 @@ export const auth = betterAuth({
   advanced: {
     defaultCookieAttributes: {
       sameSite: "none",
-      secure: true,
+      secure: env.NODE_ENV === "production",
       httpOnly: true,
     },
+    disableOriginCheck: env.NODE_ENV === "development",
+    disableCSRFCheck: env.NODE_ENV === "development",
   },
-  plugins: [organization(), admin(), expo()],
+  plugins: [organization(), admin(), bearer(), expo()],
 });

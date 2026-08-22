@@ -8,6 +8,7 @@ import { IconLoader2 } from "@tabler/icons-react";
 
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { PasswordInput } from "./ui/password-input";
 import { Label } from "./ui/label";
 
 export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
@@ -102,10 +103,9 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
                   Forgot password?
                 </button>
               </div>
-              <Input
+              <PasswordInput
                 id={field.name}
                 name={field.name}
-                type="password"
                 placeholder="••••••••"
                 className="h-11 bg-background"
                 value={field.state.value}

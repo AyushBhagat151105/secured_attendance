@@ -19,5 +19,31 @@ export const attendanceApi = {
     }
     
     return data;
+  },
+  
+  getTodaySchedule: async () => {
+    const { data, error } = await apiClient.api.student.schedule.today.get();
+    if (error) throw new Error("Failed to load schedule");
+    return data;
+  },
+
+  getHistory: async (page = 1, limit = 20) => {
+    const { data, error } = await apiClient.api.student.attendance.my.get({
+      query: { page: page.toString(), limit: limit.toString() }
+    });
+    if (error) throw new Error("Failed to load history");
+    return data;
+  },
+
+  getStats: async () => {
+    const { data, error } = await apiClient.api.student.attendance.stats.get();
+    if (error) throw new Error("Failed to load stats");
+    return data;
+  },
+
+  getProfile: async () => {
+    const { data, error } = await apiClient.api.student.profile.get();
+    if (error) throw new Error("Failed to load profile");
+    return data;
   }
 };

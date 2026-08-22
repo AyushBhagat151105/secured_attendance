@@ -1,6 +1,5 @@
 import { Link, Stack } from "expo-router";
-import { Button, Surface } from "heroui-native";
-import { Text, View } from "react-native";
+import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
 
 import { Container } from "@/components/container";
 
@@ -9,19 +8,63 @@ export default function NotFoundScreen() {
     <>
       <Stack.Screen options={{ title: "Not Found" }} />
       <Container>
-        <View className="flex-1 justify-center items-center p-4">
-          <Surface variant="secondary" className="items-center p-6 max-w-sm rounded-lg">
-            <Text className="text-4xl mb-3">🤔</Text>
-            <Text className="text-foreground font-medium text-lg mb-1">Page Not Found</Text>
-            <Text className="text-muted text-sm text-center mb-4">
+        <View style={styles.container}>
+          <View style={styles.surface}>
+            <Text style={styles.emoji}>🤔</Text>
+            <Text style={styles.title}>Page Not Found</Text>
+            <Text style={styles.subtitle}>
               The page you're looking for doesn't exist.
             </Text>
             <Link href="/" asChild>
-              <Button size="sm">Go Home</Button>
+              <TouchableOpacity style={styles.button}>
+                <Text style={styles.buttonText}>Go Home</Text>
+              </TouchableOpacity>
             </Link>
-          </Surface>
+          </View>
         </View>
       </Container>
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  surface: {
+    alignItems: 'center',
+    padding: 24,
+    maxWidth: 320,
+    borderRadius: 8,
+    backgroundColor: '#f3f4f6', // secondary
+  },
+  emoji: {
+    fontSize: 36,
+    marginBottom: 12,
+  },
+  title: {
+    color: '#111827', // foreground
+    fontWeight: '500',
+    fontSize: 18,
+    marginBottom: 4,
+  },
+  subtitle: {
+    color: '#6b7280', // muted
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  button: {
+    backgroundColor: '#4f46e5', // primary
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: '500',
+  }
+});

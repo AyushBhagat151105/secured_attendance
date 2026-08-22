@@ -4,12 +4,16 @@ import { auth } from "@secured_attendance/auth";
 import { env } from "@secured_attendance/env/server";
 import { Elysia } from "elysia";
 
+import { logger } from "./lib/logger";
 import { adminModule } from "./modules/admin";
 import { authModule } from "./modules/auth";
 import { teacherModule } from "./modules/teacher";
 import { studentModule } from "./modules/student";
 
 const app = new Elysia()
+  .onRequest(({ request }) => {
+    logger.info(`Received ${request.method} ${request.url}`);
+  })
   .use(
     cors({
       origin: env.CORS_ORIGIN,
