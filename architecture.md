@@ -1292,9 +1292,9 @@ services:
 ### Phase 5: Attendance Submission & Validation (Mobile App)
 
 #### Tasks
-- [ ] Expo custom dev client setup (prebuild for Android)
-- [ ] Install + configure react-native-vision-camera + code-scanner
-- [ ] QR scanner screen (camera view + decode)
+- [] Expo custom dev client setup (prebuild for Android)
+- [] Install + configure react-native-vision-camera + code-scanner
+- [] QR scanner screen (camera view + decode)
 - [ ] GPS collection module (expo-location)
 - [ ] Mock location detection
 - [ ] Device fingerprint collection

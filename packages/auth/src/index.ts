@@ -3,7 +3,7 @@ import prisma from "@secured_attendance/db";
 import { env } from "@secured_attendance/env/server";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { organization, admin, bearer } from "better-auth/plugins";
+import { organization, admin, bearer, jwt } from "better-auth/plugins";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -41,5 +41,5 @@ export const auth = betterAuth({
     disableOriginCheck: env.NODE_ENV === "development",
     disableCSRFCheck: env.NODE_ENV === "development",
   },
-  plugins: [organization(), admin(), bearer(), expo()],
+  plugins: [organization(), admin(), bearer(), expo(), jwt()],
 });

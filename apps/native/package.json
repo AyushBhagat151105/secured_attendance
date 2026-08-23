@@ -9,6 +9,7 @@
     "@expo/vector-icons": "^15.1.1",
     "@secured_attendance/env": "workspace:*",
     "@tanstack/react-query": "^5.101.4",
+    "axios": "^1.19.0",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "expo": "~57.0.14",

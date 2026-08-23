@@ -17,11 +17,15 @@ const COLORS = {
   secondary: "#f3f4f6",
 };
 
+import { useQueryClient } from "@tanstack/react-query";
+import { profileKeys } from "@/hooks/use-profile";
+
 export default function DeviceBindingScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [deviceInfo, setDeviceInfo] = useState<{ id: string; name: string } | null>(null);
 
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     async function loadDevice() {
@@ -38,16 +42,19 @@ export default function DeviceBindingScreen() {
 
     try {
       // Hit the real device binding endpoint in our backend
-      const { error } = await apiClient.api["auth-custom"]["device-bind"].post({
-        deviceId: deviceInfo.id,
-        deviceName: deviceInfo.name,
-      });
-
-      if (error) {
-        throw new Error((error.value as any)?.message || "Failed to bind device");
+      try {
+        await apiClient.post('/api/auth-custom/device-bind', {
+          deviceId: deviceInfo.id,
+          deviceName: deviceInfo.name,
+        });
+      } catch (err: any) {
+        throw new Error(err.response?.data?.message || err.message || "Failed to bind device");
       }
 
-      // Success - continue to app
+      // Success - invalidate profile cache so it gets the new deviceBound status
+      await queryClient.invalidateQueries({ queryKey: profileKeys.student() });
+
+      // continue to app
       router.replace("/(tabs)");
     } catch (err: any) {
       Alert.alert("Binding Failed", err.message);

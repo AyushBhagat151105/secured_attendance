@@ -1,37 +1,37 @@
 model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  members       Member[]
-  invitations   Invitation[] @relation("inviterInvitations")
-  role          String    @default("student") // super_admin, admin, teacher, student
-  requiresPasswordChange Boolean @default(true)
-  banned        Boolean?
-  banReason     String?
-  banExpires    DateTime?
-  studentProfile StudentProfile?
-  teacherProfile TeacherProfile?
+  id                     String          @id
+  name                   String
+  email                  String
+  emailVerified          Boolean         @default(false)
+  image                  String?
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  sessions               Session[]
+  accounts               Account[]
+  members                Member[]
+  invitations            Invitation[]    @relation("inviterInvitations")
+  role                   String          @default("student") // super_admin, admin, teacher, student
+  requiresPasswordChange Boolean         @default(true)
+  banned                 Boolean?
+  banReason              String?
+  banExpires             DateTime?
+  studentProfile         StudentProfile?
+  teacherProfile         TeacherProfile?
 
   @@unique([email])
   @@map("user")
 }
 
 model Session {
-  id        String   @id
-  expiresAt DateTime
-  token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                   String   @id
+  expiresAt            DateTime
+  token                String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  ipAddress            String?
+  userAgent            String?
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   activeOrganizationId String?
 
   @@unique([token])
@@ -115,4 +115,16 @@ model Invitation {
   @@index([organizationId])
   @@index([email])
   @@map("invitation")
+}
+
+model Jwks {
+  id         String    @id
+  publicKey  String
+  privateKey String
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime?
+  alg        String?
+  crv        String?
+
+  @@map("jwks")
 }

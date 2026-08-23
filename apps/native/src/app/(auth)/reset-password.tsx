@@ -49,7 +49,7 @@ export default function ResetPasswordScreen() {
       {
         newPassword,
         currentPassword,
-        revokeOtherSessions: true,
+        revokeOtherSessions: false,
       },
       {
         onError(error) {
@@ -64,12 +64,13 @@ export default function ResetPasswordScreen() {
             await new Promise(resolve => setTimeout(resolve, 1000));
             
             // Hit our custom endpoint to clear the requiresPasswordChange flag
-            Alert.alert("Success!", "changePassword succeeded! Now calling complete-onboarding API...");
-            const res = await apiClient.api["auth-custom"]["complete-onboarding"].patch();
-
-            if (res.error) {
-              Alert.alert("API Error!", `complete-onboarding failed: ${JSON.stringify(res.error)}`);
-              setError(`Failed to complete onboarding: ${JSON.stringify(res.error)}`);
+            Alert.alert("Success!", "changePassword succeeded! Now calling complete-onboarding API with Axios...");
+            
+            try {
+              const res = await apiClient.patch('/api/auth-custom/complete-onboarding');
+            } catch (err: any) {
+              Alert.alert("API Error!", `complete-onboarding failed: ${err.response?.status || err.message}`);
+              setError(`Failed to complete onboarding: ${err.response?.status || err.message}`);
               setIsLoading(false);
               return;
             }

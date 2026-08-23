@@ -17,19 +17,10 @@ export const authMacro = new Elysia({ name: "auth-macro" })
   .macro({
     requireAuth: {
       resolve: async ({ request, status }) => {
-        // --- DEBUG LOGGING ---
-        console.log("==========================================");
-        console.log("[DEBUG] Incoming Request URL:", request.url);
-        console.log("[DEBUG] Incoming Headers:", Object.fromEntries(request.headers.entries()));
-        
         const session = await auth.api.getSession({ headers: request.headers });
-        
-        console.log("[DEBUG] getSession Result:", session ? `User Found: ${session.user.email}` : "NULL");
-        console.log("==========================================");
-        // ---------------------
 
         if (!session) {
-          throw status(401, { message: "Unauthorized", debug_headers: Object.fromEntries(request.headers.entries()) });
+          throw status(401, { message: "Unauthorized" });
         }
 
         return {

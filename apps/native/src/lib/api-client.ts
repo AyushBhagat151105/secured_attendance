@@ -1,26 +1,51 @@
-import type { App } from "server/src/index";
-
-import { treaty } from "@elysiajs/eden";
+import axios from "axios";
 import { env } from "@secured_attendance/env/native";
 import { authClient } from "./auth-client";
+import Constants from "expo-constants";
 
-export const apiClient = treaty<App>(env.EXPO_PUBLIC_SERVER_URL, {
-  onRequest: async (path, options) => {
-    // We use getCookie from Better Auth because it inherently understands
-    // the Expo SecureStore chunking mechanism (unlike raw getItemAsync).
-    const cookieString = await (authClient as any).getCookie();
-
-    if (cookieString) {
-      // Extract the actual token from the cookie string (format: better-auth.session_token=TOKEN; ...)
-      const tokenMatch = cookieString.match(/better-auth\.session_token=([^;]+)/);
-      const token = tokenMatch ? tokenMatch[1] : null;
-
-      if (token) {
-        if (!options.headers) {
-          options.headers = {};
-        }
-        (options.headers as Record<string, string>).Authorization = `Bearer ${token}`;
-      }
-    }
-  }
+export const apiClient = axios.create({
+    baseURL: env.EXPO_PUBLIC_SERVER_URL,
+    headers: {
+        "Content-Type": "application/json",
+    },
+    timeout: 10000,
+    withCredentials: true,
 });
+
+apiClient.interceptors.request.use(
+    async (config) => {
+        if (!config.headers["Content-Type"]) {
+            config.headers["Content-Type"] = "application/json";
+        }
+
+        const cookieString = await (authClient as any).getCookie();
+        if (cookieString) {
+            config.headers["cookie"] = cookieString;
+        }
+        config.headers["expo-origin"] = Constants.expoConfig?.scheme || "native";
+        config.headers["x-skip-oauth-proxy"] = "true";
+
+        return config;
+    },
+    (error) => {
+        console.error('Request Error:', error);
+        return Promise.reject(error);
+    }
+);
+
+apiClient.interceptors.response.use(
+    (response) => {
+        return response;
+    },
+    (error) => {
+        console.error('API Error:', error.message);
+        if (error.response) {
+            console.error('Error Response:', error.response.status, error.response.data);
+        } else if (error.request) {
+            console.error('Network Error - No response received');
+        }
+        return Promise.reject(error);
+    }
+);
+
+export default apiClient;

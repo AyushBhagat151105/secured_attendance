@@ -54,8 +54,8 @@ function StackLayout() {
     } else if (session) {
       if (user.requiresPasswordChange && path !== "(auth)/reset-password") {
         router.replace("/(auth)/reset-password" as any);
-      } else if (!user.requiresPasswordChange && user.role === "student" && profile && !profile.deviceBound && path !== "(auth)/device-bind") {
-        router.replace("/(auth)/device-bind" as any);
+      } else if (!user.requiresPasswordChange && user.role === "student" && profile && !profile.deviceBound && path !== "(auth)/device-binding") {
+        router.replace("/(auth)/device-binding" as any);
       } else if (!user.requiresPasswordChange && (user.role !== "student" || (profile && profile.deviceBound))) {
         if (inAuthGroup) {
           router.replace("/(tabs)" as any);
