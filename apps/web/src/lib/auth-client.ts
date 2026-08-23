@@ -1,4 +1,4 @@
-import { env } from "@secured_attendance/env/web";
+﻿import { env } from "@secured_attendance/env/web";
 import { jwtClient } from "better-auth/client/plugins";
 import { organizationClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";

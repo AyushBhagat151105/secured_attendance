@@ -1,5 +1,6 @@
-import * as SecureStore from 'expo-secure-store';
-import { attendanceApi, type ScanAttendancePayload } from '../api/attendance';
+﻿import * as SecureStore from 'expo-secure-store';
+import { type ScanAttendancePayload } from '../hooks/api/use-attendance';
+import { apiClient } from './api-client';
 
 const PENDING_SCANS_KEY = 'pending_attendance_scans';
 
@@ -31,7 +32,7 @@ export async function syncPendingAttendance(): Promise<number> {
 
     for (const scan of scans) {
       try {
-        await attendanceApi.scanAttendance(scan);
+        await apiClient.post('/api/student/attendance/scan', scan);
         successfulSyncs++;
       } catch (error: any) {
         // If it's a network error, keep it in queue. 

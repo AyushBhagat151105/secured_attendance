@@ -1,4 +1,4 @@
-import { Checkbox as CheckboxPrimitive } from "@base-ui/react/checkbox";
+﻿import { Checkbox as CheckboxPrimitive } from "@base-ui/react/checkbox";
 import { IconCheck as CheckIcon } from "@tabler/icons-react";
 
 import { cn } from "@/lib/utils";

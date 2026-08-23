@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { IconDeviceMobile } from "@tabler/icons-react";
 
 export const Route = createFileRoute("/download-app")({

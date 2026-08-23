@@ -1,4 +1,4 @@
-import { IconRefresh, IconShieldOff } from "@tabler/icons-react";
+﻿import { IconRefresh, IconShieldOff } from "@tabler/icons-react";
 
 import {
   Dialog,
@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useRebindDevice } from "@/hooks/use-admin-users";
+import { useRebindDevice } from "@/hooks/api/use-admin-users";
 
 interface DeviceRebindDialogProps {
   userId: string;

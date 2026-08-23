@@ -4,8 +4,9 @@ import { authClient } from "@/lib/auth-client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useTodaySchedule, useStartSession } from "@/hooks/use-teacher";
+
 import { useState } from "react";
+import { useStartSession, useTodaySchedule } from "@/hooks/api/use-teacher";
 
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: async () => {
@@ -44,8 +45,8 @@ function RouteComponent() {
           </p>
         </div>
         {hasActiveSession ? (
-          <Button 
-            size="lg" 
+          <Button
+            size="lg"
             className="h-11 px-8 gap-2 font-medium bg-amber-600 hover:bg-amber-700 text-white"
             onClick={() => navigate({ to: `/session/${dashboardData.activeSession!.id}` as any })}
           >
@@ -82,9 +83,9 @@ function RouteComponent() {
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {schedule.map((entry) => {
+                {schedule.map((entry: any) => {
                   const isActive = dashboardData?.activeSession?.subjectId === entry.subject.id;
-                  
+
                   return (
                     <div key={entry.id} className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-muted/30 transition-colors">
                       <div className="flex items-start gap-4">
@@ -102,24 +103,24 @@ function RouteComponent() {
                           </div>
                           <p className="text-muted-foreground text-sm flex items-center gap-1.5 mt-1">
                             <IconChalkboard className="h-4 w-4" />
-                            Room {entry.room.name} • Div: {entry.divisions.map((d: any) => d.division.name).join(", ")}
+                            Room {entry.room.name} Div: {entry.divisions.map((d: any) => d.division.name).join(", ")}
                           </p>
                         </div>
                       </div>
-                      
+
                       {entry.completedSessionId ? (
                         <Link to="/reports/session/$sessionId" params={{ sessionId: entry.completedSessionId }}>
                           <Button variant="secondary" className="w-full sm:w-auto shrink-0 border-green-500/20 bg-green-500/10 text-green-600 hover:bg-green-500/20">
-                            Completed • View Report
+                            Completed View Report
                           </Button>
                         </Link>
                       ) : (
-                        <Button 
+                        <Button
                           disabled={startSessionMutation.isPending || (hasActiveSession && !isActive)}
                           onClick={() => {
                             startSessionMutation.mutate(entry.id, {
-                              onSuccess: (data) => navigate({ to: `/session/${data.id}` as any }),
-                              onError: (err) => {
+                              onSuccess: (data: any) => navigate({ to: `/session/${data.id}` as any }),
+                              onError: (err: any) => {
                                 if (err.message.includes("GEOFENCE_NOT_CONFIGURED")) {
                                   setGeofenceError(err.message.replace("GEOFENCE_NOT_CONFIGURED: ", ""));
                                 }

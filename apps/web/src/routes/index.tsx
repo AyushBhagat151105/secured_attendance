@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, isRedirect } from "@tanstack/react-router";
+﻿import { createFileRoute, redirect, isRedirect } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
 import { IconLoader2 } from "@tabler/icons-react";
 

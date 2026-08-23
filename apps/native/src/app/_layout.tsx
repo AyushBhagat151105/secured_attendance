@@ -1,4 +1,4 @@
-import "@/global.css";
+﻿import "@/global.css";
 import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
 import { Platform } from "react-native";
@@ -13,7 +13,7 @@ const queryClient = new QueryClient();
 
 import { useRouter, useSegments } from "expo-router";
 import { authClient } from "@/lib/auth-client";
-import { useStudentProfile } from "@/hooks/use-profile";
+import { useStudentProfile } from "@/hooks/api/use-profile";
 
 export const unstable_settings = {
   initialRouteName: "(tabs)",

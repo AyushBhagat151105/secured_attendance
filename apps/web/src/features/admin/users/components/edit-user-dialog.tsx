@@ -1,4 +1,4 @@
-import { useForm } from "@tanstack/react-form";
+﻿import { useForm } from "@tanstack/react-form";
 import z from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useUpdateUser } from "@/hooks/use-admin-users";
+import { useUpdateUser } from "@/hooks/api/use-admin-users";
 import type { UserRow } from "./user-columns";
 
 interface EditUserDialogProps {

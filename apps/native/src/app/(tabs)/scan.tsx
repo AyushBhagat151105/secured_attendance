@@ -1,4 +1,4 @@
-import { CameraView, useCameraPermissions } from "expo-camera";
+﻿import { CameraView, useCameraPermissions } from "expo-camera";
 import { useState, useEffect } from "react";
 import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from "react-native";
 import * as Location from "expo-location";
@@ -11,7 +11,7 @@ import Animated, {
   withSequence,
   Easing
 } from "react-native-reanimated";
-import { useScanAttendance } from "@/hooks/use-attendance";
+import { useScanAttendance } from "@/hooks/api/use-attendance";
 import { getDeviceFingerprint } from "@/lib/device";
 import { Ionicons } from "@expo/vector-icons";
 import { savePendingAttendance } from "@/lib/offline-sync";

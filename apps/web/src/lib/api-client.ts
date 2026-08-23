@@ -1,4 +1,4 @@
-import type { App } from "server/src/index";
+﻿import type { App } from "server/src/index";
 
 import { treaty } from "@elysiajs/eden";
 

@@ -1,4 +1,4 @@
-import type { LegacyColumnDef } from "@tanstack/react-table/legacy";
+﻿import type { LegacyColumnDef } from "@tanstack/react-table/legacy";
 import {
   IconDeviceDesktop,
   IconDeviceDesktopOff,
@@ -28,7 +28,7 @@ import { SuspendUserAlert } from "./suspend-user-alert";
 import { DeleteUserAlert } from "./delete-user-alert";
 import { IconTrash } from "@tabler/icons-react";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface UserRow {
   id: string;
@@ -54,7 +54,7 @@ export interface UserRow {
   } | null;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function getRoleBadgeVariant(
   role: string,
@@ -93,7 +93,7 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-// ─── Action Cell ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Action Cell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function ActionCell({ user }: { user: UserRow }) {
   const [editOpen, setEditOpen] = useState(false);
@@ -153,7 +153,7 @@ function ActionCell({ user }: { user: UserRow }) {
   );
 }
 
-// ─── Column Definitions ───────────────────────────────────────────────────────
+// â”€â”€â”€ Column Definitions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const userColumns: LegacyColumnDef<UserRow>[] = [
   {

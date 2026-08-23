@@ -1,4 +1,4 @@
-import {
+﻿import {
   IconArrowLeft,
   IconCheck,
   IconChevronRight,
@@ -25,7 +25,7 @@ import { BulkImportDropzone } from "@/features/admin/users/components/bulk-impor
 import {
   useConfirmTimetableImport,
   usePreviewTimetableImport,
-} from "@/hooks/use-admin-timetable";
+} from "@/hooks/api/use-admin-timetable";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/timetable/import")({
@@ -240,7 +240,7 @@ function TimetableImportPage() {
 
             <div className="flex justify-between items-center mt-6">
               <Button variant="outline" onClick={handleReset} disabled={isImporting}>
-                ← Back
+                â† Back
               </Button>
               <Button
                 onClick={handleConfirm}
@@ -266,7 +266,7 @@ function TimetableImportPage() {
             <div>
               <h2 className="text-lg font-semibold">Import Complete</h2>
               <p className="text-muted-foreground text-sm mt-1">
-                {finalResult.created} schedules created · {finalResult.skipped} skipped (already exist)
+                {finalResult.created} schedules created Â· {finalResult.skipped} skipped (already exist)
               </p>
               {finalResult.errors?.length > 0 && (
                 <p className="text-destructive text-sm mt-1">

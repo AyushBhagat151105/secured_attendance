@@ -1,6 +1,6 @@
-import { apiClient } from "@/lib/api-client";
+﻿import { apiClient } from "@/lib/api-client";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export type UserRole = "student" | "teacher" | "admin" | "super_admin";
 export type UserStatus = "active" | "suspended" | "pending";
@@ -36,7 +36,7 @@ export interface BulkImportConfirmInput {
   rows: unknown[];
 }
 
-// ─── Service ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Service â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * AdminUsersService — thin wrapper over the Eden Treaty client for user management.

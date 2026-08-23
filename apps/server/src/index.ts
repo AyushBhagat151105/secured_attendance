@@ -5,10 +5,10 @@ import { env } from "@secured_attendance/env/server";
 import { Elysia } from "elysia";
 
 import { logger } from "./lib/logger";
-import { adminModule } from "./modules/admin";
-import { authModule } from "./modules/auth";
-import { teacherModule } from "./modules/teacher";
-import { studentModule } from "./modules/student";
+import { adminModule } from "./routes/admin.route";
+import { authModule } from "./routes/auth.route";
+import { teacherModule } from "./routes/teacher.route";
+import { studentModule } from "./routes/student.route";
 
 const app = new Elysia()
   .onRequest(({ request }) => {
@@ -24,6 +24,12 @@ const app = new Elysia()
   )
   .all("/api/auth/*", async (context) => {
     const { request, status } = context;
+    
+    if (request.url.includes("change-password")) {
+      const session = await auth.api.getSession({ headers: request.headers });
+      logger.warn("[index.ts] User on change-password:", session?.user || "NO USER");
+    }
+
     if (["POST", "GET"].includes(request.method)) {
       return auth.handler(request);
     }

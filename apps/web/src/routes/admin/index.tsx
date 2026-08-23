@@ -1,11 +1,11 @@
-import { IconUsers, IconChartBar, IconShield, IconClock, IconCircleCheck, IconCircleDashed, IconCircle, IconAlertTriangle } from "@tabler/icons-react";
+﻿import { IconUsers, IconChartBar, IconShield, IconClock, IconCircleCheck, IconCircleDashed, IconCircle, IconAlertTriangle } from "@tabler/icons-react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useAdminAnalytics } from "@/hooks/use-reports";
+import { useAdminAnalytics } from "@/hooks/api/use-reports";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useBuildings } from "@/hooks/use-admin-campus";
+import { useBuildings } from "@/hooks/api/use-admin-campus";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminDashboard,
@@ -24,7 +24,7 @@ function AdminDashboard() {
       description: "Recorded in the system",
       icon: IconClock,
       value: analytics ? analytics.overview.totalSessions : "—",
-      trend: "Manage in Timetable →",
+      trend: "Manage in Timetable â†’",
       href: "/admin/timetable",
       color: "text-blue-500",
       bg: "bg-blue-500/10",
@@ -44,7 +44,7 @@ function AdminDashboard() {
       description: "Program-wide average",
       icon: IconChartBar,
       value: analytics ? `${analytics.overview.averageAttendance}%` : "—",
-      trend: "View Analytics →",
+      trend: "View Analytics â†’",
       href: "/admin/analytics",
       color: "text-indigo-500",
       bg: "bg-indigo-500/10",
@@ -54,7 +54,7 @@ function AdminDashboard() {
       description: "Below threshold (<75%)",
       icon: IconAlertTriangle,
       value: analytics ? analytics.alerts.length : "—",
-      trend: "Review Alerts →",
+      trend: "Review Alerts â†’",
       href: "/admin/analytics",
       color: "text-rose-500",
       bg: "bg-rose-500/10",

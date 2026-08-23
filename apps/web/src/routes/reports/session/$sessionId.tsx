@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useTeacherSessionDetail } from "@/hooks/use-reports";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
+import { useTeacherSessionDetail } from "@/hooks/api/use-reports";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { IconArrowLeft, IconCheck, IconX, IconMap } from "@tabler/icons-react";

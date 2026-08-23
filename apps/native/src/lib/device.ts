@@ -1,4 +1,4 @@
-import * as Device from "expo-device";
+﻿import * as Device from "expo-device";
 import * as SecureStore from "expo-secure-store";
 import Constants from "expo-constants";
 import * as Crypto from "expo-crypto";

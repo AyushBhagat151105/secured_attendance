@@ -1,4 +1,4 @@
-import axios from "axios";
+﻿import axios from "axios";
 import { env } from "@secured_attendance/env/native";
 import { authClient } from "./auth-client";
 import Constants from "expo-constants";

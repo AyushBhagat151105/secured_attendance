@@ -7,10 +7,10 @@ import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
 import { env } from "@secured_attendance/env/web";
-import { teacherApi } from "@/api/teacher";
-import { useTodaySchedule, useCloseSession } from "@/hooks/use-teacher";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { subscribeToSession, useCloseSession, useTodaySchedule } from "@/hooks/api/use-teacher";
 
 export const Route = createFileRoute("/session/$sessionId")({
   beforeLoad: async () => {
@@ -53,7 +53,7 @@ function SessionComponent() {
     if (!activeSession) return; // Wait for active session info (optional, but good for validation)
 
     // Connect to WebSocket using Eden Treaty
-    const ws = teacherApi.subscribeToSession(sessionId);
+    const ws = subscribeToSession(sessionId);
     
     // @ts-ignore - store the reference for cleanup
     wsRef.current = ws;
@@ -62,7 +62,7 @@ function SessionComponent() {
       setWsStatus("connected");
     });
 
-    ws.on("message", (event) => {
+    ws.on("message", (event: any) => {
       const message = event.data;
       if (typeof message !== "object" || !message) return;
       

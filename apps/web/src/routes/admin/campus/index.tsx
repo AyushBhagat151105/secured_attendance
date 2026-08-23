@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useBuildings, useRooms, useCreateBuilding, useUpdateBuilding, useCreateRoom } from "@/hooks/use-admin-campus";
+import { useBuildings, useRooms, useCreateBuilding, useUpdateBuilding, useCreateRoom } from "@/hooks/api/use-admin-campus";
 import {
   Table,
   TableBody,
@@ -55,10 +55,10 @@ function MapEditInitializer({ building, lat, lng, radius }: { building: any, lat
 
   React.useEffect(() => {
     if (!L || !map || !building || !drawContext?.featureGroup) return;
-    
+
     const group = drawContext.featureGroup;
     let existingCircle: any = null;
-    
+
     group.eachLayer((layer: any) => {
       if (layer instanceof L.Circle) {
         existingCircle = layer;
@@ -214,9 +214,9 @@ function CampusRoute() {
                           <MapDrawDelete />
                         </MapDrawControl>
                         {gpsLat !== "" && gpsLng !== "" && radiusMeters > 0 && (
-                          <MapCircle 
-                            center={[Number(gpsLat), Number(gpsLng)]} 
-                            radius={radiusMeters} 
+                          <MapCircle
+                            center={[Number(gpsLat), Number(gpsLng)]}
+                            radius={radiusMeters}
                             className="fill-yellow-600 stroke-yellow-600 stroke-1"
                           />
                         )}
@@ -391,17 +391,17 @@ function CampusRoute() {
                 <MapZoomControl />
                 {buildings.map((building) => (
                   <React.Fragment key={building.id}>
-                    <MapCircle 
-                      center={[building.gpsLat, building.gpsLng]} 
-                      radius={building.radiusMeters} 
+                    <MapCircle
+                      center={[building.gpsLat, building.gpsLng]}
+                      radius={building.radiusMeters}
                       className="fill-yellow-600 stroke-yellow-600 stroke-1"
                     />
                     <MapMarker position={[building.gpsLat, building.gpsLng]}>
                       <MapPopup>
                         <div className="font-semibold">{building.name}</div>
                         <div className="text-xs text-muted-foreground mb-3">{building.code} • Radius: {building.radiusMeters}m</div>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="secondary"
                           className="w-full"
                           onClick={() => {

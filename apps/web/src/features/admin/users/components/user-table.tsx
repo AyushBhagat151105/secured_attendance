@@ -1,4 +1,4 @@
-import { flexRender } from "@tanstack/react-table";
+﻿import { flexRender } from "@tanstack/react-table";
 import {
   getCoreRowModel,
   useLegacyTable,
@@ -25,7 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useUsers } from "@/hooks/use-admin-users";
+import { useUsers } from "@/hooks/api/use-admin-users";
 import type { UserListParams, UserRole, UserStatus } from "@/services/admin/users.service";
 import { CreateUserDialog } from "./create-user-dialog";
 import { 

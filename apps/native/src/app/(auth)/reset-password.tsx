@@ -103,11 +103,11 @@ export default function ResetPasswordScreen() {
       fetchOptions: {
         onSuccess: () => {
           setIsLoading(false);
-          router.replace("/sign-in");
+          router.replace("/(auth)/sign-in" as any);
         },
         onError: () => {
           setIsLoading(false);
-          router.replace("/sign-in");
+          router.replace("/(auth)/sign-in" as any);
         }
       }
     });

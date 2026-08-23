@@ -1,4 +1,4 @@
-import { IconAlertTriangle, IconTrash } from "@tabler/icons-react";
+﻿import { IconAlertTriangle, IconTrash } from "@tabler/icons-react";
 
 import {
   AlertDialog,
@@ -10,7 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useDeleteUser } from "@/hooks/use-admin-users";
+import { useDeleteUser } from "@/hooks/api/use-admin-users";
 
 interface DeleteUserAlertProps {
   userId: string;

@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
-import { useCompleteOnboarding } from "@/hooks/use-auth";
+import { useCompleteOnboarding } from "@/hooks/api/use-auth";
 import z from "zod";
 import { IconShieldCheck, IconLoader2 } from "@tabler/icons-react";
 

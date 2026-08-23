@@ -1,6 +1,6 @@
-import { Text, View, StyleSheet, FlatList, TouchableOpacity } from "react-native";
+﻿import { Text, View, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import { Container } from "@/components/container";
-import { useAttendanceHistory, useAttendanceStats } from "@/hooks/use-attendance-history";
+import { useAttendanceHistory, useAttendanceStats } from "@/hooks/api/use-attendance-history";
 import { ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";

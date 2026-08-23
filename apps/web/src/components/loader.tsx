@@ -1,4 +1,4 @@
-import { IconLoader2 as Loader2 } from "@tabler/icons-react";
+﻿import { IconLoader2 as Loader2 } from "@tabler/icons-react";
 
 export default function Loader() {
   return (

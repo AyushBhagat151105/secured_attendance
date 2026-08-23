@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Text, View, Alert, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,7 +19,7 @@ const COLORS = {
 };
 
 import { useQueryClient } from "@tanstack/react-query";
-import { profileKeys } from "@/hooks/use-profile";
+import { profileKeys } from "@/hooks/api/use-profile";
 
 export default function DeviceBindingScreen() {
   const [isLoading, setIsLoading] = useState(false);

@@ -1,4 +1,4 @@
-import { IconUserPlus } from "@tabler/icons-react";
+﻿import { IconUserPlus } from "@tabler/icons-react";
 import { useForm } from "@tanstack/react-form";
 import z from "zod";
 
@@ -20,8 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCreateUser } from "@/hooks/use-admin-users";
-import { useDivisions } from "@/hooks/use-admin-academic";
+import { useCreateUser } from "@/hooks/api/use-admin-users";
+import { useDivisions } from "@/hooks/api/use-admin-academic";
 
 interface CreateUserDialogProps {
   open: boolean;

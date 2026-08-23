@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Text, View, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useRouter, Link } from "expo-router";
 
@@ -21,7 +21,7 @@ export default function SignInScreen() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const router = useRouter();
 
   async function handleLogin() {
@@ -84,7 +84,7 @@ export default function SignInScreen() {
             style={styles.input}
             value={password}
             onChangeText={setPassword}
-            placeholder="••••••••"
+            placeholder="Password"
             placeholderTextColor={COLORS.muted}
             editable={!isLoading}
           />
@@ -98,9 +98,9 @@ export default function SignInScreen() {
           </Link>
         </View>
 
-        <TouchableOpacity 
-          style={[styles.button, isLoading && styles.buttonDisabled]} 
-          onPress={handleLogin} 
+        <TouchableOpacity
+          style={[styles.button, isLoading && styles.buttonDisabled]}
+          onPress={handleLogin}
           disabled={isLoading}
         >
           {isLoading ? (

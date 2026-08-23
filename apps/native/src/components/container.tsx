@@ -1,4 +1,4 @@
-import { type PropsWithChildren } from "react";
+﻿import { type PropsWithChildren } from "react";
 import { ViewProps } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";

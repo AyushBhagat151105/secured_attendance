@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+﻿import { Link, useRouterState } from "@tanstack/react-router";
 import { IconShieldCheck } from "@tabler/icons-react";
 
 import { authClient } from "@/lib/auth-client";

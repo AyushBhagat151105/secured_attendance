@@ -1,7 +1,7 @@
-import { Text, View, StyleSheet, TouchableOpacity, FlatList } from "react-native";
+﻿import { Text, View, StyleSheet, TouchableOpacity, FlatList } from "react-native";
 import { Container } from "@/components/container";
-import { useTodaySchedule } from "@/hooks/use-schedule";
-import { useAttendanceStats } from "@/hooks/use-attendance-history";
+import { useTodaySchedule } from "@/hooks/api/use-schedule";
+import { useAttendanceStats } from "@/hooks/api/use-attendance-history";
 import { authClient } from "@/lib/auth-client";
 import { ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -38,7 +38,7 @@ export default function HomeScreen() {
 
   const user = session?.user;
   const firstName = user?.name?.split(" ")[0] || "Student";
-  
+
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 
   const renderScheduleItem = ({ item }: { item: any }) => (
@@ -60,7 +60,7 @@ export default function HomeScreen() {
           </View>
         </View>
       </View>
-      
+
       {item.attendanceStatus === "PRESENT" ? (
         <View style={[styles.scanButton, { backgroundColor: COLORS.success + '20', paddingHorizontal: 12, paddingVertical: 6, flexDirection: 'row', alignItems: 'center' }]}>
           <Ionicons name="checkmark-circle" size={16} color={COLORS.success} style={{ marginRight: 4 }} />
@@ -72,7 +72,7 @@ export default function HomeScreen() {
           <Text style={{ color: COLORS.destructive, fontWeight: '600', fontSize: 12 }}>Missed</Text>
         </View>
       ) : item.activeSession ? (
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => router.push("/(tabs)/scan")}
           style={[styles.scanButton, { backgroundColor: COLORS.primary, paddingHorizontal: 16, paddingVertical: 8 }]}
         >
@@ -128,7 +128,7 @@ export default function HomeScreen() {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Today's Classes</Text>
         </View>
-        
+
         <View style={styles.listContainer}>
           {scheduleLoading ? (
             <View style={styles.centerAll}>

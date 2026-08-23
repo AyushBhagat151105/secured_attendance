@@ -59,6 +59,10 @@ export const auth = betterAuth({
   },
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      console.log(`[Auth Hook] Path: ${ctx.path}`, {
+        body: ctx.body,
+        headers: ctx.headers,
+      });
       if (ctx.path === "/sign-up/email") {
         if (ctx.request) {
           throw new APIError("FORBIDDEN", { message: "Self-registration is disabled. Contact your administrator." });

@@ -1,6 +1,6 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
-import { useTeacherSessionsReport, useTeacherSubjectsReport, useDeleteSession } from "@/hooks/use-reports";
+import { useTeacherSessionsReport, useTeacherSubjectsReport, useDeleteSession } from "@/hooks/api/use-reports";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {

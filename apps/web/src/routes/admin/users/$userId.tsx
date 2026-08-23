@@ -1,4 +1,4 @@
-import {
+﻿import {
   IconArrowLeft,
   IconCalendar,
   IconDeviceDesktop,
@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DeviceRebindDialog } from "@/features/admin/users/components/device-rebind-dialog";
 import { EditUserDialog } from "@/features/admin/users/components/edit-user-dialog";
-import { useUser } from "@/hooks/use-admin-users";
+import { useUser } from "@/hooks/api/use-admin-users";
 import type { UserRow } from "@/features/admin/users/components/user-columns";
 import { cn } from "@/lib/utils";
 

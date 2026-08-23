@@ -1,4 +1,4 @@
-import { expoClient } from "@better-auth/expo/client";
+﻿import { expoClient } from "@better-auth/expo/client";
 import { jwtClient } from "better-auth/client/plugins";
 import { env } from "@secured_attendance/env/native";
 import { createAuthClient } from "better-auth/react";

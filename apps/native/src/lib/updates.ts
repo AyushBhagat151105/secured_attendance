@@ -1,4 +1,4 @@
-import * as Updates from "expo-updates";
+﻿import * as Updates from "expo-updates";
 import { useEffect, useState } from "react";
 
 export function useUpdateCheck() {

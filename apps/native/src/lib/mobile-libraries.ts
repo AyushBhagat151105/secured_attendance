@@ -1,4 +1,4 @@
-import * as ExpoCamera from "expo-camera";
+﻿import * as ExpoCamera from "expo-camera";
 import * as ExpoLocalAuthentication from "expo-local-authentication";
 import * as ExpoLocation from "expo-location";
 import * as ExpoMaps from "expo-maps";

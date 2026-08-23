@@ -20,10 +20,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { BulkImportDropzone } from "@/features/admin/users/components/bulk-import-dropzone";
 import { BulkImportPreview } from "@/features/admin/users/components/bulk-import-preview";
-import {
-  useConfirmUsersImport,
-  usePreviewUsersImport,
-} from "@/hooks/use-admin-users";
+import { useBulkImportConfirm, useBulkImportPreview } from "@/hooks/api/use-admin-users";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/users/import")({
@@ -33,7 +30,7 @@ export const Route = createFileRoute("/admin/users/import")({
 type Step = "upload" | "preview" | "done";
 type ImportType = "students" | "teachers";
 
-// ─── CSV format reference strings ────────────────────────────────────────────
+// ——————————————————————————————————————————————————————————————————————————————
 const CSV_FORMATS: Record<ImportType, string> = {
   students:
     "enrollment_no,name,email,program_code,semester,division\n26msit001,Ayush Bhagat,26msit001@charusat.edu.in,msit,1,Div-I",
@@ -55,11 +52,11 @@ function ImportPage() {
   const [importProgress, setImportProgress] = useState(0);
   const [finalResult, setFinalResult] = useState<{ created: number; skipped: number; errors: string[] } | null>(null);
 
-  const preview = usePreviewUsersImport();
-  const confirm = useConfirmUsersImport();
+  const previewMutation = useBulkImportPreview();
+  const confirmMutation = useBulkImportConfirm();
 
   async function handleFileSelected(csv: string) {
-    const result = await preview.mutateAsync({ type: importType, csv });
+    const result = await previewMutation.mutateAsync({ type: importType, csv });
     if (result) {
       setPreviewData({ ...result, type: importType } as typeof previewData);
       setStep("preview");
@@ -83,7 +80,7 @@ function ImportPage() {
     try {
       for (let i = 0; i < validRows.length; i += CHUNK_SIZE) {
         const chunk = validRows.slice(i, i + CHUNK_SIZE);
-        const result = await confirm.mutateAsync({ type: previewData.type, rows: chunk });
+        const result = (await confirmMutation.mutateAsync({ type: previewData.type, rows: chunk })) as any;
         
         totalCreated += result?.created ?? 0;
         totalSkipped += result?.skipped ?? 0;
@@ -109,8 +106,8 @@ function ImportPage() {
     setFinalResult(null);
     setIsImporting(false);
     setImportProgress(0);
-    preview.reset();
-    confirm.reset();
+    previewMutation.reset();
+    confirmMutation.reset();
   }
 
   const stepIndex = step === "upload" ? 0 : step === "preview" ? 1 : 2;
@@ -185,10 +182,10 @@ function ImportPage() {
 
             <BulkImportDropzone
               onFileSelected={handleFileSelected}
-              isLoading={preview.isPending}
+              isLoading={previewMutation.isPending}
             />
 
-            {preview.isPending && (
+            {previewMutation.isPending && (
               <p className="text-center text-sm text-muted-foreground">Parsing CSV...</p>
             )}
 
@@ -222,7 +219,7 @@ function ImportPage() {
 
             <div className="flex justify-between items-center mt-6">
               <Button variant="outline" onClick={handleReset} disabled={isImporting}>
-                ← Back
+                â† Back
               </Button>
               <div className="flex-1 px-8">
                 {isImporting && (
@@ -256,7 +253,7 @@ function ImportPage() {
             <div>
               <h2 className="text-lg font-semibold">Import Complete</h2>
               <p className="text-muted-foreground text-sm mt-1">
-                {finalResult.created} users created · {finalResult.skipped} skipped (already exist)
+                {finalResult.created} users created Â· {finalResult.skipped} skipped (already exist)
               </p>
               {finalResult.errors?.length > 0 && (
                 <p className="text-destructive text-sm mt-1">

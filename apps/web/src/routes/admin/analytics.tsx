@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useAdminAnalytics } from "@/hooks/use-reports";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
+import { useAdminAnalytics } from "@/hooks/api/use-reports";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { IconAlertTriangle, IconUsers, IconCalendarEvent, IconPercentage, IconMapPin } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";

@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useAdminMapData } from "@/hooks/use-reports";
+﻿import { createFileRoute } from "@tanstack/react-router";
+import { useAdminMapData } from "@/hooks/api/use-reports";
 import { Map, MapTileLayer, MapCircle, MapMarker, MapPopup } from "@/components/ui/map";
 import { Card, CardContent } from "@/components/ui/card";
 import { IconMapPin, IconMapPinOff } from "@tabler/icons-react";

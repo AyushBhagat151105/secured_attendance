@@ -1,21 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useTimetableEntries } from "@/hooks/use-admin-timetable";
+import { useTimetableEntries } from "@/hooks/api/use-admin-timetable";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus, MoreHorizontal, Pencil, Trash, UserIcon } from "lucide-react";
 import { useState, useMemo } from "react";
-import { useCreateTimetableEntry, useUpdateTimetableEntry, useDeleteTimetableEntry } from "@/hooks/use-admin-timetable";
-import { useAcademicYears, useProgramSemesters, useSubjects, useDivisions } from "@/hooks/use-admin-academic";
-import { useRooms } from "@/hooks/use-admin-campus";
+import { useCreateTimetableEntry, useUpdateTimetableEntry, useDeleteTimetableEntry } from "@/hooks/api/use-admin-timetable";
+import { useAcademicYears, useProgramSemesters, useSubjects, useDivisions } from "@/hooks/api/use-admin-academic";
+import { useRooms } from "@/hooks/api/use-admin-campus";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useUsers } from "@/hooks/use-admin-users";
+import { useUsers } from "@/hooks/api/use-admin-users";
 import {
   Table,
   TableBody,

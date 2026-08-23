@@ -1,4 +1,4 @@
-import { IconAlertTriangle } from "@tabler/icons-react";
+﻿import { IconAlertTriangle } from "@tabler/icons-react";
 
 import {
   AlertDialog,
@@ -10,7 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useSuspendUser } from "@/hooks/use-admin-users";
+import { useSuspendUser } from "@/hooks/api/use-admin-users";
 
 interface SuspendUserAlertProps {
   userId: string;
