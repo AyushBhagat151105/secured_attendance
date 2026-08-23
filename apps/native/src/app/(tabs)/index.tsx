@@ -6,6 +6,8 @@ import { authClient } from "@/lib/auth-client";
 import { ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useEffect } from "react";
+import { syncPendingAttendance } from "@/lib/offline-sync";
 
 const COLORS = {
   background: "#ffffff",
@@ -23,6 +25,15 @@ export default function HomeScreen() {
   const { data: schedule, isLoading: scheduleLoading } = useTodaySchedule();
   const { data: stats, isLoading: statsLoading } = useAttendanceStats();
   const router = useRouter();
+
+  useEffect(() => {
+    // Attempt to sync pending offline attendance scans on load
+    syncPendingAttendance().then(syncedCount => {
+      if (syncedCount > 0) {
+        console.log(`Synced ${syncedCount} pending attendance records`);
+      }
+    });
+  }, []);
 
   const user = session?.user;
   const firstName = user?.name?.split(" ")[0] || "Student";

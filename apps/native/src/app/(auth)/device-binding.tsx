@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { apiClient } from "@/lib/api-client";
 import { Container } from "@/components/container";
 import { getDeviceFingerprint } from "@/lib/device";
+import * as LocalAuthentication from "expo-local-authentication";
 
 const COLORS = {
   background: "#ffffff",
@@ -41,7 +42,23 @@ export default function DeviceBindingScreen() {
     setIsLoading(true);
 
     try {
-      // Hit the real device binding endpoint in our backend
+      // 1. Biometric Check
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+
+      if (hasHardware && isEnrolled) {
+        const authResult = await LocalAuthentication.authenticateAsync({
+          promptMessage: 'Authenticate to bind device',
+          cancelLabel: 'Cancel',
+          disableDeviceFallback: false,
+        });
+        if (!authResult.success) {
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // 2. Hit the real device binding endpoint in our backend
       try {
         await apiClient.post('/api/auth-custom/device-bind', {
           deviceId: deviceInfo.id,

@@ -1292,24 +1292,24 @@ services:
 ### Phase 5: Attendance Submission & Validation (Mobile App)
 
 #### Tasks
-- [] Expo custom dev client setup (prebuild for Android)
-- [] Install + configure react-native-vision-camera + code-scanner
-- [] QR scanner screen (camera view + decode)
-- [ ] GPS collection module (expo-location)
-- [ ] Mock location detection
-- [ ] Device fingerprint collection
-- [ ] Attendance submission REST endpoint (full 11-step pipeline)
-- [ ] Geofence haversine check
-- [ ] Redis nonce store + atomic check-and-consume
-- [ ] Rate limiting per student
-- [ ] Success UX: green animation + attendance % + haptic
-- [ ] Failure UX: safe error messages
-- [ ] Student home screen (today's schedule, streak, subject overview)
-- [ ] Student attendance history screen (per-subject breakdown)
-- [ ] Device binding flow (first login)
-- [ ] Biometric setup (when available)
-- [ ] Offline handling (queue submission, retry on connectivity)
-- [ ] Navigation restructure: bottom tabs (Home, Scan, History) + drawer (Profile, Settings)
+- [x] Expo custom dev client setup (prebuild for Android)
+- [x] Install + configure react-native-vision-camera + code-scanner (using expo-camera)
+- [x] QR scanner screen (camera view + decode)
+- [x] GPS collection module (expo-location)
+- [x] Mock location detection
+- [x] Device fingerprint collection
+- [x] Attendance submission REST endpoint (full 11-step pipeline)
+- [x] Geofence haversine check
+- [x] Redis nonce store + atomic check-and-consume (Prisma optimistic concurrency)
+- [x] Rate limiting per student
+- [x] Success UX: green animation + attendance % + haptic
+- [x] Failure UX: safe error messages
+- [x] Student home screen (today's schedule, streak, subject overview)
+- [x] Student attendance history screen (per-subject breakdown)
+- [x] Device binding flow (first login)
+- [x] Biometric setup (when available)
+- [x] Offline handling (queue submission, retry on connectivity)
+- [x] Navigation restructure: bottom tabs (Home, Scan, History) + drawer (Profile, Settings)
 
 ---
 

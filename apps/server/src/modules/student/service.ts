@@ -1,6 +1,7 @@
 import prisma from "@secured_attendance/db";
 
 import { logger } from "../../lib/logger";
+import { attendanceRedis } from "../../lib/redis";
 import crypto from "crypto";
 import type { ScanAttendanceDto } from "./model";
 
@@ -40,7 +41,23 @@ export class StudentService {
    * Performs cryptographic signature validation, enrollment validation, and geofence validation.
    */
   static async submitAttendance(userId: string, body: ScanAttendanceDto) {
-    const { sessionId, nonce, signature, expiresAt, gpsLat, gpsLng } = body;
+    const { sessionId, nonce, signature, expiresAt, gpsLat, gpsLng, mockFlag } = body;
+
+    // 0. Rate Limiting Check
+    const rateLimitKey = `ratelimit:${userId}`;
+    const attempts = await attendanceRedis.incr(rateLimitKey);
+    if (attempts === 1) {
+      await attendanceRedis.expire(rateLimitKey, 60);
+    }
+    if (attempts > 5) {
+      return { success: false, error: "TOO_MANY_REQUESTS", message: "Too many attempts, please try again later" };
+    }
+
+    // 0.5 Mock Location Check
+    if (mockFlag) {
+      logger.warn("Mock location detected", { userId, sessionId });
+      return { success: false, error: "BAD_REQUEST", message: "Location error" };
+    }
 
     // 1. Get student profile
     const profile = await prisma.studentProfile.findUnique({

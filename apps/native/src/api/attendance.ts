@@ -7,6 +7,7 @@ export type ScanAttendancePayload = {
   expiresAt: number;
   gpsLat?: number;
   gpsLng?: number;
+  mockFlag?: boolean;
   deviceFingerprint?: string;
 };
 

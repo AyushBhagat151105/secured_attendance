@@ -7,6 +7,7 @@ export const ScanAttendanceBody = t.Object({
   expiresAt: t.Number(),
   gpsLat: t.Optional(t.Number()),
   gpsLng: t.Optional(t.Number()),
+  mockFlag: t.Optional(t.Boolean()),
   deviceFingerprint: t.Optional(t.String()),
 });
 

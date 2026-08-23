@@ -14,6 +14,7 @@ import Animated, {
 import { useScanAttendance } from "@/hooks/use-attendance";
 import { getDeviceFingerprint } from "@/lib/device";
 import { Ionicons } from "@expo/vector-icons";
+import { savePendingAttendance } from "@/lib/offline-sync";
 
 type ScanStatus = "idle" | "processing" | "success" | "error";
 
@@ -99,29 +100,46 @@ export default function ScanScreen() {
       // 3. Get GPS Location
       let gpsLat: number | undefined;
       let gpsLng: number | undefined;
+      let mockFlag = false;
 
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === "granted") {
         const location = await Location.getCurrentPositionAsync({});
         gpsLat = location.coords.latitude;
         gpsLng = location.coords.longitude;
+        mockFlag = location.mocked ?? false;
       }
 
       // 4. Submit Attendance
-      const result = await scanAttendance({
+      const payloadData = {
         ...payload,
         gpsLat,
         gpsLng,
+        mockFlag,
         deviceFingerprint: deviceInfo.id,
-      }) as { success: boolean; gpsWithinGeofence: boolean; attendanceId: string };
+      };
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setScanStatus("success");
-      
-      if (result.gpsWithinGeofence) {
-        setStatusMessage("Attendance marked successfully!");
-      } else {
-        setStatusMessage("Marked, but GPS was outside the classroom area.");
+      try {
+        const result = await scanAttendance(payloadData) as { success: boolean; gpsWithinGeofence: boolean; attendanceId: string };
+
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setScanStatus("success");
+        
+        if (result.gpsWithinGeofence) {
+          setStatusMessage("Attendance marked successfully!");
+        } else {
+          setStatusMessage("Marked, but GPS was outside the classroom area.");
+        }
+      } catch (error: any) {
+        const message = error.message?.toLowerCase() || '';
+        if (message.includes('network') || message.includes('failed to fetch') || message.includes('timeout')) {
+          await savePendingAttendance(payloadData);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          setScanStatus("success");
+          setStatusMessage("Saved offline. Will sync when online.");
+        } else {
+          throw error;
+        }
       }
 
     } catch (error: any) {
