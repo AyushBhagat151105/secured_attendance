@@ -17,6 +17,8 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
+import { Route as AdminAnomaliesRouteImport } from './routes/admin/anomalies'
+import { Route as AdminAuditLogsRouteImport } from './routes/admin/audit-logs'
 import { Route as AdminExportRouteImport } from './routes/admin/export'
 import { Route as ReportsIndexRouteImport } from './routes/reports/index'
 import { Route as SessionSessionIdRouteImport } from './routes/session/$sessionId'
@@ -70,6 +72,16 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAnomaliesRoute = AdminAnomaliesRouteImport.update({
+  id: '/anomalies',
+  path: '/anomalies',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAuditLogsRoute = AdminAuditLogsRouteImport.update({
+  id: '/audit-logs',
+  path: '/audit-logs',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminExportRoute = AdminExportRouteImport.update({
@@ -151,6 +163,8 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/anomalies': typeof AdminAnomaliesRoute
+  '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/export': typeof AdminExportRoute
   '/session/$sessionId': typeof SessionSessionIdRoute
   '/admin/': typeof AdminIndexRoute
@@ -174,6 +188,8 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/anomalies': typeof AdminAnomaliesRoute
+  '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/export': typeof AdminExportRoute
   '/session/$sessionId': typeof SessionSessionIdRoute
   '/admin': typeof AdminIndexRoute
@@ -199,6 +215,8 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/anomalies': typeof AdminAnomaliesRoute
+  '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/export': typeof AdminExportRoute
   '/session/$sessionId': typeof SessionSessionIdRoute
   '/admin/': typeof AdminIndexRoute
@@ -225,6 +243,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/admin/analytics'
+    | '/admin/anomalies'
+    | '/admin/audit-logs'
     | '/admin/export'
     | '/session/$sessionId'
     | '/admin/'
@@ -248,6 +268,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/admin/analytics'
+    | '/admin/anomalies'
+    | '/admin/audit-logs'
     | '/admin/export'
     | '/session/$sessionId'
     | '/admin'
@@ -272,6 +294,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/admin/analytics'
+    | '/admin/anomalies'
+    | '/admin/audit-logs'
     | '/admin/export'
     | '/session/$sessionId'
     | '/admin/'
@@ -358,6 +382,20 @@ declare module '@tanstack/react-router' {
       path: '/analytics'
       fullPath: '/admin/analytics'
       preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/anomalies': {
+      id: '/admin/anomalies'
+      path: '/anomalies'
+      fullPath: '/admin/anomalies'
+      preLoaderRoute: typeof AdminAnomaliesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/audit-logs': {
+      id: '/admin/audit-logs'
+      path: '/audit-logs'
+      fullPath: '/admin/audit-logs'
+      preLoaderRoute: typeof AdminAuditLogsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/export': {
@@ -463,6 +501,8 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminAnomaliesRoute: typeof AdminAnomaliesRoute
+  AdminAuditLogsRoute: typeof AdminAuditLogsRoute
   AdminExportRoute: typeof AdminExportRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminAcademicProgramsRoute: typeof AdminAcademicProgramsRoute
@@ -478,6 +518,8 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminAnomaliesRoute: AdminAnomaliesRoute,
+  AdminAuditLogsRoute: AdminAuditLogsRoute,
   AdminExportRoute: AdminExportRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminAcademicProgramsRoute: AdminAcademicProgramsRoute,

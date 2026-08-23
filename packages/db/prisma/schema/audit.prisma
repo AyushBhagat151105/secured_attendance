@@ -14,3 +14,20 @@ model AuditLog {
   @@index([timestamp])
   @@map("audit_log")
 }
+
+model AnomalyAlert {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String   // e.g., "IMPOSSIBLE_TRAVEL", "DEVICE_MISMATCH"
+  severity  String   // e.g., "LOW", "MEDIUM", "HIGH"
+  details   Json
+  status    String   @default("OPEN")
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("anomaly_alert")
+}

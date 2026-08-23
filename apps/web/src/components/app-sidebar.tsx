@@ -1,4 +1,4 @@
-﻿import * as React from "react"
+import * as React from "react"
 import { IconChartBar, IconLayoutDashboard, IconShield, IconUsers, IconShieldCheck, IconBook, IconMapPin, IconCalendarTime } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -85,6 +85,21 @@ const data = {
         {
           title: "Export Data",
           url: "/admin/export",
+        },
+      ],
+    },
+    {
+      title: "Security & Audit",
+      url: "#",
+      icon: <IconShield />,
+      items: [
+        {
+          title: "Anomalies",
+          url: "/admin/anomalies",
+        },
+        {
+          title: "Audit Logs",
+          url: "/admin/audit-logs",
         },
       ],
     },

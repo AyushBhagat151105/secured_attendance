@@ -31,10 +31,28 @@ export const auditQueue = new Queue("audit-log", {
   connection: queueRedis,
 });
 
+import prisma from "@secured_attendance/db";
+
 export const auditWorker = new Worker(
   "audit-log",
   async (job: Job) => {
-    console.log(`Processing audit log: ${job.id}`, job.data);
+    try {
+      await prisma.auditLog.create({
+        data: {
+          eventType: job.data.eventType,
+          actor: job.data.actor,
+          actorRole: job.data.actorRole,
+          targetId: job.data.targetId,
+          details: job.data.details ?? {},
+          ipAddress: job.data.ipAddress,
+          userAgent: job.data.userAgent,
+        },
+      });
+      console.log(`[Audit] Logged event: ${job.data.eventType}`);
+    } catch (e) {
+      console.error(`[Audit] Failed to log event: ${job.data.eventType}`, e);
+      throw e;
+    }
   },
   { connection: queueRedis }
 );

@@ -17,6 +17,7 @@ model User {
   banExpires             DateTime?
   studentProfile         StudentProfile?
   teacherProfile         TeacherProfile?
+  anomalyAlerts          AnomalyAlert[]
 
   @@unique([email])
   @@map("user")
