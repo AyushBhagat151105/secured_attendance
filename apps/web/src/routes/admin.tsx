@@ -1,10 +1,11 @@
+import React from "react";
 import {
   IconChartBar,
   IconLayoutDashboard,
   IconShield,
   IconUsers,
 } from "@tabler/icons-react";
-import { Link, Outlet, createFileRoute, redirect } from "@tanstack/react-router";
+import { Link, Outlet, createFileRoute, redirect, useLocation } from "@tanstack/react-router";
 
 import { authClient } from "@/lib/auth-client";
 import {
@@ -48,6 +49,9 @@ function AdminLayout() {
   const { session } = Route.useRouteContext();
   const user = session.user as { name: string; email: string; image?: string; role?: string };
 
+  const location = useLocation();
+  const pathSegments = location.pathname.split("/").filter(Boolean).slice(1);
+
   return (
     <SidebarProvider>
       <AppSidebar user={{ name: user.name, email: user.email, avatar: user.image ?? "" }} />
@@ -63,10 +67,43 @@ function AdminLayout() {
                   <Link to="/admin">Admin</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
-              <BreadcrumbSeparator className="hidden md:block" />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Panel</BreadcrumbPage>
-              </BreadcrumbItem>
+              
+              {pathSegments.length === 0 && (
+                <>
+                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Overview</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </>
+              )}
+
+              {pathSegments.map((segment, index) => {
+                const isLast = index === pathSegments.length - 1;
+                // If the segment is long (like a UUID), just say "Details"
+                const formatted = segment.length > 20 
+                  ? "Details" 
+                  : segment.split("-").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+
+                const path = `/admin/${pathSegments.slice(0, index + 1).join("/")}`;
+                const isNonClickable = ["/admin/academic", "/admin/map"].includes(path);
+
+                return (
+                  <React.Fragment key={segment + index}>
+                    <BreadcrumbSeparator className="hidden md:block" />
+                    <BreadcrumbItem>
+                      {isLast ? (
+                        <BreadcrumbPage>{formatted}</BreadcrumbPage>
+                      ) : isNonClickable ? (
+                        <span className="text-muted-foreground">{formatted}</span>
+                      ) : (
+                        <BreadcrumbLink asChild>
+                          <Link to={path as any}>{formatted}</Link>
+                        </BreadcrumbLink>
+                      )}
+                    </BreadcrumbItem>
+                  </React.Fragment>
+                );
+              })}
             </BreadcrumbList>
           </Breadcrumb>
         </header>

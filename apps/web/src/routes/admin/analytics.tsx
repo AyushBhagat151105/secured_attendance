@@ -1,7 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAdminAnalytics } from "@/hooks/use-reports";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { IconAlertTriangle, IconUsers, IconCalendarEvent, IconPercentage } from "@tabler/icons-react";
+import { IconAlertTriangle, IconUsers, IconCalendarEvent, IconPercentage, IconMapPin } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/admin/analytics")({
   component: AdminAnalyticsRoute,
@@ -82,9 +83,17 @@ function AdminAnalyticsRoute() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-end justify-between">
-                    <span className="text-2xl font-bold text-red-700 dark:text-red-500">{alert.percentage}%</span>
-                    <span className="text-sm text-red-600/80">{alert.presentCount} / {alert.expectedCount} Present</span>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-end justify-between">
+                      <span className="text-2xl font-bold text-red-700 dark:text-red-500">{alert.percentage}%</span>
+                      <span className="text-sm text-red-600/80">{alert.presentCount} / {alert.expectedCount} Present</span>
+                    </div>
+                    <Link to="/admin/map/$sessionId" params={{ sessionId: alert.sessionId }} className="w-full">
+                      <Button variant="outline" className="w-full border-red-200 text-red-700 hover:bg-red-100 hover:text-red-800 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/50">
+                        <IconMapPin className="mr-2 h-4 w-4" />
+                        View GPS Map
+                      </Button>
+                    </Link>
                   </div>
                 </CardContent>
               </Card>

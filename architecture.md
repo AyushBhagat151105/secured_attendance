@@ -1316,16 +1316,16 @@ services:
 ### Phase 6: Reports, Analytics & Map
 
 #### Tasks
-- [ ] Attendance report API: per-session, per-subject, per-student
-- [ ] Total percentage calculation per student per subject
-- [ ] Below-threshold alerts (< 75% attendance warning)
-- [ ] CSV export endpoint
-- [ ] PDF export endpoint (use a PDF library or server-side rendering)
-- [ ] Teacher web UI: Attendance reports page
-- [ ] Teacher web UI: Per-session student list with status
-- [ ] Admin web UI: shadcn-map page (post-session GPS visualization)
-- [ ] Admin web UI: Program-wide attendance analytics
-- [ ] Admin web UI: Export page (CSV/PDF download)
+- [x] Attendance report API: per-session, per-subject, per-student
+- [x] Total percentage calculation per student per subject
+- [x] Below-threshold alerts (< 75% attendance warning)
+- [x] CSV export endpoint
+- [x] PDF export endpoint (use a PDF library or server-side rendering)
+- [x] Teacher web UI: Attendance reports page
+- [x] Teacher web UI: Per-session student list with status
+- [x] Admin web UI: shadcn-map page (post-session GPS visualization)
+- [x] Admin web UI: Program-wide attendance analytics
+- [x] Admin web UI: Export page (CSV/PDF download)
 
 ---
 

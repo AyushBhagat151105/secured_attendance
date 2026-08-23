@@ -83,12 +83,8 @@ const data = {
           url: "/admin/analytics",
         },
         {
-          title: "Attendance",
-          url: "/admin/attendance",
-        },
-        {
-          title: "Anomalies",
-          url: "/admin/anomalies",
+          title: "Export Data",
+          url: "/admin/export",
         },
       ],
     },

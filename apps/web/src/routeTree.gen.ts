@@ -17,6 +17,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
+import { Route as AdminExportRouteImport } from './routes/admin/export'
 import { Route as ReportsIndexRouteImport } from './routes/reports/index'
 import { Route as SessionSessionIdRouteImport } from './routes/session/$sessionId'
 import { Route as AdminAcademicProgramsRouteImport } from './routes/admin/academic/programs'
@@ -69,6 +70,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminExportRoute = AdminExportRouteImport.update({
+  id: '/export',
+  path: '/export',
   getParentRoute: () => AdminRoute,
 } as any)
 const ReportsIndexRoute = ReportsIndexRouteImport.update({
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/export': typeof AdminExportRoute
   '/session/$sessionId': typeof SessionSessionIdRoute
   '/admin/': typeof AdminIndexRoute
   '/reports/': typeof ReportsIndexRoute
@@ -167,6 +174,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/export': typeof AdminExportRoute
   '/session/$sessionId': typeof SessionSessionIdRoute
   '/admin': typeof AdminIndexRoute
   '/reports': typeof ReportsIndexRoute
@@ -191,6 +199,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/export': typeof AdminExportRoute
   '/session/$sessionId': typeof SessionSessionIdRoute
   '/admin/': typeof AdminIndexRoute
   '/reports/': typeof ReportsIndexRoute
@@ -216,6 +225,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/admin/analytics'
+    | '/admin/export'
     | '/session/$sessionId'
     | '/admin/'
     | '/reports/'
@@ -238,6 +248,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/admin/analytics'
+    | '/admin/export'
     | '/session/$sessionId'
     | '/admin'
     | '/reports'
@@ -261,6 +272,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/admin/analytics'
+    | '/admin/export'
     | '/session/$sessionId'
     | '/admin/'
     | '/reports/'
@@ -346,6 +358,13 @@ declare module '@tanstack/react-router' {
       path: '/analytics'
       fullPath: '/admin/analytics'
       preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/export': {
+      id: '/admin/export'
+      path: '/export'
+      fullPath: '/admin/export'
+      preLoaderRoute: typeof AdminExportRouteImport
       parentRoute: typeof AdminRoute
     }
     '/reports/': {
@@ -444,6 +463,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminExportRoute: typeof AdminExportRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminAcademicProgramsRoute: typeof AdminAcademicProgramsRoute
   AdminAcademicSubjectsRoute: typeof AdminAcademicSubjectsRoute
@@ -458,6 +478,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminExportRoute: AdminExportRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminAcademicProgramsRoute: AdminAcademicProgramsRoute,
   AdminAcademicSubjectsRoute: AdminAcademicSubjectsRoute,

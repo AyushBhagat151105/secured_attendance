@@ -1,5 +1,6 @@
-import { IconUsers, IconChartBar, IconShield, IconClock, IconCircleCheck, IconCircleDashed, IconCircle } from "@tabler/icons-react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { IconUsers, IconChartBar, IconShield, IconClock, IconCircleCheck, IconCircleDashed, IconCircle, IconAlertTriangle } from "@tabler/icons-react";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useAdminAnalytics } from "@/hooks/use-reports";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -10,64 +11,55 @@ export const Route = createFileRoute("/admin/")({
   component: AdminDashboard,
 });
 
-// Static stat cards — will be replaced with real data in Phase 3+
-const statCards = [
-  {
-    title: "Total Users",
-    description: "Registered in the system",
-    icon: IconUsers,
-    value: "—",
-    trend: "Manage in Users →",
-    href: "/admin/users",
-    color: "text-blue-500",
-    bg: "bg-blue-500/10",
-  },
-  {
-    title: "Active Sessions",
-    description: "Currently ongoing",
-    icon: IconClock,
-    value: "—",
-    trend: "Session management in Phase 4",
-    href: null,
-    color: "text-emerald-500",
-    bg: "bg-emerald-500/10",
-  },
-  {
-    title: "Attendance Today",
-    description: "Records submitted",
-    icon: IconChartBar,
-    value: "—",
-    trend: "Reports in Phase 6",
-    href: null,
-    color: "text-indigo-500",
-    bg: "bg-indigo-500/10",
-  },
-  {
-    title: "Anomalies",
-    description: "Unreviewed alerts",
-    icon: IconShield,
-    value: "—",
-    trend: "Anomaly dashboard in Phase 7",
-    href: null,
-    color: "text-rose-500",
-    bg: "bg-rose-500/10",
-  },
-];
-
-const phases = [
-  { name: "Phase 1: Foundation & Data Model", status: "completed" },
-  { name: "Phase 2: User Management & Import", status: "completed" },
-  { name: "Phase 3: Academic Structure & Timetable", status: "current" },
-  { name: "Phase 4: Session & QR System", status: "upcoming" },
-  { name: "Phase 5: Attendance Submission (Mobile)", status: "upcoming" },
-  { name: "Phase 6: Reports & Analytics", status: "upcoming" },
-  { name: "Phase 7: Anomaly Detection & Audit", status: "upcoming" },
-];
-
 function AdminDashboard() {
   const navigate = useNavigate();
-  const { data: buildings, isLoading } = useBuildings();
-  const missingBuildings = !isLoading && buildings && buildings.length === 0;
+  const { data: buildings, isLoading: buildingsLoading } = useBuildings();
+  const { data: analytics, isLoading: analyticsLoading } = useAdminAnalytics();
+  
+  const missingBuildings = !buildingsLoading && buildings && buildings.length === 0;
+
+  const statCards = [
+    {
+      title: "Total Sessions",
+      description: "Recorded in the system",
+      icon: IconClock,
+      value: analytics ? analytics.overview.totalSessions : "—",
+      trend: "Manage in Timetable →",
+      href: "/admin/timetable",
+      color: "text-blue-500",
+      bg: "bg-blue-500/10",
+    },
+    {
+      title: "Active Sessions",
+      description: "Currently ongoing",
+      icon: IconClock,
+      value: analytics ? analytics.overview.activeSessions : "—",
+      trend: "Real-time updates",
+      href: null,
+      color: "text-emerald-500",
+      bg: "bg-emerald-500/10",
+    },
+    {
+      title: "Average Attendance",
+      description: "Program-wide average",
+      icon: IconChartBar,
+      value: analytics ? `${analytics.overview.averageAttendance}%` : "—",
+      trend: "View Analytics →",
+      href: "/admin/analytics",
+      color: "text-indigo-500",
+      bg: "bg-indigo-500/10",
+    },
+    {
+      title: "Anomalies",
+      description: "Below threshold (<75%)",
+      icon: IconAlertTriangle,
+      value: analytics ? analytics.alerts.length : "—",
+      trend: "Review Alerts →",
+      href: "/admin/analytics",
+      color: "text-rose-500",
+      bg: "bg-rose-500/10",
+    },
+  ];
 
   return (
     <div className="space-y-8 p-4 sm:p-8 max-w-7xl mx-auto w-full">
@@ -89,53 +81,29 @@ function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold tracking-tight text-foreground">{card.value}</div>
-              <p className="text-xs text-muted-foreground mt-2 font-medium">{card.description}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <Card className="shadow-none border border-border bg-card max-w-3xl">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl">Implementation Tracker</CardTitle>
-          <CardDescription>Track the development phases for the attendance system</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {phases.map((phase, i) => (
-              <div key={i} className="flex items-center gap-4">
-                {phase.status === "completed" ? (
-                  <IconCircleCheck className="h-5 w-5 text-emerald-500" />
-                ) : phase.status === "current" ? (
-                  <IconCircleDashed className="h-5 w-5 text-indigo-500 animate-[spin_4s_linear_infinite]" />
-                ) : (
-                  <IconCircle className="h-5 w-5 text-muted-foreground/30" />
-                )}
-                <span className={`font-medium ${
-                  phase.status === "completed" ? "text-foreground line-through opacity-70" :
-                  phase.status === "current" ? "text-foreground" :
-                  "text-muted-foreground"
-                }`}>
-                  {phase.name}
-                </span>
-                {phase.status === "current" && (
-                  <span className="bg-indigo-500/10 text-indigo-500 text-[10px] uppercase font-bold px-2 py-0.5 rounded-sm tracking-wider">In Progress</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+                <div className="mt-4 flex items-center text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                  {card.href ? (
+                    <Link to={card.href} className="flex items-center hover:underline">
+                      {card.trend}
+                    </Link>
+                  ) : (
+                    <span>{card.trend}</span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
       <Dialog open={missingBuildings}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-106.25">
           <DialogHeader>
             <DialogTitle className="text-xl text-rose-500 flex items-center gap-2">
               <IconShield className="h-5 w-5" />
               Action Required: Campus Setup
             </DialogTitle>
             <DialogDescription className="text-base pt-2 text-foreground/90">
-              Welcome to the Admin Dashboard! It looks like there are no buildings or geofences configured in the system. 
+              Welcome to the Admin Dashboard! It looks like there are no buildings or geofences configured in the system.
               <br /><br />
               Teachers cannot take attendance without valid building geofences. You must set up your campus first.
             </DialogDescription>
