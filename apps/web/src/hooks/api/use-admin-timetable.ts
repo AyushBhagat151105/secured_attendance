@@ -52,7 +52,7 @@ export const useDeleteTimetableEntry = () => {
   });
 };
 
-// â”€â”€â”€ Bulk Import â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Bulk Import ──────────────────────────────────────────────────────────────
 export const usePreviewTimetableImport = () => {
   return useMutation({
     mutationFn: (csv: string) => unwrapEden(apiClient.api.admin.timetable.entries.import.preview.post({ csv })),

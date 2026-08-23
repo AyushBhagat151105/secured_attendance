@@ -219,7 +219,7 @@ function ImportPage() {
 
             <div className="flex justify-between items-center mt-6">
               <Button variant="outline" onClick={handleReset} disabled={isImporting}>
-                â† Back
+                Back
               </Button>
               <div className="flex-1 px-8">
                 {isImporting && (
@@ -253,7 +253,7 @@ function ImportPage() {
             <div>
               <h2 className="text-lg font-semibold">Import Complete</h2>
               <p className="text-muted-foreground text-sm mt-1">
-                {finalResult.created} users created Â· {finalResult.skipped} skipped (already exist)
+                {finalResult.created} users created · {finalResult.skipped} skipped (already exist)
               </p>
               {finalResult.errors?.length > 0 && (
                 <p className="text-destructive text-sm mt-1">

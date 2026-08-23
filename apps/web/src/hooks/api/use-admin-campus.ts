@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import { unwrapEden } from "@/lib/fetch-utils";
 
-// â”€â”€â”€ Buildings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Buildings ────────────────────────────────────────────────────────────────
 export const buildingKeys = {
   all: ["buildings"] as const,
   detail: (id: string) => [...buildingKeys.all, id] as const,
@@ -40,7 +40,7 @@ export const useUpdateBuilding = () => {
   });
 };
 
-// â”€â”€â”€ Rooms â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Rooms ────────────────────────────────────────────────────────────────────
 export const roomKeys = {
   all: ["rooms"] as const,
   detail: (id: string) => [...roomKeys.all, id] as const,

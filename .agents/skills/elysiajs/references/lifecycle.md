@@ -167,7 +167,7 @@ _Caught whenever an error bubbles up from any lifecycle stage._
 
 ```ts
 new Elysia().onError(({ code, status }) => {
-    if (code === 'NOT_FOUND') return status(404, 'â“ Not found')
+    if (code === 'NOT_FOUND') return status(404, 'Not found')
     return new Response('Oops', { status: 500 })
 })
 ```
@@ -182,7 +182,7 @@ _Runs **after** the response has been sent to the client._
 
 ```ts
 new Elysia().onAfterResponse(() =>
-    console.log('âœ… response sent at', Date.now())
+    console.log('response sent at', Date.now())
 )
 ```
 

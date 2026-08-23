@@ -114,7 +114,7 @@ export function BulkImportDropzone({ onFileSelected, isLoading }: BulkImportDrop
                   {isDragging ? "Drop your CSV here" : "Drop CSV or click to browse"}
                 </p>
                 <p className="text-muted-foreground text-xs mt-0.5">
-                  Max {MAX_FILE_SIZE_MB}MB Â· CSV format only
+                  Max {MAX_FILE_SIZE_MB}MB· CSV format only
                 </p>
               </div>
             </>
