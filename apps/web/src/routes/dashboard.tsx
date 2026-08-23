@@ -3,7 +3,9 @@ import { IconCalendarEvent, IconUsersGroup, IconQrcode, IconClockPlay, IconArrow
 import { authClient } from "@/lib/auth-client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTodaySchedule, useStartSession } from "@/hooks/use-teacher";
+import { useState } from "react";
 
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: async () => {
@@ -24,6 +26,7 @@ function RouteComponent() {
   const navigate = useNavigate();
   // Fetch Dashboard Data (Today's Schedule & Active Session)
   const { data: dashboardData, isLoading } = useTodaySchedule();
+  const [geofenceError, setGeofenceError] = useState<string | null>(null);
 
   // Mutation to start a new session
   const startSessionMutation = useStartSession();
@@ -115,7 +118,12 @@ function RouteComponent() {
                           disabled={startSessionMutation.isPending || (hasActiveSession && !isActive)}
                           onClick={() => {
                             startSessionMutation.mutate(entry.id, {
-                              onSuccess: (data) => navigate({ to: `/session/${data.id}` as any })
+                              onSuccess: (data) => navigate({ to: `/session/${data.id}` as any }),
+                              onError: (err) => {
+                                if (err.message.includes("GEOFENCE_NOT_CONFIGURED")) {
+                                  setGeofenceError(err.message.replace("GEOFENCE_NOT_CONFIGURED: ", ""));
+                                }
+                              }
                             });
                           }}
                           variant={isActive ? "secondary" : "default"}
@@ -164,6 +172,20 @@ function RouteComponent() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={!!geofenceError} onOpenChange={() => setGeofenceError(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Geofence Not Configured</DialogTitle>
+            <DialogDescription className="pt-2 text-base">
+              {geofenceError}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setGeofenceError(null)}>Understood</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

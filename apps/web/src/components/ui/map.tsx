@@ -16,8 +16,8 @@ import {
     type PlaceAutocompleteProps,
 } from "@/components/ui/place-autocomplete"
 import type {
-    Circle,
-    CircleMarker,
+    Circle as LCircle,
+    CircleMarker as LCircleMarker,
     DivIconOptions,
     Draw,
     DrawEvents,
@@ -25,21 +25,21 @@ import type {
     DrawOptions,
     EditToolbar,
     ErrorEvent,
-    FeatureGroup,
+    FeatureGroup as LFeatureGroup,
     LatLngExpression,
-    LayerGroup,
+    LayerGroup as LLayerGroup,
     Map as LeafletMap,
     LocateOptions,
     LocationEvent,
-    Marker,
+    Marker as LMarker,
     MarkerCluster,
     PointExpression,
-    Polygon,
-    Polyline,
-    Popup,
-    Rectangle,
-    TileLayer,
-    Tooltip,
+    Polygon as LPolygon,
+    Polyline as LPolyline,
+    Popup as LPopup,
+    Rectangle as LRectangle,
+    TileLayer as LTileLayer,
+    Tooltip as LTooltip,
 } from "leaflet"
 import "leaflet-draw/dist/leaflet.draw.css"
 import "leaflet.fullscreen/dist/Control.FullScreen.css"
@@ -81,6 +81,18 @@ import { renderToString } from "react-dom/server"
 import {
     useMap,
     useMapEvents,
+    MapContainer,
+    TileLayer,
+    Marker,
+    Popup,
+    Tooltip,
+    Circle,
+    CircleMarker,
+    Polyline,
+    Polygon,
+    Rectangle,
+    LayerGroup,
+    FeatureGroup,
     type CircleMarkerProps,
     type CircleProps,
     type LayerGroupProps,
@@ -93,97 +105,7 @@ import {
     type TileLayerProps,
     type TooltipProps,
 } from "react-leaflet"
-import type { MarkerClusterGroupProps } from "react-leaflet-markercluster"
-
-function createLazyComponent<T extends ComponentType<any>>(
-    factory: () => Promise<{ default: T }>
-) {
-    const LazyComponent = lazy(factory)
-
-    return (props: React.ComponentProps<T>) => {
-        const [isMounted, setIsMounted] = useState(false)
-
-        useEffect(() => {
-            setIsMounted(true)
-        }, [])
-
-        if (!isMounted) {
-            return null
-        }
-
-        return (
-            <Suspense>
-                <LazyComponent {...props} />
-            </Suspense>
-        )
-    }
-}
-
-const LeafletMapContainer = createLazyComponent(() =>
-    import("react-leaflet").then((mod) => ({
-        default: mod.MapContainer,
-    }))
-)
-const LeafletTileLayer = createLazyComponent(() =>
-    import("react-leaflet").then((mod) => ({
-        default: mod.TileLayer,
-    }))
-)
-const LeafletMarker = createLazyComponent(() =>
-    import("react-leaflet").then((mod) => ({
-        default: mod.Marker,
-    }))
-)
-const LeafletPopup = createLazyComponent(() =>
-    import("react-leaflet").then((mod) => ({
-        default: mod.Popup,
-    }))
-)
-const LeafletTooltip = createLazyComponent(() =>
-    import("react-leaflet").then((mod) => ({
-        default: mod.Tooltip,
-    }))
-)
-const LeafletCircle = createLazyComponent(() =>
-    import("react-leaflet").then((mod) => ({
-        default: mod.Circle,
-    }))
-)
-const LeafletCircleMarker = createLazyComponent(() =>
-    import("react-leaflet").then((mod) => ({
-        default: mod.CircleMarker,
-    }))
-)
-const LeafletPolyline = createLazyComponent(() =>
-    import("react-leaflet").then((mod) => ({
-        default: mod.Polyline,
-    }))
-)
-const LeafletPolygon = createLazyComponent(() =>
-    import("react-leaflet").then((mod) => ({
-        default: mod.Polygon,
-    }))
-)
-const LeafletRectangle = createLazyComponent(() =>
-    import("react-leaflet").then((mod) => ({
-        default: mod.Rectangle,
-    }))
-)
-const LeafletLayerGroup = createLazyComponent(() =>
-    import("react-leaflet").then((mod) => ({
-        default: mod.LayerGroup,
-    }))
-)
-const LeafletFeatureGroup = createLazyComponent(() =>
-    import("react-leaflet").then((mod) => ({
-        default: mod.FeatureGroup,
-    }))
-)
-const LeafletMarkerClusterGroup = createLazyComponent(async () =>
-    import("react-leaflet-markercluster").then((mod) => ({
-        default: mod.default,
-    }))
-)
+import MarkerClusterGroup, { type MarkerClusterGroupProps } from "react-leaflet-markercluster"
 
 function Map({
     zoom = 15,
@@ -191,11 +113,11 @@ function Map({
     className,
     ...props
 }: Omit<MapContainerProps, "zoomControl"> & {
-    center: LatLngExpression
+    center?: LatLngExpression
     ref?: Ref<LeafletMap>
 }) {
     return (
-        <LeafletMapContainer
+        <MapContainer
             zoom={zoom}
             maxZoom={maxZoom}
             attributionControl={false}
@@ -251,7 +173,7 @@ function MapTileLayer({
     name?: string
     darkUrl?: string
     darkAttribution?: string
-    ref?: Ref<TileLayer>
+    ref?: Ref<LTileLayer>
 }) {
     const map = useMap()
     if (map.attributionControl) {
@@ -260,9 +182,9 @@ function MapTileLayer({
 
     const context = useContext(MapLayersContext)
     const DEFAULT_URL =
-        "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
     const DEFAULT_DARK_URL =
-        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 
     const { resolvedTheme } = useTheme()
     const resolvedUrl =
@@ -290,7 +212,7 @@ function MapTileLayer({
     }
 
     return (
-        <LeafletTileLayer
+        <TileLayer
             url={resolvedUrl}
             attribution={resolvedAttribution}
             {...props}
@@ -302,7 +224,7 @@ function MapLayerGroup({
     name,
     disabled,
     ...props
-}: LayerGroupProps & MapLayerGroupOption & { ref?: Ref<LayerGroup> }) {
+}: LayerGroupProps & MapLayerGroupOption & { ref?: Ref<LLayerGroup> }) {
     const context = useMapLayersContext()
 
     useEffect(() => {
@@ -318,14 +240,14 @@ function MapLayerGroup({
         return null
     }
 
-    return <LeafletLayerGroup {...props} />
+    return <LayerGroup {...props} />
 }
 
-function MapFeatureGroup({
+function MapLFeatureGroup({
     name,
     disabled,
     ...props
-}: LayerGroupProps & MapLayerGroupOption & { ref?: Ref<FeatureGroup> }) {
+}: LayerGroupProps & MapLayerGroupOption & { ref?: Ref<LFeatureGroup> }) {
     const context = useMapLayersContext()
 
     useEffect(() => {
@@ -341,7 +263,7 @@ function MapFeatureGroup({
         return null
     }
 
-    return <LeafletFeatureGroup {...props} />
+    return <FeatureGroup {...props} />
 }
 
 function MapLayers({
@@ -565,13 +487,13 @@ function MapMarker({
         "iconAnchor" | "bgPos" | "popupAnchor" | "tooltipAnchor"
     > & {
         icon?: ReactNode
-        ref?: Ref<Marker>
+        ref?: Ref<LMarker>
     }) {
     const { L } = useLeaflet()
     if (!L) return null
 
     return (
-        <LeafletMarker
+        <Marker
             icon={L.divIcon({
                 html: renderToString(icon),
                 iconAnchor,
@@ -612,7 +534,7 @@ function MapMarkerClusterGroup({
         : undefined
 
     return (
-        <LeafletMarkerClusterGroup
+        <MarkerClusterGroup
             polygonOptions={polygonOptions}
             spiderLegPolylineOptions={spiderLegPolylineOptions}
             iconCreateFunction={iconCreateFunction}
@@ -624,9 +546,9 @@ function MapMarkerClusterGroup({
 function MapCircle({
     className,
     ...props
-}: CircleProps & { ref?: Ref<Circle> }) {
+}: CircleProps & { ref?: Ref<LCircle> }) {
     return (
-        <LeafletCircle
+        <Circle
             className={cn(
                 "fill-foreground stroke-foreground stroke-2",
                 className
@@ -639,9 +561,9 @@ function MapCircle({
 function MapCircleMarker({
     className,
     ...props
-}: CircleMarkerProps & { ref?: Ref<CircleMarker> }) {
+}: CircleMarkerProps & { ref?: Ref<LCircleMarker> }) {
     return (
-        <LeafletCircleMarker
+        <CircleMarker
             className={cn(
                 "fill-foreground stroke-foreground stroke-2",
                 className
@@ -654,9 +576,9 @@ function MapCircleMarker({
 function MapPolyline({
     className,
     ...props
-}: PolylineProps & { ref?: Ref<Polyline> }) {
+}: PolylineProps & { ref?: Ref<LPolyline> }) {
     return (
-        <LeafletPolyline
+        <Polyline
             className={cn(
                 "fill-foreground stroke-foreground stroke-2",
                 className
@@ -669,9 +591,9 @@ function MapPolyline({
 function MapPolygon({
     className,
     ...props
-}: PolygonProps & { ref?: Ref<Polygon> }) {
+}: PolygonProps & { ref?: Ref<LPolygon> }) {
     return (
-        <LeafletPolygon
+        <Polygon
             className={cn(
                 "fill-foreground stroke-foreground stroke-2",
                 className
@@ -684,9 +606,9 @@ function MapPolygon({
 function MapRectangle({
     className,
     ...props
-}: RectangleProps & { ref?: Ref<Rectangle> }) {
+}: RectangleProps & { ref?: Ref<LRectangle> }) {
     return (
-        <LeafletRectangle
+        <Rectangle
             className={cn(
                 "fill-foreground stroke-foreground stroke-2",
                 className
@@ -699,9 +621,9 @@ function MapRectangle({
 function MapPopup({
     className,
     ...props
-}: Omit<PopupProps, "content"> & { ref?: Ref<Popup> }) {
+}: Omit<PopupProps, "content"> & { ref?: Ref<LPopup> }) {
     return (
-        <LeafletPopup
+        <Popup
             className={cn(
                 "bg-popover text-popover-foreground animate-in fade-out-0 fade-in-0 zoom-out-95 zoom-in-95 slide-in-from-bottom-2 z-50 w-72 rounded-md border p-4 font-sans shadow-md outline-hidden",
                 className
@@ -720,7 +642,7 @@ function MapTooltip({
 }: Omit<TooltipProps, "offset"> & {
     side?: "top" | "right" | "bottom" | "left"
     sideOffset?: number
-    ref?: Ref<Tooltip>
+    ref?: Ref<LTooltip>
 }) {
     const ARROW_POSITION_CLASSES = {
         top: "bottom-0.5 left-1/2 -translate-x-1/2 translate-y-1/2",
@@ -736,7 +658,7 @@ function MapTooltip({
     }
 
     return (
-        <LeafletTooltip
+        <Tooltip
             className={cn(
                 "animate-in fade-in-0 zoom-in-95 fade-out-0 zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 w-fit text-xs text-balance transition-opacity",
                 className
@@ -753,7 +675,7 @@ function MapTooltip({
                     ARROW_POSITION_CLASSES[side]
                 )}
             />
-        </LeafletTooltip>
+        </Tooltip>
     )
 }
 
@@ -1043,7 +965,7 @@ function MapDrawControl({
                 deleteControlRef,
                 layersCount,
             }}>
-            <LeafletFeatureGroup ref={featureGroupRef} />
+            <FeatureGroup ref={featureGroupRef} />
             <MapControlContainer className={cn(position, className)}>
                 <ButtonGroup orientation="vertical" {...props} />
             </MapControlContainer>
@@ -1527,7 +1449,7 @@ export {
     MapDrawPolyline,
     MapDrawRectangle,
     MapDrawUndo,
-    MapFeatureGroup,
+    MapLFeatureGroup,
     MapFullscreenControl,
     MapLayerGroup,
     MapLayers,

@@ -88,7 +88,7 @@ export class StudentScheduleService {
         if (entry.room && s.roomId !== entry.room.id) return false;
         
         // Check if session was created roughly around the timetable entry start time
-        const [startHour, startMin] = entry.startTime.split(':').map(Number);
+        const [startHour = 0, startMin = 0] = entry.startTime.split(':').map(Number);
         const slotTimeMins = startHour * 60 + startMin;
         const sessionTimeMins = s.createdAt.getHours() * 60 + s.createdAt.getMinutes();
         return Math.abs(sessionTimeMins - slotTimeMins) <= 60;
@@ -100,7 +100,7 @@ export class StudentScheduleService {
           if (s.subjectId !== entry.subjectId) return false;
           if (entry.room && s.roomId !== entry.room.id) return false;
           
-          const [startHour, startMin] = entry.startTime.split(':').map(Number);
+          const [startHour = 0, startMin = 0] = entry.startTime.split(':').map(Number);
           const slotTimeMins = startHour * 60 + startMin;
           const sessionTimeMins = s.createdAt.getHours() * 60 + s.createdAt.getMinutes();
           return Math.abs(sessionTimeMins - slotTimeMins) <= 60;
@@ -119,7 +119,7 @@ export class StudentScheduleService {
           if (s.subjectId !== entry.subjectId || s.status !== "closed") return false;
           if (entry.room && s.roomId !== entry.room.id) return false;
           
-          const [startHour, startMin] = entry.startTime.split(':').map(Number);
+          const [startHour = 0, startMin = 0] = entry.startTime.split(':').map(Number);
           const slotTimeMins = startHour * 60 + startMin;
           const sessionTimeMins = s.createdAt.getHours() * 60 + s.createdAt.getMinutes();
           return Math.abs(sessionTimeMins - slotTimeMins) <= 60;

@@ -120,6 +120,11 @@ export class TeacherService {
       where: { id: timetableEntryId },
       include: {
         divisions: true,
+        room: {
+          include: {
+            building: true,
+          }
+        }
       },
     });
 
@@ -129,6 +134,13 @@ export class TeacherService {
 
     if (!entry.teacherCodes.includes(profile.code)) {
       return status(403, { message: "You are not assigned to this class" });
+    }
+
+    // Validate Geofence Configuration
+    if (!entry.room?.building?.gpsLat || !entry.room?.building?.radiusMeters) {
+      return status(400, { 
+        message: "GEOFENCE_NOT_CONFIGURED: The geofence for this classroom has not been set up. Please contact the administrator to set the building's GPS coordinates before taking attendance." 
+      });
     }
 
     // Create session

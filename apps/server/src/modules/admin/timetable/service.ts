@@ -176,6 +176,10 @@ export class TimetableService {
     let validCount = 0;
     let invalidCount = 0;
 
+    // Fetch existing rooms for validation
+    const existingRooms = await prisma.room.findMany({ select: { name: true } });
+    const roomNames = new Set(existingRooms.map(r => r.name.toLowerCase()));
+
     for (const row of parsedRows as any[]) {
       // Skip empty periods/breaks where subjectCode is literally empty or a dash
       if (!row.subjectCode || row.subjectCode.trim() === "—" || row.subjectCode.trim() === "-" || row.subjectCode.trim() === "") {
@@ -196,6 +200,10 @@ export class TimetableService {
       if (!row.startTime) errors.push("Missing startTime");
       if (!row.endTime) errors.push("Missing endTime");
       if (!row.teacherCode) errors.push("Missing teacherCode");
+
+      if (row.roomName && !roomNames.has(row.roomName.toLowerCase())) {
+        errors.push(`Room '${row.roomName}' not found. Please create it in Campus Management first.`);
+      }
 
       if (errors.length === 0) {
         validCount++;
@@ -310,36 +318,12 @@ export class TimetableService {
           });
         }
 
-        // 6. Resolve or Create Room
-        let room = await prisma.room.findFirst({
+        // 6. Resolve Room
+        const room = await prisma.room.findFirst({
           where: { name: row.roomName },
         });
         if (!room) {
-          let defaultBuilding = await prisma.building.findFirst();
-          if (!defaultBuilding) {
-            defaultBuilding = await prisma.building.create({
-              data: {
-                name: "Main Campus",
-                code: "MAIN",
-                gpsLat: 0,
-                gpsLng: 0,
-                radiusMeters: 500,
-              },
-            });
-          }
-
-          const lowerName = row.roomName.toLowerCase();
-          let roomType = "classroom";
-          if (lowerName.includes("lab")) roomType = "lab";
-          else if (lowerName.includes("auditorium")) roomType = "auditorium";
-
-          room = await prisma.room.create({
-            data: {
-              name: row.roomName,
-              type: roomType,
-              buildingId: defaultBuilding.id,
-            },
-          });
+          throw new Error(`Room '${row.roomName}' not found. Please create it in Campus Management first.`);
         }
 
         // 7. Parse dayOfWeek and teachers

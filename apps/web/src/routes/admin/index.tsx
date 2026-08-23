@@ -1,7 +1,10 @@
 import { IconUsers, IconChartBar, IconShield, IconClock, IconCircleCheck, IconCircleDashed, IconCircle } from "@tabler/icons-react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useBuildings } from "@/hooks/use-admin-campus";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminDashboard,
@@ -62,6 +65,10 @@ const phases = [
 ];
 
 function AdminDashboard() {
+  const navigate = useNavigate();
+  const { data: buildings, isLoading } = useBuildings();
+  const missingBuildings = !isLoading && buildings && buildings.length === 0;
+
   return (
     <div className="space-y-8 p-4 sm:p-8 max-w-7xl mx-auto w-full">
       <div className="flex flex-col gap-1 border-b border-border pb-6">
@@ -119,6 +126,27 @@ function AdminDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={missingBuildings}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-rose-500 flex items-center gap-2">
+              <IconShield className="h-5 w-5" />
+              Action Required: Campus Setup
+            </DialogTitle>
+            <DialogDescription className="text-base pt-2 text-foreground/90">
+              Welcome to the Admin Dashboard! It looks like there are no buildings or geofences configured in the system. 
+              <br /><br />
+              Teachers cannot take attendance without valid building geofences. You must set up your campus first.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => navigate({ to: "/admin/campus" })}>
+              Set up Campus Now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

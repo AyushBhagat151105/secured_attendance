@@ -17,6 +17,32 @@ function TeacherMapRoute() {
   if (error) return <div className="p-8 text-red-500">Failed to load map data.</div>;
   if (!data) return null;
 
+  // Calculate dynamic bounds to fit both the geofence and all student check-ins
+  let bounds: [[number, number], [number, number]] | undefined = undefined;
+  
+  if (data) {
+    let minLat = data.geofence.centerLat;
+    let maxLat = data.geofence.centerLat;
+    let minLng = data.geofence.centerLng;
+    let maxLng = data.geofence.centerLng;
+
+    data.points.forEach((point: any) => {
+      if (point.lat < minLat) minLat = point.lat;
+      if (point.lat > maxLat) maxLat = point.lat;
+      if (point.lng < minLng) minLng = point.lng;
+      if (point.lng > maxLng) maxLng = point.lng;
+    });
+
+    // Add padding to bounds
+    const latPadding = Math.max((maxLat - minLat) * 0.1, 0.001);
+    const lngPadding = Math.max((maxLng - minLng) * 0.1, 0.001);
+    
+    bounds = [
+      [minLat - latPadding, minLng - lngPadding],
+      [maxLat + latPadding, maxLng + lngPadding]
+    ];
+  }
+
   return (
     <div className="space-y-6 p-4 sm:p-8 max-w-7xl mx-auto w-full h-[calc(100vh-4rem)] flex flex-col">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -37,8 +63,7 @@ function TeacherMapRoute() {
       <Card className="flex-1 flex flex-col overflow-hidden">
         <CardContent className="p-0 flex-1 relative z-0">
           <Map
-            center={[data.geofence.centerLat, data.geofence.centerLng] as [number, number]}
-            zoom={18}
+            bounds={bounds}
             className="h-full w-full"
           >
             <MapTileLayer />
