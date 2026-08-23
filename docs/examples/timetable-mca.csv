@@ -1,0 +1,5 @@
+programCode,academicYear,semester,division,subjectCode,subjectName,roomName,dayOfWeek,startTime,endTime,teacherCode,type
+mca,2026-2027,1,A,CAUC506,Enterprise Computing using Java EE,Class-9,0,09:10,10:10,HMP,lecture
+mca,2026-2027,1,A,CAUC506,Enterprise Computing using Java EE,Lab-1,0,10:10,12:10,HMP,lab
+mca,2026-2027,1,A,CAUC507,Data Structures,Class-9,1,09:10,10:10,NV,lecture
+mca,2026-2027,1,A,CAUC508,Database Management,Class-9,2,11:10,12:10,RP,lecture

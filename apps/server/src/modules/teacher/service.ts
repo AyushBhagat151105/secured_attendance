@@ -18,14 +18,14 @@ export class TeacherService {
       return status(404, { message: "Teacher profile not found" });
     }
 
-    // Convert JS day (0=Sun, 1=Mon) to DB day (0=Mon, 5=Sat)
+    // JS getDay(): 0 = Sunday, 1 = Monday.
+    // The DB stores dayOfWeek using this exact mapping (0=Sunday, 1=Monday).
     const jsDay = new Date().getDay();
-    const dbDayOfWeek = jsDay === 0 ? 6 : jsDay - 1;
 
     // Get today's schedule
     const schedule = await prisma.timetableEntry.findMany({
       where: {
-        dayOfWeek: dbDayOfWeek,
+        dayOfWeek: jsDay,
         teacherCodes: {
           has: profile.code,
         },
@@ -42,6 +42,29 @@ export class TeacherService {
       orderBy: {
         startTime: "asc",
       },
+    });
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    // Fetch today's sessions to see which schedule slots are already completed
+    const todaysSessions = await prisma.attendanceSession.findMany({
+      where: {
+        teacherProfileId: profile.id,
+        createdAt: { gte: todayStart },
+      },
+    });
+
+    // Attach completedSessionId to schedule entries
+    const scheduleWithCompletion = schedule.map(entry => {
+      const completedSession = todaysSessions.find(
+        s => s.subjectId === entry.subjectId && s.roomId === entry.roomId && s.status === "closed"
+      );
+      
+      return {
+        ...entry,
+        completedSessionId: completedSession?.id,
+      };
     });
 
     // Get active session
@@ -63,7 +86,7 @@ export class TeacherService {
 
     return {
       teacher: profile,
-      schedule,
+      schedule: scheduleWithCompletion,
       activeSession,
     };
   }
@@ -171,6 +194,18 @@ export class TeacherService {
       return status(400, { message: "Session is already closed" });
     }
 
+    const attendanceCount = await prisma.attendance.count({
+      where: { sessionId }
+    });
+
+    if (attendanceCount === 0) {
+      await prisma.attendanceSession.delete({
+        where: { id: sessionId }
+      });
+      logger.info("Session deleted (0 attendance)", { sessionId, teacherCode: profile.code });
+      return { success: true, deleted: true, message: "Session deleted because it had 0 attendance" };
+    }
+
     const closed = await prisma.attendanceSession.update({
       where: { id: sessionId },
       data: {
@@ -181,6 +216,42 @@ export class TeacherService {
 
     logger.info("Session closed", { sessionId: closed.id, teacherCode: profile.code });
 
-    return closed;
+    return { success: true, deleted: false, session: closed };
+  }
+
+  /**
+   * Deletes a session explicitly (e.g. if the teacher made a mistake or was just testing).
+   */
+  static async deleteSession(userId: string, sessionId: string) {
+    if (process.env.NODE_ENV !== "development") {
+      return status(403, { message: "Session deletion is only allowed in development mode." });
+    }
+
+    const profile = await prisma.teacherProfile.findUnique({
+      where: { userId },
+    });
+
+    if (!profile) {
+      return status(404, { message: "Teacher profile not found" });
+    }
+    const session = await prisma.attendanceSession.findUnique({
+      where: { id: sessionId },
+    });
+
+    if (!session) {
+      return status(404, { message: "Session not found" });
+    }
+
+    if (session.teacherProfileId !== profile.id) {
+      return status(403, { message: "Not authorized to delete this session" });
+    }
+
+    await prisma.attendanceSession.delete({
+      where: { id: sessionId },
+    });
+
+    logger.info("Session deleted manually", { sessionId, teacherCode: profile.code });
+
+    return { success: true };
   }
 }

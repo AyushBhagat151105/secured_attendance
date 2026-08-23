@@ -31,8 +31,8 @@ export const studentModule = new Elysia({ prefix: "/api/student" })
     return StudentHistoryService.getStats(user.id);
   }, { requireAuth: true, response: AttendanceStats })
 
-  .post("/attendance/scan", async ({ user, body, status }) => {
-    const result = await StudentService.submitAttendance(user.id, body);
+  .post("/attendance/scan", async ({ user, body, status, server }) => {
+    const result = await StudentService.submitAttendance(user.id, body, server);
     if (!result.success) {
       switch (result.error) {
         case "NOT_FOUND": return status(404, { message: result.message });

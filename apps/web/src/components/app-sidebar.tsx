@@ -79,6 +79,10 @@ const data = {
       icon: <IconChartBar />,
       items: [
         {
+          title: "Analytics",
+          url: "/admin/analytics",
+        },
+        {
           title: "Attendance",
           url: "/admin/attendance",
         },

@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate, Link } from "@tanstack/react-router";
 import { IconCalendarEvent, IconUsersGroup, IconQrcode, IconClockPlay, IconArrowRight, IconChalkboard } from "@tabler/icons-react";
 import { authClient } from "@/lib/auth-client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -104,28 +104,36 @@ function RouteComponent() {
                         </div>
                       </div>
                       
-                      <Button 
-                        disabled={startSessionMutation.isPending || (hasActiveSession && !isActive)}
-                        onClick={() => {
-                          startSessionMutation.mutate(entry.id, {
-                            onSuccess: (data) => navigate({ to: `/session/${data.id}` as any })
-                          });
-                        }}
-                        variant={isActive ? "secondary" : "default"}
-                        className="w-full sm:w-auto shrink-0"
-                      >
-                        {isActive ? (
-                          <>
-                            <IconArrowRight className="h-4 w-4 mr-2" />
-                            Active
-                          </>
-                        ) : (
-                          <>
-                            <IconClockPlay className="h-4 w-4 mr-2" />
-                            Start Session
-                          </>
-                        )}
-                      </Button>
+                      {entry.completedSessionId ? (
+                        <Link to="/reports/session/$sessionId" params={{ sessionId: entry.completedSessionId }}>
+                          <Button variant="secondary" className="w-full sm:w-auto shrink-0 border-green-500/20 bg-green-500/10 text-green-600 hover:bg-green-500/20">
+                            Completed • View Report
+                          </Button>
+                        </Link>
+                      ) : (
+                        <Button 
+                          disabled={startSessionMutation.isPending || (hasActiveSession && !isActive)}
+                          onClick={() => {
+                            startSessionMutation.mutate(entry.id, {
+                              onSuccess: (data) => navigate({ to: `/session/${data.id}` as any })
+                            });
+                          }}
+                          variant={isActive ? "secondary" : "default"}
+                          className="w-full sm:w-auto shrink-0"
+                        >
+                          {isActive ? (
+                            <>
+                              <IconArrowRight className="h-4 w-4 mr-2" />
+                              Active
+                            </>
+                          ) : (
+                            <>
+                              <IconClockPlay className="h-4 w-4 mr-2" />
+                              Start Session
+                            </>
+                          )}
+                        </Button>
+                      )}
                     </div>
                   );
                 })}

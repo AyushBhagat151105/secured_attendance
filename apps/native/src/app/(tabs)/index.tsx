@@ -18,6 +18,7 @@ const COLORS = {
   muted: "#6b7280",
   success: "#10b981",
   orange: "#f97316",
+  destructive: "#ef4444",
 };
 
 export default function HomeScreen() {
@@ -60,14 +61,24 @@ export default function HomeScreen() {
         </View>
       </View>
       
-      {item.activeSession && (
+      {item.attendanceStatus === "PRESENT" ? (
+        <View style={[styles.scanButton, { backgroundColor: COLORS.success + '20', paddingHorizontal: 12, paddingVertical: 6, flexDirection: 'row', alignItems: 'center' }]}>
+          <Ionicons name="checkmark-circle" size={16} color={COLORS.success} style={{ marginRight: 4 }} />
+          <Text style={{ color: COLORS.success, fontWeight: '600', fontSize: 12 }}>Present</Text>
+        </View>
+      ) : item.attendanceStatus === "ABSENT" ? (
+        <View style={[styles.scanButton, { backgroundColor: COLORS.destructive + '20', paddingHorizontal: 12, paddingVertical: 6, flexDirection: 'row', alignItems: 'center' }]}>
+          <Ionicons name="close-circle" size={16} color={COLORS.destructive} style={{ marginRight: 4 }} />
+          <Text style={{ color: COLORS.destructive, fontWeight: '600', fontSize: 12 }}>Missed</Text>
+        </View>
+      ) : item.activeSession ? (
         <TouchableOpacity 
           onPress={() => router.push("/(tabs)/scan")}
           style={[styles.scanButton, { backgroundColor: COLORS.primary, paddingHorizontal: 16, paddingVertical: 8 }]}
         >
           <Text style={{ color: 'white', fontWeight: '600' }}>Scan</Text>
         </TouchableOpacity>
-      )}
+      ) : null}
     </View>
   );
 

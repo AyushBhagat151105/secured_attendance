@@ -346,6 +346,36 @@ export class TimetableService {
         const dayOfWeek = parseInt(row.dayOfWeek, 10);
         const teacherCodes = row.teacherCode.split(",").map((t: string) => t.trim());
 
+        // Validate TeacherProfiles exist
+        const teachers = await prisma.teacherProfile.findMany({
+          where: { code: { in: teacherCodes } }
+        });
+        
+        if (teachers.length !== teacherCodes.length) {
+          const foundCodes = teachers.map(t => t.code);
+          const missing = teacherCodes.filter((c: string) => !foundCodes.includes(c));
+          throw new Error(`Teachers not found: ${missing.join(", ")}`);
+        }
+
+        // 8. Create Teaching Assignments for each teacher
+        for (const teacher of teachers) {
+          await prisma.teachingAssignment.upsert({
+            where: {
+              teacherProfileId_subjectId_divisionId: {
+                teacherProfileId: teacher.id,
+                subjectId: subject.id,
+                divisionId: division.id,
+              }
+            },
+            create: {
+              teacherProfileId: teacher.id,
+              subjectId: subject.id,
+              divisionId: division.id,
+            },
+            update: {}
+          });
+        }
+
         // Check for exact duplicate
         const existing = await prisma.timetableEntry.findFirst({
           where: {

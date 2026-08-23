@@ -143,7 +143,7 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
               programCode: parsed?.programCode ?? row.program_code?.trim() ?? "",
               semester: isNaN(semester) ? 1 : semester,
               division,
-              tempPassword: row.password || env.DEFAULT_TEACHER_PASSWORD,
+              tempPassword: row.password || env.DEFAULT_STUDENT_PASSWORD,
               errors,
             };
           });
@@ -218,7 +218,6 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
                   email: row.email,
                   password: row.tempPassword!,
                   name: row.name,
-                  requiresPasswordChange: true,
                 },
                 asResponse: false,
               });
@@ -228,17 +227,92 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
               // Update role
               const user = await prisma.user.update({
                 where: { id: result.user.id },
-                data: { role: "student" },
+                data: { 
+                  role: "student",
+                  requiresPasswordChange: true
+                },
               });
 
               const parsed = parseEnrollmentNo(row.enrollmentNo);
+              const finalProgramCode = parsed?.programCode ?? row.programCode;
+              
+              // 1. Resolve Academic Year
+              let academicYear = await prisma.academicYear.findFirst({ where: { isCurrent: true } });
+              if (!academicYear) {
+                const currentYear = new Date().getFullYear();
+                academicYear = await prisma.academicYear.findFirst({ where: { name: `${currentYear}-${currentYear + 1}` } });
+                if (!academicYear) {
+                  academicYear = await prisma.academicYear.create({
+                    data: {
+                      name: `${currentYear}-${currentYear + 1}`,
+                      startDate: new Date(`${currentYear}-06-01T00:00:00.000Z`),
+                      endDate: new Date(`${currentYear + 1}-05-31T23:59:59.999Z`),
+                      isCurrent: true,
+                    },
+                  });
+                }
+              }
+
+              // 2. Resolve Program
+              let program = await prisma.program.findUnique({ where: { code: finalProgramCode } });
+              if (!program) {
+                program = await prisma.program.create({
+                  data: {
+                    code: finalProgramCode,
+                    name: finalProgramCode.toUpperCase(),
+                    shortName: finalProgramCode.toUpperCase(),
+                  },
+                });
+              }
+
+              // 3. Resolve ProgramSemester
+              let programSemester = await prisma.programSemester.findUnique({
+                where: {
+                  programId_academicYearId_semester: {
+                    programId: program.id,
+                    academicYearId: academicYear.id,
+                    semester: row.semester,
+                  },
+                },
+              });
+              if (!programSemester) {
+                const orgSlug = `${program.shortName.toLowerCase()}-sem-${row.semester}-${academicYear.name.toLowerCase().replace(/\s+/g, '-')}`;
+                programSemester = await prisma.programSemester.create({
+                  data: {
+                    programId: program.id,
+                    academicYearId: academicYear.id,
+                    semester: row.semester,
+                    orgSlug,
+                  },
+                });
+              }
+
+              // 4. Resolve Division
+              let division = await prisma.division.findUnique({
+                where: {
+                  programSemesterId_name: {
+                    programSemesterId: programSemester.id,
+                    name: row.division,
+                  },
+                },
+              });
+              if (!division) {
+                division = await prisma.division.create({
+                  data: {
+                    name: row.division,
+                    programSemesterId: programSemester.id,
+                  },
+                });
+              }
+
               await prisma.studentProfile.create({
                 data: {
                   userId: user.id,
                   enrollmentNo: row.enrollmentNo,
-                  programCode: parsed?.programCode ?? row.programCode,
+                  programCode: finalProgramCode,
                   admissionYear: parsed?.admissionYear ?? new Date().getFullYear(),
                   rollNumber: parsed?.rollNumber ?? "",
+                  divisionId: division.id,
                   status: "pending",
                 },
               });
@@ -265,7 +339,6 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
                   email: row.email,
                   password: row.tempPassword!,
                   name: row.name,
-                  requiresPasswordChange: true,
                 },
                 asResponse: false,
               });
@@ -275,7 +348,10 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
               // Update role
               const user = await prisma.user.update({
                 where: { id: result.user.id },
-                data: { role: "teacher" },
+                data: { 
+                  role: "teacher",
+                  requiresPasswordChange: true
+                },
               });
 
               await prisma.teacherProfile.create({

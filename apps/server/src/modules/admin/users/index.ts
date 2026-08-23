@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import { requireRole } from "../../auth/guards";
-import { UpdateUserBody, UserIdParam, UsersListQuery, CreateTeacherBody } from "./model";
+import { UpdateUserBody, UserIdParam, UsersListQuery, CreateTeacherBody, CreateStudentBody, CreateAdminBody } from "./model";
 import { AdminUsersService } from "./service";
 import { logger } from "../../../lib/logger";
 
@@ -32,6 +32,18 @@ export const adminUsersModule = new Elysia({ prefix: "/users" })
     { body: CreateTeacherBody },
   )
 
+  .post(
+    "/student",
+    async ({ body }) => AdminUsersService.createStudent(body),
+    { body: CreateStudentBody },
+  )
+
+  .post(
+    "/admin",
+    async ({ body }) => AdminUsersService.createAdmin(body),
+    { body: CreateAdminBody },
+  )
+
   .patch(
     "/:id",
     async ({ params: { id }, body }) => AdminUsersService.updateUser(id, body),
@@ -41,9 +53,15 @@ export const adminUsersModule = new Elysia({ prefix: "/users" })
     },
   )
 
+  .post(
+    "/:id/suspend",
+    async ({ params: { id } }) => AdminUsersService.suspendUser(id),
+    { params: UserIdParam },
+  )
+
   .delete(
     "/:id",
-    async ({ params: { id } }) => AdminUsersService.suspendUser(id),
+    async ({ params: { id } }) => AdminUsersService.deleteUser(id),
     { params: UserIdParam },
   )
 

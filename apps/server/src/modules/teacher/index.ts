@@ -1,6 +1,7 @@
 import { Elysia, status, t } from "elysia";
 import { requireRole } from "../auth/guards";
 import { TeacherService } from "./service";
+import { teacherReportModule } from "./report";
 import { CreateSessionBody } from "./model";
 import { auth } from "@secured_attendance/auth";
 import prisma from "@secured_attendance/db";
@@ -12,6 +13,7 @@ const activeTimers = new Map<string, ReturnType<typeof setInterval>>();
 
 export const teacherModule = new Elysia({ prefix: "/api/teacher" })
   .use(requireRole(["teacher"]))
+  .use(teacherReportModule)
   
   // REST ENDPOINTS
   .get("/schedule/today", async ({ request }) => {
@@ -33,6 +35,13 @@ export const teacherModule = new Elysia({ prefix: "/api/teacher" })
     if (!session) return status(401, { message: "Unauthorized" });
 
     return TeacherService.closeSession(session.user.id, params.id);
+  })
+  
+  .delete("/sessions/:id", async ({ request, params }) => {
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (!session) return status(401, { message: "Unauthorized" });
+
+    return TeacherService.deleteSession(session.user.id, params.id);
   })
 
   // WEBSOCKET GATEWAY
@@ -87,6 +96,9 @@ export const teacherModule = new Elysia({ prefix: "/api/teacher" })
 
       logger.info("Teacher connected to WS", { sessionId });
 
+      // Subscribe to live feed updates for this session
+      ws.subscribe(`session-${sessionId}`);
+
       // Generate a single token immediately and send it
       const generateAndSendTokens = async () => {
         try {
@@ -127,6 +139,16 @@ export const teacherModule = new Elysia({ prefix: "/api/teacher" })
           logger.error("Failed to generate QR tokens", { error });
         }
       };
+
+      // Send initial attendance count
+      try {
+        const count = await prisma.attendance.count({
+          where: { sessionId }
+        });
+        ws.send({ type: "ATTENDANCE_COUNT", count });
+      } catch (e) {
+        logger.error("Failed to send initial attendance count", { error: e });
+      }
 
       // Send initial batch
       await generateAndSendTokens();

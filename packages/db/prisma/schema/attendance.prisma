@@ -60,7 +60,7 @@ model Attendance {
   studentProfileId String
   studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id])
   sessionId        String
-  session          AttendanceSession @relation(fields: [sessionId], references: [id])
+  session          AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   // Submitted data
   timestamp        DateTime @default(now())

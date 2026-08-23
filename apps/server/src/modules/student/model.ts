@@ -35,6 +35,7 @@ export const ScheduleSlot = t.Object({
     id: t.String(),
     status: t.String(),
   })),
+  attendanceStatus: t.Optional(t.String()),
 });
 
 export const ScheduleResponse = t.Array(ScheduleSlot);

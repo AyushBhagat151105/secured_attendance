@@ -25,6 +25,8 @@ import {
 import { DeviceRebindDialog } from "./device-rebind-dialog";
 import { EditUserDialog } from "./edit-user-dialog";
 import { SuspendUserAlert } from "./suspend-user-alert";
+import { DeleteUserAlert } from "./delete-user-alert";
+import { IconTrash } from "@tabler/icons-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -41,6 +43,10 @@ export interface UserRow {
     deviceBound: boolean;
     deviceModel?: string | null;
     programCode: string;
+    division?: { 
+      name: string;
+      programSemester?: { semester: number };
+    };
   } | null;
   teacherProfile?: {
     code: string;
@@ -92,6 +98,7 @@ function getInitials(name: string): string {
 function ActionCell({ user }: { user: UserRow }) {
   const [editOpen, setEditOpen] = useState(false);
   const [suspendOpen, setSuspendOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [rebindOpen, setRebindOpen] = useState(false);
 
   return (
@@ -123,16 +130,24 @@ function ActionCell({ user }: { user: UserRow }) {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() => setSuspendOpen(true)}
-            className="text-destructive focus:text-destructive"
           >
             <IconLock className="mr-2 h-4 w-4" />
             Suspend
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => setDeleteOpen(true)}
+            className="text-destructive focus:text-destructive focus:bg-destructive/10"
+          >
+            <IconTrash className="mr-2 h-4 w-4" />
+            Delete User
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
       <EditUserDialog user={user} open={editOpen} onOpenChange={setEditOpen} />
       <SuspendUserAlert userId={user.id} userName={user.name} open={suspendOpen} onOpenChange={setSuspendOpen} />
+      <DeleteUserAlert userId={user.id} userName={user.name} open={deleteOpen} onOpenChange={setDeleteOpen} />
       <DeviceRebindDialog userId={user.id} userName={user.name} open={rebindOpen} onOpenChange={setRebindOpen} />
     </>
   );
@@ -244,3 +259,74 @@ export const userColumns: LegacyColumnDef<UserRow>[] = [
     cell: ({ row }) => <ActionCell user={row.original} />,
   },
 ];
+
+export const studentColumns: LegacyColumnDef<UserRow>[] = [
+  userColumns[0], // User (Avatar, Name, Email)
+  {
+    id: "enrollmentNo",
+    header: "Enrollment No",
+    cell: ({ row }) => (
+      <span className="text-muted-foreground font-mono text-xs">
+        {row.original.studentProfile?.enrollmentNo ?? "—"}
+      </span>
+    ),
+  },
+  {
+    id: "program",
+    header: "Program",
+    cell: ({ row }) => {
+      const p = row.original.studentProfile;
+      if (!p) return <span className="text-muted-foreground">—</span>;
+      return (
+        <span className="text-sm">
+          {p.programCode.toUpperCase()} (Sem {p.division?.programSemester?.semester ?? "?"})
+        </span>
+      );
+    },
+  },
+  {
+    id: "division",
+    header: "Division",
+    cell: ({ row }) => (
+      <span className="text-sm">
+        {row.original.studentProfile?.division?.name ?? "—"}
+      </span>
+    ),
+  },
+  userColumns[3], // Status
+  userColumns[4], // Device
+  userColumns[5], // Joined
+  userColumns[6], // Actions
+];
+
+export const teacherColumns: LegacyColumnDef<UserRow>[] = [
+  userColumns[0], // User
+  {
+    id: "code",
+    header: "Code",
+    cell: ({ row }) => (
+      <span className="text-muted-foreground font-mono text-xs">
+        {row.original.teacherProfile?.code ?? "—"}
+      </span>
+    ),
+  },
+  {
+    id: "department",
+    header: "Department",
+    cell: ({ row }) => (
+      <span className="text-sm">
+        {row.original.teacherProfile?.department ?? "—"}
+      </span>
+    ),
+  },
+  userColumns[5], // Joined
+  userColumns[6], // Actions
+];
+
+export const adminColumns: LegacyColumnDef<UserRow>[] = [
+  userColumns[0], // User
+  userColumns[1], // Role
+  userColumns[5], // Joined
+  userColumns[6], // Actions
+];
+

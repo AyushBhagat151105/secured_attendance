@@ -3,13 +3,13 @@ import { useState, useEffect } from "react";
 import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from "react-native";
 import * as Location from "expo-location";
 import * as Haptics from "expo-haptics";
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withRepeat, 
-  withTiming, 
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
   withSequence,
-  Easing 
+  Easing
 } from "react-native-reanimated";
 import { useScanAttendance } from "@/hooks/use-attendance";
 import { getDeviceFingerprint } from "@/lib/device";
@@ -78,20 +78,30 @@ export default function ScanScreen() {
 
   const handleBarcodeScanned = async ({ type, data }: { type: string; data: string }) => {
     if (scanStatus !== "idle") return;
-    
+
     setScanStatus("processing");
+    console.log("QR Code scanned by device, payload string:", data);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
       // 1. Parse QR Data
       let payload;
       try {
-        payload = JSON.parse(data);
+        const rawPayload = JSON.parse(data);
+        
+        // Map short keys to expected long keys if needed
+        payload = {
+          sessionId: rawPayload.sessionId || rawPayload.s,
+          nonce: rawPayload.nonce || rawPayload.n,
+          signature: rawPayload.signature || rawPayload.sig,
+          expiresAt: rawPayload.expiresAt || rawPayload.e,
+        };
+
         if (!payload.sessionId || !payload.nonce || !payload.signature || !payload.expiresAt) {
           throw new Error("Invalid format");
         }
       } catch (e) {
-        throw new Error("Invalid or unrecognised QR code.");
+        throw new Error(`Invalid or unrecognised QR code. ${e}`);
       }
 
       // 2. Get Device Fingerprint
@@ -124,7 +134,7 @@ export default function ScanScreen() {
 
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setScanStatus("success");
-        
+
         if (result.gpsWithinGeofence) {
           setStatusMessage("Attendance marked successfully!");
         } else {
@@ -172,7 +182,7 @@ export default function ScanScreen() {
         onBarcodeScanned={isScanning ? handleBarcodeScanned : undefined}
       >
         <View style={styles.overlayContainer}>
-          
+
           <View style={styles.topTextContainer}>
             <Text style={styles.topTitle}>Scan to Attend</Text>
             <Text style={styles.topSubtitle}>
@@ -188,7 +198,7 @@ export default function ScanScreen() {
               <View style={[styles.corner, styles.cornerTR]} />
               <View style={[styles.corner, styles.cornerBL]} />
               <View style={[styles.corner, styles.cornerBR]} />
-              
+
               {/* Scanning Line */}
               <View style={styles.scanningLineContainer}>
                 <Animated.View style={[lineStyle, styles.scanningLine]} />

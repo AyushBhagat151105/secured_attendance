@@ -24,17 +24,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUsers } from "@/hooks/use-admin-users";
 import type { UserListParams, UserRole, UserStatus } from "@/services/admin/users.service";
 import { CreateUserDialog } from "./create-user-dialog";
-import { type UserRow, userColumns } from "./user-columns";
+import { 
+  type UserRow, 
+  userColumns, 
+  studentColumns, 
+  teacherColumns, 
+  adminColumns 
+} from "./user-columns";
 
 const PAGE_SIZE = 20;
 
 export function UserTable() {
+  const [activeTab, setActiveTab] = useState<"all" | "student" | "teacher" | "admin">("student");
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [role, setRole] = useState<UserRole | "">("");
   const [status, setStatus] = useState<UserStatus | "">("");
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -42,15 +49,20 @@ export function UserTable() {
     page,
     limit: PAGE_SIZE,
     ...(search ? { search } : {}),
-    ...(role ? { role } : {}),
+    ...(activeTab !== "all" ? { role: activeTab as UserRole } : {}),
     ...(status ? { status } : {}),
   };
 
   const { data, isLoading, isError } = useUsers(params);
 
+  let activeColumns = userColumns;
+  if (activeTab === "student") activeColumns = studentColumns;
+  if (activeTab === "teacher") activeColumns = teacherColumns;
+  if (activeTab === "admin") activeColumns = adminColumns;
+
   const table = useLegacyTable<UserRow>({
     data: (data?.users as UserRow[]) ?? [],
-    columns: userColumns as LegacyColumnDef<UserRow>[],
+    columns: activeColumns as LegacyColumnDef<UserRow>[],
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
     pageCount: data?.pagination?.totalPages ?? 1,
@@ -58,10 +70,29 @@ export function UserTable() {
 
   const totalPages = data?.pagination?.totalPages ?? 1;
 
+  const handleTabChange = (val: string) => {
+    setActiveTab(val as "all" | "student" | "teacher" | "admin");
+    setPage(1);
+  };
+
   return (
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full sm:w-auto">
+          <TabsList>
+            <TabsTrigger value="student">Students</TabsTrigger>
+            <TabsTrigger value="teacher">Teachers</TabsTrigger>
+            <TabsTrigger value="admin">Admins</TabsTrigger>
+            <TabsTrigger value="all">All Users</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <Button onClick={() => setCreateOpen(true)} className="gap-2 shrink-0">
+          + New User
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex flex-1 items-center gap-2">
           <Input
             placeholder="Search by name or email..."
@@ -72,24 +103,6 @@ export function UserTable() {
             }}
             className="max-w-xs"
           />
-          <Select
-            value={role || "all"}
-            onValueChange={(v) => {
-              setRole(v === "all" ? "" : (v as UserRole));
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder="Role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All roles</SelectItem>
-              <SelectItem value="student">Student</SelectItem>
-              <SelectItem value="teacher">Teacher</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="super_admin">Super Admin</SelectItem>
-            </SelectContent>
-          </Select>
           <Select
             value={status || "all"}
             onValueChange={(v) => {
@@ -108,10 +121,6 @@ export function UserTable() {
             </SelectContent>
           </Select>
         </div>
-
-        <Button onClick={() => setCreateOpen(true)} className="gap-2 shrink-0">
-          + New User
-        </Button>
       </div>
 
       {/* Table */}
@@ -134,7 +143,7 @@ export function UserTable() {
             {isLoading ? (
               Array.from({ length: 8 }).map((_, i) => (
                 <TableRow key={i}>
-                  {userColumns.map((_, j) => (
+                  {activeColumns.map((_, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-5 w-full" />
                     </TableCell>
@@ -143,15 +152,15 @@ export function UserTable() {
               ))
             ) : isError ? (
               <TableRow>
-                <TableCell colSpan={userColumns.length} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={activeColumns.length} className="py-10 text-center text-muted-foreground">
                   Failed to load users. Please try again.
                 </TableCell>
               </TableRow>
             ) : table.getRowModel().rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={userColumns.length} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={activeColumns.length} className="py-10 text-center text-muted-foreground">
                   No users found.{" "}
-                  {search || role || status ? "Try clearing your filters." : "Create your first user."}
+                  {search || status ? "Try clearing your filters." : "Create your first user."}
                 </TableCell>
               </TableRow>
             ) : (

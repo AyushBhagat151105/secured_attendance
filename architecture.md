@@ -1245,7 +1245,7 @@ services:
 #### Tasks
 - [x] Auth guards/middleware: `requireAuth`, `requireRole(roles[])`
 - [x] Device binding endpoint + logic
-- [x] Admin user CRUD API (create, list, update, suspend)
+- [x] Admin user CRUD API (create, list, update, suspend, delete)
 - [x] CSV bulk import API for students (parse enrollment_no, auto-detect program)
 - [x] CSV bulk import API for teachers (with code/initials)
 - [x] Admin web UI: User management page

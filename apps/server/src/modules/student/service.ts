@@ -40,8 +40,10 @@ export class StudentService {
    * Processes a QR code scan by a student to mark attendance.
    * Performs cryptographic signature validation, enrollment validation, and geofence validation.
    */
-  static async submitAttendance(userId: string, body: ScanAttendanceDto) {
+  static async submitAttendance(userId: string, body: ScanAttendanceDto, server?: any) {
     const { sessionId, nonce, signature, expiresAt, gpsLat, gpsLng, mockFlag } = body;
+
+    logger.info("Received QR attendance scan", { userId, sessionId, mockFlag, gpsLat, gpsLng });
 
     // 0. Rate Limiting Check
     const rateLimitKey = `ratelimit:${userId}`;
@@ -200,7 +202,23 @@ export class StudentService {
       }
     });
 
-    logger.info("Attendance marked", { studentId: profile.id, sessionId: session.id, gpsWithinGeofence });
+    logger.info("Attendance marked successfully", { userId, sessionId, attendanceId: attendance.id, gpsWithinGeofence });
+
+    // 10. Async Live Feed Update
+    if (server) {
+      try {
+        const count = await prisma.attendance.count({
+          where: { sessionId: session.id }
+        });
+        
+        server.publish(`session-${session.id}`, JSON.stringify({
+          type: "ATTENDANCE_COUNT",
+          count
+        }));
+      } catch (e) {
+        logger.error("Failed to publish attendance count to live feed", { error: e });
+      }
+    }
 
     return {
       success: true,

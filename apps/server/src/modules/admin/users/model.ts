@@ -12,6 +12,20 @@ export const CreateUserBody = t.Object({
   ]),
 });
 
+export const CreateStudentBody = t.Object({
+  name: t.String({ minLength: 2 }),
+  email: t.String({ format: "email" }),
+  enrollmentNo: t.String({ minLength: 2 }),
+  programCode: t.String(),
+  semester: t.Numeric(),
+  divisionId: t.String(),
+});
+
+export const CreateAdminBody = t.Object({
+  name: t.String({ minLength: 2 }),
+  email: t.String({ format: "email" }),
+});
+
 export const CreateTeacherBody = t.Object({
   name: t.String({ minLength: 2 }),
   email: t.String({ format: "email" }),
@@ -60,7 +74,9 @@ export const UsersListQuery = t.Object({
 export const UserIdParam = t.Object({ id: t.String() });
 
 export type CreateUserType = typeof CreateUserBody.static;
+export type CreateStudentType = typeof CreateStudentBody.static;
 export type CreateTeacherType = typeof CreateTeacherBody.static;
+export type CreateAdminType = typeof CreateAdminBody.static;
 export type UpdateUserType = typeof UpdateUserBody.static;
 export type UsersListQueryType = typeof UsersListQuery.static;
 export type UserIdParamType = typeof UserIdParam.static;

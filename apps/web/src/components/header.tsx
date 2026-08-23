@@ -31,7 +31,10 @@ export default function Header() {
       { to: "/admin/users", label: "Users" }
     );
   } else if (role === "teacher") {
-    links.push({ to: "/dashboard", label: "Dashboard", exact: true });
+    links.push(
+      { to: "/dashboard", label: "Dashboard", exact: true },
+      { to: "/reports", label: "Reports" }
+    );
   }
 
   return (

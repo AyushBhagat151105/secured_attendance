@@ -1,6 +1,6 @@
 import prisma from "@secured_attendance/db";
 import { logger } from "../../../lib/logger";
-import type { UpdateUserType, UsersListQueryType, CreateTeacherType } from "./model";
+import type { UpdateUserType, UsersListQueryType, CreateTeacherType, CreateStudentType, CreateAdminType } from "./model";
 import { status } from "elysia";
 import { auth } from "@secured_attendance/auth";
 import { env } from "@secured_attendance/env/server";
@@ -48,6 +48,16 @@ export class AdminUsersService {
               deviceBound: true,
               deviceModel: true,
               programCode: true,
+              division: {
+                select: {
+                  name: true,
+                  programSemester: {
+                    select: {
+                      semester: true,
+                    },
+                  },
+                },
+              },
             },
           },
           teacherProfile: {
@@ -124,7 +134,6 @@ export class AdminUsersService {
           email: data.email,
           password: env.DEFAULT_TEACHER_PASSWORD,
           name: data.name,
-          requiresPasswordChange: true,
         },
         asResponse: false,
       });
@@ -135,7 +144,10 @@ export class AdminUsersService {
 
       await prisma.user.update({
         where: { id: result.user.id },
-        data: { role: "teacher" },
+        data: { 
+          role: "teacher",
+          requiresPasswordChange: true
+        },
       });
 
       await prisma.teacherProfile.create({
@@ -149,6 +161,91 @@ export class AdminUsersService {
       return result.user;
     } catch (error) {
       logger.error("Failed to create teacher", { error, data });
+      return status(500, { message: "Internal Server Error" });
+    }
+  }
+
+  static async createStudent(data: CreateStudentType) {
+    const existing = await prisma.user.findFirst({ where: { email: data.email } });
+    if (existing) {
+      return status(400, { message: "User with this email already exists" });
+    }
+
+    try {
+      const result = await auth.api.signUpEmail({
+        body: {
+          email: data.email,
+          password: env.DEFAULT_STUDENT_PASSWORD,
+          name: data.name,
+        },
+        asResponse: false,
+      });
+
+      if (!result?.user) {
+         return status(500, { message: "Failed to create user account" });
+      }
+
+      await prisma.user.update({
+        where: { id: result.user.id },
+        data: { 
+          role: "student",
+          requiresPasswordChange: true
+        },
+      });
+
+      const match = data.enrollmentNo.match(/^(\d{2})([a-z]+)(\d{3})$/i);
+      const parsedYear = match && match[1] ? 2000 + parseInt(match[1]) : new Date().getFullYear();
+      const parsedRoll = match && match[3] ? match[3] : "";
+
+      await prisma.studentProfile.create({
+        data: {
+          userId: result.user.id,
+          enrollmentNo: data.enrollmentNo,
+          programCode: data.programCode,
+          admissionYear: parsedYear,
+          rollNumber: parsedRoll,
+          divisionId: data.divisionId,
+        },
+      });
+
+      return result.user;
+    } catch (error) {
+      logger.error("Failed to create student", { error, data });
+      return status(500, { message: "Internal Server Error" });
+    }
+  }
+
+  static async createAdmin(data: CreateAdminType) {
+    const existing = await prisma.user.findFirst({ where: { email: data.email } });
+    if (existing) {
+      return status(400, { message: "User with this email already exists" });
+    }
+
+    try {
+      const result = await auth.api.signUpEmail({
+        body: {
+          email: data.email,
+          password: env.DEFAULT_TEACHER_PASSWORD,
+          name: data.name,
+        },
+        asResponse: false,
+      });
+
+      if (!result?.user) {
+         return status(500, { message: "Failed to create user account" });
+      }
+
+      await prisma.user.update({
+        where: { id: result.user.id },
+        data: { 
+          role: "admin",
+          requiresPasswordChange: true
+        },
+      });
+
+      return result.user;
+    } catch (error) {
+      logger.error("Failed to create admin", { error, data });
       return status(500, { message: "Internal Server Error" });
     }
   }
@@ -200,6 +297,18 @@ export class AdminUsersService {
     }
 
     logger.info("User suspended", { userId: id });
+    return { success: true };
+  }
+
+  static async deleteUser(id: string) {
+    const existing = await prisma.user.findUnique({ where: { id } });
+    if (!existing) {
+      return status(404, { message: "User not found" });
+    }
+
+    await prisma.user.delete({ where: { id } });
+
+    logger.info("User deleted", { userId: id });
     return { success: true };
   }
 

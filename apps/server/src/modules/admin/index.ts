@@ -5,6 +5,7 @@ import { adminUsersModule } from "./users/index";
 import { adminAcademicModule } from "./academic/index";
 import { adminCampusModule } from "./campus/index";
 import { adminTimetableModule } from "./timetable/index";
+import { adminReportModule } from "./reports/index";
 
 /**
  * Admin module — groups all admin routes under /api/admin
@@ -15,7 +16,8 @@ export const adminModule = new Elysia({ prefix: "/api/admin" })
   .use(adminImportModule)
   .use(adminAcademicModule)
   .use(adminCampusModule)
-  .use(adminTimetableModule);
+  .use(adminTimetableModule)
+  .use(adminReportModule);
 
 export type { AdminModule };
 type AdminModule = typeof adminModule;

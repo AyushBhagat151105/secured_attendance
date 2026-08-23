@@ -16,15 +16,20 @@ import { Route as DownloadAppRouteImport } from './routes/download-app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
+import { Route as ReportsIndexRouteImport } from './routes/reports/index'
 import { Route as SessionSessionIdRouteImport } from './routes/session/$sessionId'
 import { Route as AdminAcademicProgramsRouteImport } from './routes/admin/academic/programs'
 import { Route as AdminAcademicSubjectsRouteImport } from './routes/admin/academic/subjects'
 import { Route as AdminCampusIndexRouteImport } from './routes/admin/campus/index'
+import { Route as AdminMapSessionIdRouteImport } from './routes/admin/map/$sessionId'
 import { Route as AdminTimetableIndexRouteImport } from './routes/admin/timetable/index'
 import { Route as AdminTimetableImportRouteImport } from './routes/admin/timetable/import'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin/users/$userId'
 import { Route as AdminUsersImportRouteImport } from './routes/admin/users/import'
+import { Route as ReportsMapSessionIdRouteImport } from './routes/reports/map/$sessionId'
+import { Route as ReportsSessionSessionIdRouteImport } from './routes/reports/session/$sessionId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -61,6 +66,16 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AdminRoute,
+} as any)
+const ReportsIndexRoute = ReportsIndexRouteImport.update({
+  id: '/reports/',
+  path: '/reports/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SessionSessionIdRoute = SessionSessionIdRouteImport.update({
   id: '/session/$sessionId',
   path: '/session/$sessionId',
@@ -79,6 +94,11 @@ const AdminAcademicSubjectsRoute = AdminAcademicSubjectsRouteImport.update({
 const AdminCampusIndexRoute = AdminCampusIndexRouteImport.update({
   id: '/campus/',
   path: '/campus/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMapSessionIdRoute = AdminMapSessionIdRouteImport.update({
+  id: '/map/$sessionId',
+  path: '/map/$sessionId',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminTimetableIndexRoute = AdminTimetableIndexRouteImport.update({
@@ -106,6 +126,16 @@ const AdminUsersImportRoute = AdminUsersImportRouteImport.update({
   path: '/users/import',
   getParentRoute: () => AdminRoute,
 } as any)
+const ReportsMapSessionIdRoute = ReportsMapSessionIdRouteImport.update({
+  id: '/reports/map/$sessionId',
+  path: '/reports/map/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsSessionSessionIdRoute = ReportsSessionSessionIdRouteImport.update({
+  id: '/reports/session/$sessionId',
+  path: '/reports/session/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -114,13 +144,18 @@ export interface FileRoutesByFullPath {
   '/download-app': typeof DownloadAppRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/session/$sessionId': typeof SessionSessionIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/reports/': typeof ReportsIndexRoute
   '/admin/academic/programs': typeof AdminAcademicProgramsRoute
   '/admin/academic/subjects': typeof AdminAcademicSubjectsRoute
+  '/admin/map/$sessionId': typeof AdminMapSessionIdRoute
   '/admin/timetable/import': typeof AdminTimetableImportRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/admin/users/import': typeof AdminUsersImportRoute
+  '/reports/map/$sessionId': typeof ReportsMapSessionIdRoute
+  '/reports/session/$sessionId': typeof ReportsSessionSessionIdRoute
   '/admin/campus/': typeof AdminCampusIndexRoute
   '/admin/timetable/': typeof AdminTimetableIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
@@ -131,13 +166,18 @@ export interface FileRoutesByTo {
   '/download-app': typeof DownloadAppRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/session/$sessionId': typeof SessionSessionIdRoute
   '/admin': typeof AdminIndexRoute
+  '/reports': typeof ReportsIndexRoute
   '/admin/academic/programs': typeof AdminAcademicProgramsRoute
   '/admin/academic/subjects': typeof AdminAcademicSubjectsRoute
+  '/admin/map/$sessionId': typeof AdminMapSessionIdRoute
   '/admin/timetable/import': typeof AdminTimetableImportRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/admin/users/import': typeof AdminUsersImportRoute
+  '/reports/map/$sessionId': typeof ReportsMapSessionIdRoute
+  '/reports/session/$sessionId': typeof ReportsSessionSessionIdRoute
   '/admin/campus': typeof AdminCampusIndexRoute
   '/admin/timetable': typeof AdminTimetableIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
@@ -150,13 +190,18 @@ export interface FileRoutesById {
   '/download-app': typeof DownloadAppRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/session/$sessionId': typeof SessionSessionIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/reports/': typeof ReportsIndexRoute
   '/admin/academic/programs': typeof AdminAcademicProgramsRoute
   '/admin/academic/subjects': typeof AdminAcademicSubjectsRoute
+  '/admin/map/$sessionId': typeof AdminMapSessionIdRoute
   '/admin/timetable/import': typeof AdminTimetableImportRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/admin/users/import': typeof AdminUsersImportRoute
+  '/reports/map/$sessionId': typeof ReportsMapSessionIdRoute
+  '/reports/session/$sessionId': typeof ReportsSessionSessionIdRoute
   '/admin/campus/': typeof AdminCampusIndexRoute
   '/admin/timetable/': typeof AdminTimetableIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
@@ -170,13 +215,18 @@ export interface FileRouteTypes {
     | '/download-app'
     | '/login'
     | '/reset-password'
+    | '/admin/analytics'
     | '/session/$sessionId'
     | '/admin/'
+    | '/reports/'
     | '/admin/academic/programs'
     | '/admin/academic/subjects'
+    | '/admin/map/$sessionId'
     | '/admin/timetable/import'
     | '/admin/users/$userId'
     | '/admin/users/import'
+    | '/reports/map/$sessionId'
+    | '/reports/session/$sessionId'
     | '/admin/campus/'
     | '/admin/timetable/'
     | '/admin/users/'
@@ -187,13 +237,18 @@ export interface FileRouteTypes {
     | '/download-app'
     | '/login'
     | '/reset-password'
+    | '/admin/analytics'
     | '/session/$sessionId'
     | '/admin'
+    | '/reports'
     | '/admin/academic/programs'
     | '/admin/academic/subjects'
+    | '/admin/map/$sessionId'
     | '/admin/timetable/import'
     | '/admin/users/$userId'
     | '/admin/users/import'
+    | '/reports/map/$sessionId'
+    | '/reports/session/$sessionId'
     | '/admin/campus'
     | '/admin/timetable'
     | '/admin/users'
@@ -205,13 +260,18 @@ export interface FileRouteTypes {
     | '/download-app'
     | '/login'
     | '/reset-password'
+    | '/admin/analytics'
     | '/session/$sessionId'
     | '/admin/'
+    | '/reports/'
     | '/admin/academic/programs'
     | '/admin/academic/subjects'
+    | '/admin/map/$sessionId'
     | '/admin/timetable/import'
     | '/admin/users/$userId'
     | '/admin/users/import'
+    | '/reports/map/$sessionId'
+    | '/reports/session/$sessionId'
     | '/admin/campus/'
     | '/admin/timetable/'
     | '/admin/users/'
@@ -225,6 +285,9 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SessionSessionIdRoute: typeof SessionSessionIdRoute
+  ReportsIndexRoute: typeof ReportsIndexRoute
+  ReportsMapSessionIdRoute: typeof ReportsMapSessionIdRoute
+  ReportsSessionSessionIdRoute: typeof ReportsSessionSessionIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -278,6 +341,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/reports/': {
+      id: '/reports/'
+      path: '/reports'
+      fullPath: '/reports/'
+      preLoaderRoute: typeof ReportsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/session/$sessionId': {
       id: '/session/$sessionId'
       path: '/session/$sessionId'
@@ -304,6 +381,13 @@ declare module '@tanstack/react-router' {
       path: '/campus'
       fullPath: '/admin/campus/'
       preLoaderRoute: typeof AdminCampusIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/map/$sessionId': {
+      id: '/admin/map/$sessionId'
+      path: '/map/$sessionId'
+      fullPath: '/admin/map/$sessionId'
+      preLoaderRoute: typeof AdminMapSessionIdRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/timetable/': {
@@ -341,13 +425,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersImportRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/reports/map/$sessionId': {
+      id: '/reports/map/$sessionId'
+      path: '/reports/map/$sessionId'
+      fullPath: '/reports/map/$sessionId'
+      preLoaderRoute: typeof ReportsMapSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports/session/$sessionId': {
+      id: '/reports/session/$sessionId'
+      path: '/reports/session/$sessionId'
+      fullPath: '/reports/session/$sessionId'
+      preLoaderRoute: typeof ReportsSessionSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminAcademicProgramsRoute: typeof AdminAcademicProgramsRoute
   AdminAcademicSubjectsRoute: typeof AdminAcademicSubjectsRoute
+  AdminMapSessionIdRoute: typeof AdminMapSessionIdRoute
   AdminTimetableImportRoute: typeof AdminTimetableImportRoute
   AdminUsersUserIdRoute: typeof AdminUsersUserIdRoute
   AdminUsersImportRoute: typeof AdminUsersImportRoute
@@ -357,9 +457,11 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminAcademicProgramsRoute: AdminAcademicProgramsRoute,
   AdminAcademicSubjectsRoute: AdminAcademicSubjectsRoute,
+  AdminMapSessionIdRoute: AdminMapSessionIdRoute,
   AdminTimetableImportRoute: AdminTimetableImportRoute,
   AdminUsersUserIdRoute: AdminUsersUserIdRoute,
   AdminUsersImportRoute: AdminUsersImportRoute,
@@ -378,6 +480,9 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SessionSessionIdRoute: SessionSessionIdRoute,
+  ReportsIndexRoute: ReportsIndexRoute,
+  ReportsMapSessionIdRoute: ReportsMapSessionIdRoute,
+  ReportsSessionSessionIdRoute: ReportsSessionSessionIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

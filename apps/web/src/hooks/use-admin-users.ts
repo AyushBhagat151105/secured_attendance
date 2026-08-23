@@ -25,17 +25,29 @@ export const useUser = (id: string) =>
 export const useCreateUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { name: string; email: string; password: string; role: string }) => {
-      const csv = `name,email,password,role\n${input.name},${input.email},${input.password},${input.role}`;
-      const preview = await adminUsersApi.bulkImportPreview({
-        type: input.role === "teacher" ? "teachers" : "students",
-        csv,
-      });
-      const rows = preview?.parsed?.filter((r: { errors: string[] }) => r.errors.length === 0) ?? [];
-      return adminUsersApi.bulkImportConfirm({
-        type: input.role === "teacher" ? "teachers" : "students",
-        rows,
-      });
+    mutationFn: async (input: any) => {
+      if (input.role === "student") {
+        return adminUsersApi.createStudent({
+          name: input.name,
+          email: input.email,
+          enrollmentNo: input.enrollmentNo,
+          programCode: input.programCode,
+          semester: Number(input.semester),
+          divisionId: input.divisionId,
+        });
+      } else if (input.role === "teacher") {
+        return adminUsersApi.createTeacher({
+          name: input.name,
+          email: input.email,
+          teacherCode: input.teacherCode,
+          department: input.department,
+        });
+      } else {
+        return adminUsersApi.createAdmin({
+          name: input.name,
+          email: input.email,
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
@@ -64,6 +76,18 @@ export const useSuspendUser = () => {
     mutationFn: adminUsersApi.suspendUser,
     onSuccess: () => {
       toast.success("User suspended");
+      queryClient.invalidateQueries({ queryKey: userKeys.all });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};
+
+export const useDeleteUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: adminUsersApi.deleteUser,
+    onSuccess: () => {
+      toast.success("User deleted");
       queryClient.invalidateQueries({ queryKey: userKeys.all });
     },
     onError: (err) => toast.error(err.message),
