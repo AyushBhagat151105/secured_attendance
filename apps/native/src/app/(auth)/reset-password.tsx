@@ -1,6 +1,9 @@
 import { useState } from "react";
-import { Text, View, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
+import { Text, View, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { useRouter } from "expo-router";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { resetPasswordSchema, type ResetPasswordSchema } from "@secured_attendance/validators";
 
 import { authClient } from "@/lib/auth-client";
 import { apiClient } from "@/lib/api-client";
@@ -18,100 +21,92 @@ const COLORS = {
 };
 
 export default function ResetPasswordScreen() {
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
 
-  async function handleResetPassword() {
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      setError("Please fill in all fields");
-      return;
-    }
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ResetPasswordSchema>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
 
-    if (newPassword !== confirmPassword) {
-      setError("New passwords do not match");
-      return;
-    }
-
-    if (newPassword.length < 8) {
-      setError("Password must be at least 8 characters");
-      return;
-    }
-
-    setIsLoading(true);
+  async function onSubmit(data: ResetPasswordSchema) {
     setError(null);
 
     await authClient.changePassword(
       {
-        newPassword,
-        currentPassword,
+        newPassword: data.newPassword,
+        currentPassword: data.currentPassword,
         revokeOtherSessions: false,
       },
       {
         onError(error) {
-          Alert.alert("Frontend Error!", `changePassword failed: ${error.error?.message || "Unknown error"}. Because this failed, complete-onboarding will NEVER be called!`);
+          Alert.alert(
+            "Frontend Error!",
+            `changePassword failed: ${error.error?.message || "Unknown error"}. Because this failed, complete-onboarding will NEVER be called!`,
+          );
           setError(error.error?.message || "Failed to change password");
-          setIsLoading(false);
         },
         async onSuccess() {
           try {
             // Give expoClient time to finish writing the new session cookie to SecureStore
             // because plugin hooks in Better Auth are sometimes not fully awaited before resolving.
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+
             // Hit our custom endpoint to clear the requiresPasswordChange flag
-            Alert.alert("Success!", "changePassword succeeded! Now calling complete-onboarding API with Axios...");
-            
+            Alert.alert(
+              "Success!",
+              "changePassword succeeded! Now calling complete-onboarding API with Axios...",
+            );
+
             try {
-              const res = await apiClient.patch('/api/auth-custom/complete-onboarding');
+              await apiClient.patch("/api/auth-custom/complete-onboarding");
             } catch (err: any) {
-              Alert.alert("API Error!", `complete-onboarding failed: ${err.response?.status || err.message}`);
+              Alert.alert(
+                "API Error!",
+                `complete-onboarding failed: ${err.response?.status || err.message}`,
+              );
               setError(`Failed to complete onboarding: ${err.response?.status || err.message}`);
-              setIsLoading(false);
               return;
             }
 
             // Refresh the session to update the requiresPasswordChange flag in the client
-            await authClient.getSession({
-              fetchOptions: {
-                onSuccess: () => {
-                  setIsLoading(false);
-                },
-                onError: () => {
-                  setIsLoading(false);
-                }
-              }
-            });
-
+            await authClient.getSession();
           } catch (err) {
             Alert.alert("Crash!", "Something crashed while calling complete-onboarding.");
             setError("Failed to complete onboarding");
-            setIsLoading(false);
           }
         },
-      }
+      },
     );
   }
 
   async function handleLogout() {
-    setIsLoading(true);
+    setIsLoggingOut(true);
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          setIsLoading(false);
+          setIsLoggingOut(false);
           router.replace("/(auth)/sign-in" as any);
         },
         onError: () => {
-          setIsLoading(false);
+          setIsLoggingOut(false);
           router.replace("/(auth)/sign-in" as any);
-        }
-      }
+        },
+      },
     });
   }
+
+  const isLoading = isSubmitting || isLoggingOut;
 
   return (
     <Container style={styles.container}>
@@ -123,52 +118,89 @@ export default function ResetPasswordScreen() {
       </View>
 
       <View style={styles.card}>
-        {error ? (
-          <Text style={styles.errorText}>{error}</Text>
-        ) : null}
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Current Password</Text>
-          <PasswordInput
-            style={styles.input}
-            value={currentPassword}
-            onChangeText={setCurrentPassword}
-            placeholder="••••••••"
-            placeholderTextColor={COLORS.muted}
-            editable={!isLoading}
+          <Controller
+            control={control}
+            name="currentPassword"
+            render={({ field: { onChange, value } }) => (
+              <>
+                <PasswordInput
+                  style={[
+                    styles.input,
+                    errors.currentPassword && { borderColor: COLORS.destructive },
+                  ]}
+                  value={value}
+                  onChangeText={onChange}
+                  placeholder="••••••••"
+                  placeholderTextColor={COLORS.muted}
+                  editable={!isLoading}
+                />
+                {errors.currentPassword && (
+                  <Text style={styles.errorTextSmall}>{errors.currentPassword.message}</Text>
+                )}
+              </>
+            )}
           />
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>New Password</Text>
-          <PasswordInput
-            style={styles.input}
-            value={newPassword}
-            onChangeText={setNewPassword}
-            placeholder="••••••••"
-            placeholderTextColor={COLORS.muted}
-            editable={!isLoading}
+          <Controller
+            control={control}
+            name="newPassword"
+            render={({ field: { onChange, value } }) => (
+              <>
+                <PasswordInput
+                  style={[styles.input, errors.newPassword && { borderColor: COLORS.destructive }]}
+                  value={value}
+                  onChangeText={onChange}
+                  placeholder="••••••••"
+                  placeholderTextColor={COLORS.muted}
+                  editable={!isLoading}
+                />
+                {errors.newPassword && (
+                  <Text style={styles.errorTextSmall}>{errors.newPassword.message}</Text>
+                )}
+              </>
+            )}
           />
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Confirm New Password</Text>
-          <PasswordInput
-            style={styles.input}
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            placeholder="••••••••"
-            placeholderTextColor={COLORS.muted}
-            editable={!isLoading}
+          <Controller
+            control={control}
+            name="confirmPassword"
+            render={({ field: { onChange, value } }) => (
+              <>
+                <PasswordInput
+                  style={[
+                    styles.input,
+                    errors.confirmPassword && { borderColor: COLORS.destructive },
+                  ]}
+                  value={value}
+                  onChangeText={onChange}
+                  placeholder="••••••••"
+                  placeholderTextColor={COLORS.muted}
+                  editable={!isLoading}
+                />
+                {errors.confirmPassword && (
+                  <Text style={styles.errorTextSmall}>{errors.confirmPassword.message}</Text>
+                )}
+              </>
+            )}
           />
         </View>
 
         <TouchableOpacity
-          style={[styles.button, isLoading && styles.buttonDisabled]}
-          onPress={handleResetPassword}
+          style={[styles.button, isSubmitting && styles.buttonDisabled]}
+          onPress={handleSubmit(onSubmit)}
           disabled={isLoading}
         >
-          {isLoading ? (
+          {isSubmitting ? (
             <ActivityIndicator size="small" color="#ffffff" />
           ) : (
             <Text style={styles.buttonText}>Update Password</Text>
@@ -176,11 +208,15 @@ export default function ResetPasswordScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.button, styles.logoutButton, isLoading && styles.buttonDisabled]}
+          style={[styles.button, styles.logoutButton, isLoggingOut && styles.buttonDisabled]}
           onPress={handleLogout}
           disabled={isLoading}
         >
-          <Text style={styles.logoutButtonText}>Logout & Try Again</Text>
+          {isLoggingOut ? (
+            <ActivityIndicator size="small" color={COLORS.muted} />
+          ) : (
+            <Text style={styles.logoutButtonText}>Logout & Try Again</Text>
+          )}
         </TouchableOpacity>
       </View>
     </Container>
@@ -191,29 +227,29 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 24,
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 32,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.foreground,
   },
   subtitle: {
     color: COLORS.muted,
     marginTop: 8,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 22,
   },
   card: {
     backgroundColor: COLORS.card,
     padding: 24,
     borderRadius: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -224,16 +260,21 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: COLORS.destructive,
-    textAlign: 'center',
-    fontWeight: '500',
+    textAlign: "center",
+    fontWeight: "500",
     marginBottom: 8,
+  },
+  errorTextSmall: {
+    color: COLORS.destructive,
+    fontSize: 12,
+    marginTop: 4,
   },
   inputGroup: {
     marginBottom: 16,
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
     color: COLORS.foreground,
     marginBottom: 8,
   },
@@ -251,20 +292,20 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     height: 48,
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 8,
   },
   buttonDisabled: {
     opacity: 0.7,
   },
   buttonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   logoutButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderWidth: 1,
     borderColor: COLORS.border,
     marginTop: 0,
@@ -272,6 +313,6 @@ const styles = StyleSheet.create({
   logoutButtonText: {
     color: COLORS.muted,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

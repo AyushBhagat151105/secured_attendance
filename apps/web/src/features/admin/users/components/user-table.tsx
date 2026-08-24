@@ -28,12 +28,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUsers } from "@/hooks/api/use-admin-users";
 import type { UserListParams, UserRole, UserStatus } from "@/services/admin/users.service";
 import { CreateUserDialog } from "./create-user-dialog";
-import { 
-  type UserRow, 
-  userColumns, 
-  studentColumns, 
-  teacherColumns, 
-  adminColumns 
+import {
+  type UserRow,
+  userColumns,
+  studentColumns,
+  teacherColumns,
+  adminColumns,
 } from "./user-columns";
 
 const PAGE_SIZE = 20;
@@ -152,13 +152,19 @@ export function UserTable() {
               ))
             ) : isError ? (
               <TableRow>
-                <TableCell colSpan={activeColumns.length} className="py-10 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={activeColumns.length}
+                  className="py-10 text-center text-muted-foreground"
+                >
                   Failed to load users. Please try again.
                 </TableCell>
               </TableRow>
             ) : table.getRowModel().rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={activeColumns.length} className="py-10 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={activeColumns.length}
+                  className="py-10 text-center text-muted-foreground"
+                >
                   No users found.{" "}
                   {search || status ? "Try clearing your filters." : "Create your first user."}
                 </TableCell>

@@ -1,6 +1,16 @@
-﻿import { useState } from "react";
-import { Text, View, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from "react-native";
+import { useState } from "react";
+import {
+  Text,
+  View,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { useRouter, Link } from "expo-router";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { signInSchema, type SignInSchema } from "@secured_attendance/validators";
 
 import { authClient } from "@/lib/auth-client";
 import { Container } from "@/components/container";
@@ -17,34 +27,38 @@ const COLORS = {
 };
 
 export default function SignInScreen() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
 
-  async function handleLogin() {
-    setIsLoading(true);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignInSchema>({
+    resolver: zodResolver(signInSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  async function onSubmit(data: SignInSchema) {
     setError(null);
 
     await authClient.signIn.email(
       {
-        email,
-        password,
+        email: data.email,
+        password: data.password,
       },
       {
         onError(error) {
           setError(error.error?.message || "Failed to sign in");
-          setIsLoading(false);
         },
         onSuccess() {
-          // If successful, the layout should auto-redirect to device binding if needed, 
+          // If successful, the layout should auto-redirect to device binding if needed,
           // or we can redirect directly here.
           // For now, _layout handles the initial session change redirect.
-        },
-        onFinished() {
-          setIsLoading(false);
         },
       },
     );
@@ -54,39 +68,56 @@ export default function SignInScreen() {
     <Container style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>
-          Sign in to mark your attendance
-        </Text>
+        <Text style={styles.subtitle}>Sign in to mark your attendance</Text>
       </View>
 
       <View style={styles.card}>
-        {error ? (
-          <Text style={styles.errorText}>{error}</Text>
-        ) : null}
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            placeholder="student@charusat.edu.in"
-            placeholderTextColor={COLORS.muted}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            editable={!isLoading}
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <>
+                <TextInput
+                  style={[styles.input, errors.email && { borderColor: COLORS.destructive }]}
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  placeholder="student@charusat.edu.in"
+                  placeholderTextColor={COLORS.muted}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  editable={!isSubmitting}
+                />
+                {errors.email && <Text style={styles.errorTextSmall}>{errors.email.message}</Text>}
+              </>
+            )}
           />
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Password</Text>
-          <PasswordInput
-            style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Password"
-            placeholderTextColor={COLORS.muted}
-            editable={!isLoading}
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, value } }) => (
+              <>
+                <PasswordInput
+                  style={[styles.input, errors.password && { borderColor: COLORS.destructive }]}
+                  value={value}
+                  onChangeText={onChange}
+                  placeholder="Password"
+                  placeholderTextColor={COLORS.muted}
+                  editable={!isSubmitting}
+                />
+                {errors.password && (
+                  <Text style={styles.errorTextSmall}>{errors.password.message}</Text>
+                )}
+              </>
+            )}
           />
         </View>
 
@@ -99,11 +130,11 @@ export default function SignInScreen() {
         </View>
 
         <TouchableOpacity
-          style={[styles.button, isLoading && styles.buttonDisabled]}
-          onPress={handleLogin}
-          disabled={isLoading}
+          style={[styles.button, isSubmitting && styles.buttonDisabled]}
+          onPress={handleSubmit(onSubmit)}
+          disabled={isSubmitting}
         >
-          {isLoading ? (
+          {isSubmitting ? (
             <ActivityIndicator size="small" color="#ffffff" />
           ) : (
             <Text style={styles.buttonText}>Sign In</Text>
@@ -118,28 +149,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 24,
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 32,
   },
   title: {
     fontSize: 30,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.foreground,
   },
   subtitle: {
     color: COLORS.muted,
     marginTop: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   card: {
     backgroundColor: COLORS.card,
     padding: 24,
     borderRadius: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -150,16 +181,21 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: COLORS.destructive,
-    textAlign: 'center',
-    fontWeight: '500',
+    textAlign: "center",
+    fontWeight: "500",
     marginBottom: 8,
+  },
+  errorTextSmall: {
+    color: COLORS.destructive,
+    fontSize: 12,
+    marginTop: 4,
   },
   inputGroup: {
     marginBottom: 16,
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
     color: COLORS.foreground,
     marginBottom: 8,
   },
@@ -174,29 +210,29 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   forgotPasswordContainer: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
     marginBottom: 8,
   },
   forgotPasswordText: {
     color: COLORS.primary,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
     padding: 8,
   },
   button: {
     backgroundColor: COLORS.primary,
     height: 48,
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 8,
   },
   buttonDisabled: {
     opacity: 0.7,
   },
   buttonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

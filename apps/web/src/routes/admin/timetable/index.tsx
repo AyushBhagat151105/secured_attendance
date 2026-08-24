@@ -1,4 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  createTimetableEntrySchema,
+  updateTimetableEntrySchema,
+  type CreateTimetableEntrySchema,
+  type UpdateTimetableEntrySchema,
+} from "@secured_attendance/validators";
+
 import { useTimetableEntries } from "@/hooks/api/use-admin-timetable";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
@@ -6,15 +15,54 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus, MoreHorizontal, Pencil, Trash, UserIcon } from "lucide-react";
 import { useState, useMemo } from "react";
-import { useCreateTimetableEntry, useUpdateTimetableEntry, useDeleteTimetableEntry } from "@/hooks/api/use-admin-timetable";
-import { useAcademicYears, useProgramSemesters, useSubjects, useDivisions } from "@/hooks/api/use-admin-academic";
+import {
+  useCreateTimetableEntry,
+  useUpdateTimetableEntry,
+  useDeleteTimetableEntry,
+} from "@/hooks/api/use-admin-timetable";
+import {
+  useAcademicYears,
+  useProgramSemesters,
+  useSubjects,
+  useDivisions,
+} from "@/hooks/api/use-admin-academic";
 import { useRooms } from "@/hooks/api/use-admin-campus";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useUsers } from "@/hooks/api/use-admin-users";
 import {
   Table,
@@ -25,6 +73,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { IconLocation } from "@tabler/icons-react";
+
 
 export const Route = createFileRoute("/admin/timetable/")({
   component: TimetableRoute,
@@ -42,37 +91,43 @@ const formatTime = (time: string) => {
   return `${hours}:${minutesStr} ${ampm}`;
 };
 
-function TeacherInput({ defaultValue }: { defaultValue?: string }) {
-  const [value, setValue] = useState(defaultValue || "");
+function TeacherInput({ value, onChange, onBlur, name, ref }: any) {
   const [focused, setFocused] = useState(false);
   const { data } = useUsers({ role: "teacher", limit: 100 });
   const teachers = data?.users || [];
 
-  const tokens = value.split(",").map(t => t.trim());
+  const stringValue = value || "";
+  const tokens = stringValue.split(",").map((t: string) => t.trim());
   const currentToken = tokens[tokens.length - 1] || "";
 
   const suggestions = teachers.filter((t: any) => {
     const code = t.teacherProfile?.code || "";
-    const name = t.name || "";
-    return (code.toLowerCase().includes(currentToken.toLowerCase()) ||
-      name.toLowerCase().includes(currentToken.toLowerCase())) &&
-      !tokens.slice(0, -1).includes(code);
+    const teacherName = t.name || "";
+    return (
+      (code.toLowerCase().includes(currentToken.toLowerCase()) ||
+        teacherName.toLowerCase().includes(currentToken.toLowerCase())) &&
+      !tokens.slice(0, -1).includes(code)
+    );
   });
 
   const handleSelect = (teacher: any) => {
     const code = teacher.teacherProfile?.code || teacher.id;
     const newTokens = [...tokens.slice(0, -1), code];
-    setValue(newTokens.join(", ") + ", ");
+    onChange(newTokens.join(", ") + ", ");
   };
 
   return (
     <div className="relative">
       <Input
-        name="teacherCodes"
+        name={name}
+        ref={ref}
         value={value}
-        onChange={e => setValue(e.target.value)}
+        onChange={onChange}
         onFocus={() => setFocused(true)}
-        onBlur={() => setTimeout(() => setFocused(false), 200)}
+        onBlur={(e) => {
+          setTimeout(() => setFocused(false), 200);
+          if (onBlur) onBlur(e);
+        }}
         placeholder="T01, T02"
         autoComplete="new-password"
         spellCheck="false"
@@ -83,7 +138,10 @@ function TeacherInput({ defaultValue }: { defaultValue?: string }) {
             <div
               key={t.id}
               className="px-3 py-2 hover:bg-muted cursor-pointer flex justify-between items-center"
-              onMouseDown={(e) => { e.preventDefault(); handleSelect(t); }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleSelect(t);
+              }}
             >
               <span className="font-semibold">{t.teacherProfile?.code}</span>
               <span className="text-muted-foreground text-xs">{t.name}</span>
@@ -101,17 +159,28 @@ function TimetableEntryActions({ entry, days, programs, years, subjects, rooms, 
   const updateEntry = useUpdateTimetableEntry();
   const deleteEntry = useDeleteTimetableEntry();
 
-  const onEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+  const form = useForm<UpdateTimetableEntrySchema>({
+    resolver: zodResolver(updateTimetableEntrySchema),
+    defaultValues: {
+      subjectId: entry.subjectId,
+      roomId: entry.roomId,
+      dayOfWeek: entry.dayOfWeek,
+      startTime: entry.startTime,
+      endTime: entry.endTime,
+      type: entry.type || "",
+      teacherCodes: entry.teacherCodes?.join(", ") || "",
+    },
+  });
+
+  const onSubmit = async (value: UpdateTimetableEntrySchema) => {
     const body = {
-      subjectId: formData.get("subjectId") as string,
-      roomId: formData.get("roomId") as string,
-      dayOfWeek: parseInt(formData.get("dayOfWeek") as string, 10),
-      startTime: formData.get("startTime") as string,
-      endTime: formData.get("endTime") as string,
-      type: formData.get("type") as string || undefined,
-      teacherCodes: (formData.get("teacherCodes") as string).split(",").map(s => s.trim()).filter(Boolean),
+      ...value,
+      teacherCodes: value.teacherCodes
+        ? value.teacherCodes
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [],
     };
     await updateEntry.mutateAsync({ id: entry.id, body });
     setShowEdit(false);
@@ -126,7 +195,10 @@ function TimetableEntryActions({ entry, days, programs, years, subjects, rooms, 
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground">
+          <Button
+            variant="ghost"
+            className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+          >
             <span className="sr-only">Open menu</span>
             <MoreHorizontal className="h-4 w-4" />
           </Button>
@@ -134,10 +206,18 @@ function TimetableEntryActions({ entry, days, programs, years, subjects, rooms, 
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setShowEdit(true)}>
+          <DropdownMenuItem
+            onClick={() => {
+              form.reset();
+              setShowEdit(true);
+            }}
+          >
             <Pencil className="mr-2 h-4 w-4" /> Edit Time/Room
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setShowDelete(true)} className="text-destructive focus:text-destructive">
+          <DropdownMenuItem
+            onClick={() => setShowDelete(true)}
+            className="text-destructive focus:text-destructive"
+          >
             <Trash className="mr-2 h-4 w-4" /> Delete Class
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -145,71 +225,140 @@ function TimetableEntryActions({ entry, days, programs, years, subjects, rooms, 
 
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <DialogContent className="max-w-md">
-          <form onSubmit={onEditSubmit}>
-            <DialogHeader>
-              <DialogTitle>Edit Class</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-2 py-2">
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                <div className="grid gap-2">
-                  <Label>Start Time</Label>
-                  <Input name="startTime" type="time" required defaultValue={entry.startTime} />
+          <DialogHeader>
+            <DialogTitle>Edit Class</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid gap-2 py-2">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                  <Controller
+                    control={form.control}
+                    name="startTime"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Start Time</FieldLabel>
+                          <Input {...field} type="time" />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    control={form.control}
+                    name="endTime"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>End Time</FieldLabel>
+                          <Input {...field} type="time" />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
                 </div>
-                <div className="grid gap-2">
-                  <Label>End Time</Label>
-                  <Input name="endTime" type="time" required defaultValue={entry.endTime} />
-                </div>
+
+                <Controller
+                  control={form.control}
+                  name="dayOfWeek"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Day of Week</FieldLabel>
+                      <Select
+                        onValueChange={(val) => field.onChange(parseInt(val, 10))}
+                        defaultValue={field.value?.toString()}
+                      >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        <SelectContent>
+                          {days.map((d: string, i: number) => (
+                            <SelectItem key={i} value={i.toString()}>
+                              {d}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+
+                <Controller
+                  control={form.control}
+                  name="subjectId"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Subject</FieldLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <SelectTrigger className="w-full overflow-hidden [&>span]:w-full [&>span]:text-left">
+                            <SelectValue />
+                          </SelectTrigger>
+                        <SelectContent className="max-w-100">
+                          {subjects?.map((s: any) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              <div className="truncate pr-4" title={`${s.code} (${s.name})`}>
+                                <span className="font-medium">{s.code}</span> ({s.name})
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+
+                <Controller
+                  control={form.control}
+                  name="roomId"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Room</FieldLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        <SelectContent>
+                          {rooms?.map((r: any) => (
+                            <SelectItem key={r.id} value={r.id}>
+                              {r.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+
+                <Controller
+                  control={form.control}
+                  name="type"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Class Type</FieldLabel>
+                        <Input {...field} placeholder="Lecture, Lab, etc" />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+
+                <Controller
+                  control={form.control}
+                  name="teacherCodes"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Teacher Codes</FieldLabel>
+                        <TeacherInput {...field} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
               </div>
-              <div className="grid gap-2">
-                <Label>Day of Week</Label>
-                <Select name="dayOfWeek" required defaultValue={entry.dayOfWeek.toString()}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {days.map((d: string, i: number) => (
-                      <SelectItem key={i} value={i.toString()}>{d}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label>Subject</Label>
-                <Select name="subjectId" required defaultValue={entry.subjectId}>
-                  <SelectTrigger className="w-full overflow-hidden [&>span]:w-full [&>span]:text-left"><SelectValue /></SelectTrigger>
-                  <SelectContent className="max-w-100">
-                    {subjects?.map((s: any) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        <div className="truncate pr-4" title={`${s.code} (${s.name})`}>
-                          <span className="font-medium">{s.code}</span> ({s.name})
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label>Room</Label>
-                <Select name="roomId" required defaultValue={entry.roomId}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {rooms?.map((r: any) => (
-                      <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label>Class Type</Label>
-                <Input name="type" placeholder="Lecture, Lab, etc" defaultValue={entry.type} />
-              </div>
-              <div className="grid gap-2">
-                <Label>Teacher Codes</Label>
-                <TeacherInput defaultValue={entry.teacherCodes?.join(", ")} />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={updateEntry.isPending}>Save</Button>
-            </DialogFooter>
-          </form>
+              <DialogFooter>
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  Save
+                </Button>
+              </DialogFooter>
+            </form>
         </DialogContent>
       </Dialog>
 
@@ -223,7 +372,10 @@ function TimetableEntryActions({ entry, days, programs, years, subjects, rooms, 
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onDeleteConfirm} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction
+              onClick={onDeleteConfirm}
+              className="bg-destructive text-destructive-foreground"
+            >
               {deleteEntry.isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -253,22 +405,35 @@ function TimetableRoute() {
   const createEntry = useCreateTimetableEntry();
   const [isAddOpen, setIsAddOpen] = useState(false);
 
-  const onAddSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+  const form = useForm<CreateTimetableEntrySchema>({
+    resolver: zodResolver(createTimetableEntrySchema),
+    defaultValues: {
+      programSemesterId: "",
+      academicYearId: "",
+      divisionId: "",
+      subjectId: "",
+      roomId: "",
+      dayOfWeek: 0,
+      startTime: "",
+      endTime: "",
+      type: "",
+      teacherCodes: "",
+    },
+  });
+
+  const onSubmit = async (value: CreateTimetableEntrySchema) => {
     const body = {
-      programSemesterId: formData.get("programSemesterId") as string,
-      academicYearId: formData.get("academicYearId") as string,
-      subjectId: formData.get("subjectId") as string,
-      roomId: formData.get("roomId") as string,
-      dayOfWeek: parseInt(formData.get("dayOfWeek") as string, 10),
-      startTime: formData.get("startTime") as string,
-      endTime: formData.get("endTime") as string,
-      type: formData.get("type") as string || undefined,
-      teacherCodes: (formData.get("teacherCodes") as string).split(",").map(s => s.trim()).filter(Boolean),
-      divisionIds: [formData.get("divisionId") as string], // simplified for UI form
+      ...value,
+      teacherCodes: value.teacherCodes
+        ? value.teacherCodes
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [],
+      divisionIds: [value.divisionId], // simplified for UI form
     };
     await createEntry.mutateAsync(body);
+    form.reset();
     setIsAddOpen(false);
   };
 
@@ -290,105 +455,204 @@ function TimetableRoute() {
         <h2 className="text-3xl font-bold tracking-tight">Timetable Overview</h2>
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="mr-2 h-4 w-4" /> Add Class</Button>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> Add Class
+            </Button>
           </DialogTrigger>
           <DialogContent className="max-w-4xl">
-            <form onSubmit={onAddSubmit}>
-              <DialogHeader>
-                <DialogTitle>Schedule New Class</DialogTitle>
-              </DialogHeader>
-              <div className="grid grid-cols-3 gap-x-6 gap-y-4 py-4">
-                <div className="grid gap-2">
-                  <Label>Program Semester</Label>
-                  <Select name="programSemesterId" required>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {programs?.map((p: any) => (
-                        <SelectItem key={p.id} value={p.id}>{p.program.code} - Sem {p.semester}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            <DialogHeader>
+              <DialogTitle>Schedule New Class</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="grid grid-cols-3 gap-x-6 gap-y-4 py-4">
+                  <Controller
+                    control={form.control}
+                    name="programSemesterId"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Program Semester</FieldLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          <SelectContent>
+                            {programs?.map((p: any) => (
+                              <SelectItem key={p.id} value={p.id}>
+                                {p.program.code} - Sem {p.semester}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    control={form.control}
+                    name="academicYearId"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Academic Year</FieldLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          <SelectContent>
+                            {years?.map((y: any) => (
+                              <SelectItem key={y.id} value={y.id}>
+                                {y.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    control={form.control}
+                    name="divisionId"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Division</FieldLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          <SelectContent>
+                            {divisions?.map((d: any) => (
+                              <SelectItem key={d.id} value={d.id}>
+                                {d.name} ({d.programSemester.program.code})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    control={form.control}
+                    name="subjectId"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Subject</FieldLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <SelectTrigger className="w-full overflow-hidden [&>span]:w-full [&>span]:text-left">
+                              <SelectValue />
+                            </SelectTrigger>
+                          <SelectContent className="max-w-100">
+                            {subjects?.map((s: any) => (
+                              <SelectItem key={s.id} value={s.id}>
+                                <div className="truncate pr-4" title={`${s.code} (${s.name})`}>
+                                  <span className="font-medium">{s.code}</span> ({s.name})
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    control={form.control}
+                    name="roomId"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Room</FieldLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          <SelectContent>
+                            {rooms?.map((r: any) => (
+                              <SelectItem key={r.id} value={r.id}>
+                                {r.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    control={form.control}
+                    name="dayOfWeek"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Day of Week</FieldLabel>
+                        <Select
+                          onValueChange={(val) => field.onChange(parseInt(val, 10))}
+                          defaultValue={field.value?.toString()}
+                        >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          <SelectContent>
+                            {DAYS.map((d: string, i: number) => (
+                              <SelectItem key={i} value={i.toString()}>
+                                {d}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    control={form.control}
+                    name="startTime"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Start Time</FieldLabel>
+                          <Input {...field} type="time" />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    control={form.control}
+                    name="endTime"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>End Time</FieldLabel>
+                          <Input {...field} type="time" />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    control={form.control}
+                    name="type"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Class Type</FieldLabel>
+                          <Input {...field} placeholder="Lecture" />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    control={form.control}
+                    name="teacherCodes"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Teacher Codes</FieldLabel>
+                          <TeacherInput {...field} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
                 </div>
-                <div className="grid gap-2">
-                  <Label>Academic Year</Label>
-                  <Select name="academicYearId" required>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {years?.map((y: any) => (
-                        <SelectItem key={y.id} value={y.id}>{y.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label>Division</Label>
-                  <Select name="divisionId" required>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {divisions?.map((d: any) => (
-                        <SelectItem key={d.id} value={d.id}>{d.name} ({d.programSemester.program.code})</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label>Subject</Label>
-                  <Select name="subjectId" required>
-                    <SelectTrigger className="w-full overflow-hidden [&>span]:w-full [&>span]:text-left"><SelectValue /></SelectTrigger>
-                    <SelectContent className="max-w-100">
-                      {subjects?.map((s: any) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          <div className="truncate pr-4" title={`${s.code} (${s.name})`}>
-                            <span className="font-medium">{s.code}</span> ({s.name})
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label>Room</Label>
-                  <Select name="roomId" required>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {rooms?.map((r: any) => (
-                        <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label>Day of Week</Label>
-                  <Select name="dayOfWeek" required>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {DAYS.map((d: string, i: number) => (
-                        <SelectItem key={i} value={i.toString()}>{d}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label>Start Time</Label>
-                  <Input name="startTime" type="time" required />
-                </div>
-                <div className="grid gap-2">
-                  <Label>End Time</Label>
-                  <Input name="endTime" type="time" required />
-                </div>
-                <div className="grid gap-2">
-                  <Label>Class Type</Label>
-                  <Input name="type" placeholder="Lecture" />
-                </div>
-                <div className="grid gap-2">
-                  <Label>Teacher Codes</Label>
-                  <TeacherInput />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="submit" disabled={createEntry.isPending}>Schedule Class</Button>
-              </DialogFooter>
-            </form>
+                <DialogFooter>
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    Schedule Class
+                  </Button>
+                </DialogFooter>
+              </form>
           </DialogContent>
         </Dialog>
       </div>
@@ -418,7 +682,9 @@ function TimetableRoute() {
                     <TableRow key={slot}>
                       <TableCell className="font-medium whitespace-nowrap align-top pt-4">
                         <div className="text-sm">{formatTime(startTime)}</div>
-                        <div className="text-xs text-muted-foreground font-normal">to {formatTime(endTime)}</div>
+                        <div className="text-xs text-muted-foreground font-normal">
+                          to {formatTime(endTime)}
+                        </div>
                       </TableCell>
                       {DAYS.map((day, dayIndex) => {
                         const cellEntries =
@@ -426,14 +692,17 @@ function TimetableRoute() {
                             (e) =>
                               e.dayOfWeek === dayIndex &&
                               e.startTime === startTime &&
-                              e.endTime === endTime
+                              e.endTime === endTime,
                           ) || [];
 
                         return (
                           <TableCell key={day} className="align-top border-l p-1 bg-muted/10">
                             <div className="flex flex-col gap-1.5 h-full min-h-15">
                               {cellEntries.map((entry) => (
-                                <Card key={entry.id} className="p-2 border shadow-sm relative group overflow-hidden bg-background">
+                                <Card
+                                  key={entry.id}
+                                  className="p-2 border shadow-sm relative group overflow-hidden bg-background"
+                                >
                                   <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background rounded-md shadow-sm z-10">
                                     <TimetableEntryActions
                                       entry={entry}
@@ -445,27 +714,55 @@ function TimetableRoute() {
                                       divisions={divisions}
                                     />
                                   </div>
-                                  <div className="text-xs font-semibold text-primary pr-6">{entry.subject?.code}</div>
-                                  <div className="text-[10px] text-muted-foreground leading-tight mt-0.5 line-clamp-2" title={entry.subject?.name}>
+                                  <div className="text-xs font-semibold text-primary pr-6">
+                                    {entry.subject?.code}
+                                  </div>
+                                  <div
+                                    className="text-[10px] text-muted-foreground leading-tight mt-0.5 line-clamp-2"
+                                    title={entry.subject?.name}
+                                  >
                                     {entry.subject?.name}
                                   </div>
                                   <div className="flex flex-col gap-1 mt-1.5">
                                     {entry.teacherCodes && entry.teacherCodes.length > 0 && (
                                       <div className="flex items-center gap-1.5 text-[10px] leading-tight text-muted-foreground truncate">
                                         <UserIcon className="w-3 h-3 shrink-0" />
-                                        <span className="truncate">{entry.teacherCodes.map((code: string) => teachersMap.get(code) || code).join(", ")}</span>
+                                        <span className="truncate">
+                                          {entry.teacherCodes
+                                            .map((code: string) => teachersMap.get(code) || code)
+                                            .join(", ")}
+                                        </span>
                                       </div>
                                     )}
                                     {entry.divisions && entry.divisions.length > 0 && (
-                                      <div className="flex items-center gap-1.5 text-[10px] leading-tight text-muted-foreground truncate" title={entry.divisions.map((d: any) => `${d.division?.programSemester?.program?.code} - ${d.division?.name}`).join(", ")}>
+                                      <div
+                                        className="flex items-center gap-1.5 text-[10px] leading-tight text-muted-foreground truncate"
+                                        title={entry.divisions
+                                          .map(
+                                            (d: any) =>
+                                              `${d.division?.programSemester?.program?.code} - ${d.division?.name}`,
+                                          )
+                                          .join(", ")}
+                                      >
                                         <IconLocation className="w-3 h-3 shrink-0" />
-                                        <span className="truncate">{entry.divisions.map((d: any) => `${d.division?.programSemester?.program?.code} - ${d.division?.name}`).join(", ")}</span>
+                                        <span className="truncate">
+                                          {entry.divisions
+                                            .map(
+                                              (d: any) =>
+                                                `${d.division?.programSemester?.program?.code} - ${d.division?.name}`,
+                                            )
+                                            .join(", ")}
+                                        </span>
                                       </div>
                                     )}
                                   </div>
                                   <div className="flex justify-between items-center mt-2 pt-1 border-t">
-                                    <Badge variant="outline" className="text-[9px] px-1 h-4">{entry.type || "Class"}</Badge>
-                                    <span className="text-[10px] text-muted-foreground font-medium">{entry.room?.name}</span>
+                                    <Badge variant="outline" className="text-[9px] px-1 h-4">
+                                      {entry.type || "Class"}
+                                    </Badge>
+                                    <span className="text-[10px] text-muted-foreground font-medium">
+                                      {entry.room?.name}
+                                    </span>
                                   </div>
                                 </Card>
                               ))}

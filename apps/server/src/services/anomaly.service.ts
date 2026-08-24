@@ -11,7 +11,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const d = R * c; 
+  const d = R * c;
   return d;
 }
 
@@ -52,7 +52,7 @@ export async function checkImpossibleTravel(
   userId: string,
   currentLat: number,
   currentLng: number,
-  currentTime: Date
+  currentTime: Date,
 ): Promise<boolean> {
   const lastAttendance = await prisma.attendance.findFirst({
     where: {
@@ -74,11 +74,12 @@ export async function checkImpossibleTravel(
     lastAttendance.gpsLat,
     lastAttendance.gpsLng,
     currentLat,
-    currentLng
+    currentLng,
   );
 
-  const timeDiffHours = (currentTime.getTime() - lastAttendance.timestamp.getTime()) / (1000 * 60 * 60);
-  
+  const timeDiffHours =
+    (currentTime.getTime() - lastAttendance.timestamp.getTime()) / (1000 * 60 * 60);
+
   if (timeDiffHours <= 0) return false;
 
   const speedKmh = distanceKm / timeDiffHours;

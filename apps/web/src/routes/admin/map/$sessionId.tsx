@@ -18,7 +18,7 @@ function AdminMapRoute() {
 
   // Calculate dynamic bounds to fit both the geofence and all student check-ins
   let bounds: [[number, number], [number, number]] | undefined = undefined;
-  
+
   if (data) {
     let minLat = data.geofence.centerLat;
     let maxLat = data.geofence.centerLat;
@@ -35,10 +35,10 @@ function AdminMapRoute() {
     // Add padding to bounds
     const latPadding = Math.max((maxLat - minLat) * 0.1, 0.001);
     const lngPadding = Math.max((maxLng - minLng) * 0.1, 0.001);
-    
+
     bounds = [
       [minLat - latPadding, minLng - lngPadding],
-      [maxLat + latPadding, maxLng + lngPadding]
+      [maxLat + latPadding, maxLng + lngPadding],
     ];
   }
 
@@ -47,33 +47,38 @@ function AdminMapRoute() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">GPS Visualization</h1>
         <p className="text-muted-foreground text-lg">
-          {data.sessionInfo.subject} • {data.sessionInfo.room} • {new Date(data.sessionInfo.date).toLocaleString()}
+          {data.sessionInfo.subject} • {data.sessionInfo.room} •{" "}
+          {new Date(data.sessionInfo.date).toLocaleString()}
         </p>
       </div>
 
       <Card className="flex-1 flex flex-col overflow-hidden">
         <CardContent className="p-0 flex-1 relative z-0">
-          <Map 
-            center={!bounds ? [data.geofence.centerLat, data.geofence.centerLng] as [number, number] : undefined} 
-            zoom={!bounds ? 18 : undefined} 
+          <Map
+            center={
+              !bounds
+                ? ([data.geofence.centerLat, data.geofence.centerLng] as [number, number])
+                : undefined
+            }
+            zoom={!bounds ? 18 : undefined}
             bounds={bounds}
             className="h-full w-full"
           >
             <MapTileLayer />
-            
+
             {/* Geofence Boundary */}
-            <MapCircle 
-              center={[data.geofence.centerLat, data.geofence.centerLng] as [number, number]} 
-              radius={data.geofence.radiusMeters} 
-              pathOptions={{ color: 'indigo', fillColor: 'indigo', fillOpacity: 0.1 }}
+            <MapCircle
+              center={[data.geofence.centerLat, data.geofence.centerLng] as [number, number]}
+              radius={data.geofence.radiusMeters}
+              pathOptions={{ color: "indigo", fillColor: "indigo", fillOpacity: 0.1 }}
             >
               <MapPopup>Classroom Geofence ({data.geofence.radiusMeters}m radius)</MapPopup>
             </MapCircle>
 
             {/* Student Check-ins */}
             {data.points.map((point: any, idx: number) => (
-              <MapMarker 
-                key={idx} 
+              <MapMarker
+                key={idx}
                 position={[point.lat, point.lng] as [number, number]}
                 icon={
                   point.isWithinGeofence && !point.isMocked ? (
@@ -84,9 +89,11 @@ function AdminMapRoute() {
                 }
               >
                 <MapPopup>
-                  <strong>{point.studentName}</strong><br/>
-                  Valid: {point.isWithinGeofence ? 'Yes' : 'No (Outside geofence)'}<br/>
-                  Mocked GPS: {point.isMocked ? 'Yes (Spoofing)' : 'No'}
+                  <strong>{point.studentName}</strong>
+                  <br />
+                  Valid: {point.isWithinGeofence ? "Yes" : "No (Outside geofence)"}
+                  <br />
+                  Mocked GPS: {point.isMocked ? "Yes (Spoofing)" : "No"}
                 </MapPopup>
               </MapMarker>
             ))}

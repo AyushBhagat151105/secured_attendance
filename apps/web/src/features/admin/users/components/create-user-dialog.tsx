@@ -1,6 +1,7 @@
-﻿import { IconUserPlus } from "@tabler/icons-react";
-import { useForm } from "@tanstack/react-form";
-import z from "zod";
+import { IconUserPlus } from "@tabler/icons-react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { createUserSchema, type CreateUserSchema } from "@secured_attendance/validators";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +13,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { useCreateUser } from "@/hooks/api/use-admin-users";
 import { useDivisions } from "@/hooks/api/use-admin-academic";
 
@@ -28,42 +29,16 @@ interface CreateUserDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const createSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.email("Enter a valid email"),
-  role: z.enum(["student", "teacher", "admin"]),
-  
-  // Student fields
-  enrollmentNo: z.string(),
-  programCode: z.string(),
-  semester: z.string(),
-  divisionId: z.string(),
-  
-  // Teacher fields
-  teacherCode: z.string(),
-  department: z.string(),
-}).superRefine((data, ctx) => {
-  if (data.role === "student") {
-    if (!data.enrollmentNo) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Required for student", path: ["enrollmentNo"] });
-    if (!data.programCode) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Required for student", path: ["programCode"] });
-    if (!data.semester) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Required for student", path: ["semester"] });
-    if (!data.divisionId) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Required for student", path: ["divisionId"] });
-  }
-  if (data.role === "teacher") {
-    if (!data.teacherCode) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Required for teacher", path: ["teacherCode"] });
-    if (!data.department) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Required for teacher", path: ["department"] });
-  }
-});
-
 export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) {
   const create = useCreateUser();
   const { data: divisions } = useDivisions();
 
-  const form = useForm({
+  const form = useForm<CreateUserSchema>({
+    resolver: zodResolver(createUserSchema),
     defaultValues: {
       name: "",
       email: "",
-      role: "student" as "student" | "teacher" | "admin",
+      role: "student",
       enrollmentNo: "",
       programCode: "",
       semester: "",
@@ -71,21 +46,24 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
       teacherCode: "",
       department: "",
     },
-    validators: {
-      onSubmit: createSchema,
-    },
-    onSubmit: async ({ value }) => {
-      await create.mutateAsync(value);
-      form.reset();
-      onOpenChange(false);
-    },
   });
 
+  const onSubmit = async (value: CreateUserSchema) => {
+    await create.mutateAsync(value);
+    form.reset();
+    onOpenChange(false);
+  };
+
+  const role = form.watch("role");
+
   return (
-    <Dialog open={open} onOpenChange={(open) => {
-      if (!open) form.reset();
-      onOpenChange(open);
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(open) => {
+        if (!open) form.reset();
+        onOpenChange(open);
+      }}
+    >
       <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
@@ -99,25 +77,15 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
           </div>
         </DialogHeader>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            void form.handleSubmit();
-          }}
-          className="space-y-4"
-        >
-          <form.Field name="role">
-            {(field) => (
-              <div className="space-y-1.5">
-                <Label>Role</Label>
-                <Select
-                  value={field.state.value}
-                  onValueChange={(v) =>
-                    field.handleChange(v as "student" | "teacher" | "admin")
-                  }
-                >
-                  <SelectTrigger>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <Controller
+            control={form.control}
+            name="role"
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Role</FieldLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <SelectTrigger id={field.name} aria-invalid={fieldState.invalid}>
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
@@ -126,205 +94,171 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
             )}
-          </form.Field>
+          />
 
           <div className="grid grid-cols-2 gap-4">
-            <form.Field name="name">
-              {(field) => (
-                <div className="space-y-1.5">
-                  <Label htmlFor={field.name}>Full Name</Label>
+            <Controller
+              control={form.control}
+              name="name"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Full Name</FieldLabel>
                   <Input
+                    {...field}
                     id={field.name}
                     placeholder="Ayush Bhagat"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={fieldState.invalid}
                   />
-                  {field.state.meta.errors.map((err) => (
-                    <p key={err?.toString()} className="text-destructive text-xs">
-                      {err?.toString()}
-                    </p>
-                  ))}
-                </div>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
               )}
-            </form.Field>
+            />
 
-            <form.Field name="email">
-              {(field) => (
-                <div className="space-y-1.5">
-                  <Label htmlFor={field.name}>Email</Label>
+            <Controller
+              control={form.control}
+              name="email"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Email</FieldLabel>
                   <Input
+                    {...field}
                     id={field.name}
                     type="email"
                     placeholder="user@charusat.edu.in"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={fieldState.invalid}
                   />
-                  {field.state.meta.errors.map((err) => (
-                    <p key={err?.toString()} className="text-destructive text-xs">
-                      {err?.toString()}
-                    </p>
-                  ))}
-                </div>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
               )}
-            </form.Field>
+            />
           </div>
 
-          <form.Subscribe selector={(state) => state.values.role}>
-            {(role) => (
-              <>
-                {role === "student" && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <form.Field name="enrollmentNo">
-                      {(field) => (
-                        <div className="space-y-1.5">
-                          <Label htmlFor={field.name}>Enrollment No</Label>
-                          <Input
-                            id={field.name}
-                            placeholder="e.g. 26msit005"
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                          />
-                          {field.state.meta.errors.map((err) => (
-                            <p key={err?.message} className="text-destructive text-xs">
-                              {err?.message}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-                    </form.Field>
-                    <form.Field name="programCode">
-                      {(field) => (
-                        <div className="space-y-1.5">
-                          <Label htmlFor={field.name}>Program Code</Label>
-                          <Input
-                            id={field.name}
-                            placeholder="e.g. mca"
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                          />
-                          {field.state.meta.errors.map((err) => (
-                            <p key={err?.message} className="text-destructive text-xs">
-                              {err?.message}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-                    </form.Field>
-                    <form.Field name="semester">
-                      {(field) => (
-                        <div className="space-y-1.5">
-                          <Label htmlFor={field.name}>Semester</Label>
-                          <Input
-                            id={field.name}
-                            type="number"
-                            min="1"
-                            max="10"
-                            placeholder="e.g. 1"
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                          />
-                          {field.state.meta.errors.map((err) => (
-                            <p key={err?.message} className="text-destructive text-xs">
-                              {err?.message}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-                    </form.Field>
-                    <form.Field name="divisionId">
-                      {(field) => (
-                        <div className="space-y-1.5">
-                          <Label htmlFor={field.name}>Division</Label>
-                          <Select
-                            value={field.state.value}
-                            onValueChange={field.handleChange}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select division" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {divisions?.map((div: any) => (
-                                <SelectItem key={div.id} value={div.id}>
-                                  {div.programSemester?.program?.code?.toUpperCase() ?? "DIV"} - Sem {div.programSemester?.semester ?? "?"} - Div {div.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {field.state.meta.errors.map((err) => (
-                            <p key={err?.message} className="text-destructive text-xs">
-                              {err?.message}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-                    </form.Field>
-                  </div>
+          {role === "student" && (
+            <div className="grid grid-cols-2 gap-4">
+              <Controller
+                control={form.control}
+                name="enrollmentNo"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Enrollment No</FieldLabel>
+                    <Input
+                      {...field}
+                      id={field.name}
+                      placeholder="e.g. 26msit005"
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
                 )}
+              />
+              <Controller
+                control={form.control}
+                name="programCode"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Program Code</FieldLabel>
+                    <Input
+                      {...field}
+                      id={field.name}
+                      placeholder="e.g. mca"
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+              <Controller
+                control={form.control}
+                name="semester"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Semester</FieldLabel>
+                    <Input
+                      {...field}
+                      id={field.name}
+                      type="number"
+                      min="1"
+                      max="10"
+                      placeholder="e.g. 1"
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+              <Controller
+                control={form.control}
+                name="divisionId"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Division</FieldLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <SelectTrigger id={field.name} aria-invalid={fieldState.invalid}>
+                        <SelectValue placeholder="Select division" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {divisions?.map((div: any) => (
+                          <SelectItem key={div.id} value={div.id}>
+                            {div.programSemester?.program?.code?.toUpperCase() ?? "DIV"} - Sem{" "}
+                            {div.programSemester?.semester ?? "?"} - Div {div.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+            </div>
+          )}
 
-                {role === "teacher" && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <form.Field name="teacherCode">
-                      {(field) => (
-                        <div className="space-y-1.5">
-                          <Label htmlFor={field.name}>Teacher Code</Label>
-                          <Input
-                            id={field.name}
-                            placeholder="e.g. HMP"
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                          />
-                          {field.state.meta.errors.map((err) => (
-                            <p key={err?.message} className="text-destructive text-xs">
-                              {err?.message}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-                    </form.Field>
-                    <form.Field name="department">
-                      {(field) => (
-                        <div className="space-y-1.5">
-                          <Label htmlFor={field.name}>Department</Label>
-                          <Input
-                            id={field.name}
-                            placeholder="e.g. Computer Science"
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                          />
-                          {field.state.meta.errors.map((err) => (
-                            <p key={err?.message} className="text-destructive text-xs">
-                              {err?.message}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-                    </form.Field>
-                  </div>
+          {role === "teacher" && (
+            <div className="grid grid-cols-2 gap-4">
+              <Controller
+                control={form.control}
+                name="teacherCode"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Teacher Code</FieldLabel>
+                    <Input
+                      {...field}
+                      id={field.name}
+                      placeholder="e.g. HMP"
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
                 )}
-              </>
-            )}
-          </form.Subscribe>
+              />
+              <Controller
+                control={form.control}
+                name="department"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Department</FieldLabel>
+                    <Input
+                      {...field}
+                      id={field.name}
+                      placeholder="e.g. Computer Science"
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+            </div>
+          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <form.Subscribe>
-              {(state) => (
-                <Button type="submit" disabled={!state.canSubmit || state.isSubmitting}>
-                  {state.isSubmitting ? "Creating..." : "Create User"}
-                </Button>
-              )}
-            </form.Subscribe>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? "Creating..." : "Create User"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

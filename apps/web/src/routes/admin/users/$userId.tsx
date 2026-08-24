@@ -50,7 +50,9 @@ function UserDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-20">
         <p className="text-muted-foreground">User not found.</p>
-        <Link to="/admin/users" className={cn(buttonVariants({ variant: "outline" }))}>Back to Users</Link>
+        <Link to="/admin/users" className={cn(buttonVariants({ variant: "outline" }))}>
+          Back to Users
+        </Link>
       </div>
     );
   }
@@ -70,10 +72,7 @@ function UserDetailPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Link
-          to="/admin/users"
-          className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
-        >
+        <Link to="/admin/users" className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}>
           <IconArrowLeft className="h-4 w-4" />
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight">User Detail</h1>
@@ -139,11 +138,7 @@ function UserDetailPage() {
             <TabsContent value="profile" className="mt-0">
               <CardContent className="space-y-3">
                 <InfoRow icon={IconMail} label="Email" value={typedUser.email} />
-                <InfoRow
-                  icon={IconShield}
-                  label="Role"
-                  value={typedUser.role.replace("_", " ")}
-                />
+                <InfoRow icon={IconShield} label="Role" value={typedUser.role.replace("_", " ")} />
                 <InfoRow
                   icon={IconCalendar}
                   label="Joined"

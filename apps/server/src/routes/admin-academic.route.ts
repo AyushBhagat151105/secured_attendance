@@ -30,11 +30,15 @@ export const adminAcademicModule = new Elysia({ prefix: "/academic" })
     params: IdParam,
     detail: { tags: ["Admin - Academic"], summary: "Get academic year" },
   })
-  .patch("/years/:id", async ({ params: { id }, body }) => AcademicService.updateAcademicYear(id, body), {
-    params: IdParam,
-    body: UpdateAcademicYearBody,
-    detail: { tags: ["Admin - Academic"], summary: "Update academic year" },
-  })
+  .patch(
+    "/years/:id",
+    async ({ params: { id }, body }) => AcademicService.updateAcademicYear(id, body),
+    {
+      params: IdParam,
+      body: UpdateAcademicYearBody,
+      detail: { tags: ["Admin - Academic"], summary: "Update academic year" },
+    },
+  )
   .delete("/years/:id", async ({ params: { id } }) => AcademicService.deleteAcademicYear(id), {
     params: IdParam,
     detail: { tags: ["Admin - Academic"], summary: "Delete academic year" },
@@ -52,11 +56,15 @@ export const adminAcademicModule = new Elysia({ prefix: "/academic" })
     params: IdParam,
     detail: { tags: ["Admin - Academic"], summary: "Get program" },
   })
-  .patch("/programs/:id", async ({ params: { id }, body }) => AcademicService.updateProgram(id, body), {
-    params: IdParam,
-    body: UpdateProgramBody,
-    detail: { tags: ["Admin - Academic"], summary: "Update program" },
-  })
+  .patch(
+    "/programs/:id",
+    async ({ params: { id }, body }) => AcademicService.updateProgram(id, body),
+    {
+      params: IdParam,
+      body: UpdateProgramBody,
+      detail: { tags: ["Admin - Academic"], summary: "Update program" },
+    },
+  )
   .delete("/programs/:id", async ({ params: { id } }) => AcademicService.deleteProgram(id), {
     params: IdParam,
     detail: { tags: ["Admin - Academic"], summary: "Delete program" },
@@ -74,15 +82,23 @@ export const adminAcademicModule = new Elysia({ prefix: "/academic" })
     params: IdParam,
     detail: { tags: ["Admin - Academic"], summary: "Get program semester" },
   })
-  .patch("/semesters/:id", async ({ params: { id }, body }) => AcademicService.updateProgramSemester(id, body), {
-    params: IdParam,
-    body: UpdateProgramSemesterBody,
-    detail: { tags: ["Admin - Academic"], summary: "Update program semester" },
-  })
-  .delete("/semesters/:id", async ({ params: { id } }) => AcademicService.deleteProgramSemester(id), {
-    params: IdParam,
-    detail: { tags: ["Admin - Academic"], summary: "Delete program semester" },
-  })
+  .patch(
+    "/semesters/:id",
+    async ({ params: { id }, body }) => AcademicService.updateProgramSemester(id, body),
+    {
+      params: IdParam,
+      body: UpdateProgramSemesterBody,
+      detail: { tags: ["Admin - Academic"], summary: "Update program semester" },
+    },
+  )
+  .delete(
+    "/semesters/:id",
+    async ({ params: { id } }) => AcademicService.deleteProgramSemester(id),
+    {
+      params: IdParam,
+      detail: { tags: ["Admin - Academic"], summary: "Delete program semester" },
+    },
+  )
 
   // ─── Divisions ────────────────────────────────────────────────────────────────
   .get("/divisions", async () => AcademicService.listDivisions(), {
@@ -96,11 +112,15 @@ export const adminAcademicModule = new Elysia({ prefix: "/academic" })
     params: IdParam,
     detail: { tags: ["Admin - Academic"], summary: "Get division" },
   })
-  .patch("/divisions/:id", async ({ params: { id }, body }) => AcademicService.updateDivision(id, body), {
-    params: IdParam,
-    body: UpdateDivisionBody,
-    detail: { tags: ["Admin - Academic"], summary: "Update division" },
-  })
+  .patch(
+    "/divisions/:id",
+    async ({ params: { id }, body }) => AcademicService.updateDivision(id, body),
+    {
+      params: IdParam,
+      body: UpdateDivisionBody,
+      detail: { tags: ["Admin - Academic"], summary: "Update division" },
+    },
+  )
   .delete("/divisions/:id", async ({ params: { id } }) => AcademicService.deleteDivision(id), {
     params: IdParam,
     detail: { tags: ["Admin - Academic"], summary: "Delete division" },
@@ -118,11 +138,15 @@ export const adminAcademicModule = new Elysia({ prefix: "/academic" })
     params: IdParam,
     detail: { tags: ["Admin - Academic"], summary: "Get subject" },
   })
-  .patch("/subjects/:id", async ({ params: { id }, body }) => AcademicService.updateSubject(id, body), {
-    params: IdParam,
-    body: UpdateSubjectBody,
-    detail: { tags: ["Admin - Academic"], summary: "Update subject" },
-  })
+  .patch(
+    "/subjects/:id",
+    async ({ params: { id }, body }) => AcademicService.updateSubject(id, body),
+    {
+      params: IdParam,
+      body: UpdateSubjectBody,
+      detail: { tags: ["Admin - Academic"], summary: "Update subject" },
+    },
+  )
   .delete("/subjects/:id", async ({ params: { id } }) => AcademicService.deleteSubject(id), {
     params: IdParam,
     detail: { tags: ["Admin - Academic"], summary: "Delete subject" },

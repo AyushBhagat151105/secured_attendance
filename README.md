@@ -45,11 +45,13 @@ secured_attendance/
 Ensure you have [Bun](https://bun.sh) and Docker installed.
 
 1. **Install Dependencies**
+
    ```sh
    bun install
    ```
 
 2. **Setup Database & Redis**
+
    ```sh
    docker compose -f packages/db/docker-compose.yml up -d
    bun db:push
@@ -64,13 +66,14 @@ Ensure you have [Bun](https://bun.sh) and Docker installed.
    ```sh
    # Start the backend server
    bun dev:server
-   
+
    # Start the web dashboard
    bun dev:web
-   
+
    # Start the mobile app
    bun dev:native
    ```
 
 ## 📜 Maintenance
+
 Please refer to `AGENTS.md` for AI assistant instructions regarding project context and technology stacks.

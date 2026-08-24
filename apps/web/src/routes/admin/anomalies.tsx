@@ -99,11 +99,17 @@ function AdminAnomaliesPage() {
                       </TableCell>
                       <TableCell>
                         {anomaly.status === "OPEN" ? (
-                          <Badge variant="outline" className="text-xs text-orange-500 border-orange-200 bg-orange-500/10">
+                          <Badge
+                            variant="outline"
+                            className="text-xs text-orange-500 border-orange-200 bg-orange-500/10"
+                          >
                             OPEN
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-xs text-emerald-500 border-emerald-200 bg-emerald-500/10">
+                          <Badge
+                            variant="outline"
+                            className="text-xs text-emerald-500 border-emerald-200 bg-emerald-500/10"
+                          >
                             RESOLVED
                           </Badge>
                         )}

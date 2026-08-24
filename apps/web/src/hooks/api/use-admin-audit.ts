@@ -10,7 +10,7 @@ export function useAdminAnomalies(status?: string) {
       unwrapEden(
         apiClient.api.admin.anomalies.get({
           query: status ? { status } : {},
-        })
+        }),
       ),
   });
 }
@@ -18,8 +18,7 @@ export function useAdminAnomalies(status?: string) {
 export function useResolveAnomaly() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      unwrapEden(apiClient.api.admin.anomalies({ id }).resolve.patch()),
+    mutationFn: (id: string) => unwrapEden(apiClient.api.admin.anomalies({ id }).resolve.patch()),
     onSuccess: () => {
       toast.success("Anomaly marked as resolved");
       qc.invalidateQueries({ queryKey: ["admin", "anomalies"] });
@@ -45,7 +44,7 @@ export function useAdminAuditLogs(params: {
             eventType: params.eventType,
             actor: params.actor,
           },
-        })
+        }),
       ),
   });
 }

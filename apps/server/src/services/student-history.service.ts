@@ -15,20 +15,20 @@ export class StudentHistoryService {
             include: {
               subject: true,
               room: true,
-            }
-          }
+            },
+          },
         },
         orderBy: {
-          timestamp: 'desc',
+          timestamp: "desc",
         },
         skip,
         take: limit,
       }),
-      prisma.attendance.count({ where: { studentProfileId: profile.id } })
+      prisma.attendance.count({ where: { studentProfileId: profile.id } }),
     ]);
 
     return {
-      items: items.map(record => ({
+      items: items.map((record) => ({
         id: record.id,
         date: record.timestamp.toISOString(),
         status: "PRESENT",
@@ -38,10 +38,12 @@ export class StudentHistoryService {
             name: record.session.subject.name,
             code: record.session.subject.code,
           },
-          room: record.session.room ? {
-            name: record.session.room.name,
-          } : { name: "Unknown Room" }
-        }
+          room: record.session.room
+            ? {
+                name: record.session.room.name,
+              }
+            : { name: "Unknown Room" },
+        },
       })),
       total,
       page,
@@ -57,10 +59,10 @@ export class StudentHistoryService {
       where: { studentProfileId: profile.id },
       include: {
         session: {
-          include: { subject: true }
-        }
+          include: { subject: true },
+        },
       },
-      orderBy: { timestamp: 'desc' }
+      orderBy: { timestamp: "desc" },
     });
 
     if (records.length === 0) {
@@ -83,7 +85,7 @@ export class StudentHistoryService {
           attended: 0,
         });
       }
-      
+
       const stats = subjectStatsMap.get(subjectId)!;
       stats.total++;
       stats.attended++;

@@ -8,7 +8,7 @@ export const adminAnomaliesModule = new Elysia({ prefix: "/anomalies" })
     "/",
     async ({ query }) => {
       const statusValue = query.status as string | undefined;
-      
+
       const anomalies = await prisma.anomalyAlert.findMany({
         where: statusValue ? { status: statusValue } : undefined,
         include: {
@@ -18,14 +18,14 @@ export const adminAnomaliesModule = new Elysia({ prefix: "/anomalies" })
         },
         orderBy: { createdAt: "desc" },
       });
-      
+
       return anomalies;
     },
     {
       query: t.Object({
         status: t.Optional(t.String()),
       }),
-    }
+    },
   )
   .patch(
     "/:id/resolve",
@@ -34,7 +34,7 @@ export const adminAnomaliesModule = new Elysia({ prefix: "/anomalies" })
         where: { id: params.id },
       });
       if (!anomaly) return status(404, "Anomaly not found");
-      
+
       const updated = await prisma.anomalyAlert.update({
         where: { id: params.id },
         data: { status: "RESOLVED" },
@@ -45,5 +45,5 @@ export const adminAnomaliesModule = new Elysia({ prefix: "/anomalies" })
       params: t.Object({
         id: t.String(),
       }),
-    }
+    },
   );

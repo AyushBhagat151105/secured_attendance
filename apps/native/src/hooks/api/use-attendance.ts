@@ -14,11 +14,11 @@ export type ScanAttendancePayload = {
 
 export function useScanAttendance() {
   const qc = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (payload: ScanAttendancePayload) => {
       try {
-        const res = await apiClient.post('/api/student/attendance/scan', payload);
+        const res = await apiClient.post("/api/student/attendance/scan", payload);
         return res.data;
       } catch (err: any) {
         throw new Error(err.response?.data?.message || err.message || "Failed to scan attendance");

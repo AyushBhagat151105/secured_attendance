@@ -67,12 +67,12 @@ flowchart TD
 
 Better Auth's organization plugin provides org-level roles via the `Member` model. System-wide roles (especially `super_admin`) exist **above** all organizations.
 
-| Role | Scope | Access |
-|------|-------|--------|
-| `super_admin` | System-wide | Full system config, create admins, manage all orgs |
-| `admin` | Organization (Program+Semester) | Manage timetable, rooms, students, teachers within their program |
-| `teacher` | Organization (assigned programs) | Open/close sessions, view attendance for their classes |
-| `student` | Organization (their program+semester) | **Mobile app only** — scan QR, view own attendance |
+| Role          | Scope                                 | Access                                                           |
+| ------------- | ------------------------------------- | ---------------------------------------------------------------- |
+| `super_admin` | System-wide                           | Full system config, create admins, manage all orgs               |
+| `admin`       | Organization (Program+Semester)       | Manage timetable, rooms, students, teachers within their program |
+| `teacher`     | Organization (assigned programs)      | Open/close sessions, view attendance for their classes           |
+| `student`     | Organization (their program+semester) | **Mobile app only** — scan QR, view own attendance               |
 
 ### 2.2 Organization Mapping
 
@@ -88,10 +88,10 @@ Division = tag/group within an organization (stored on StudentProfile)
 
 ### 2.3 Email Domain Detection
 
-| Pattern | Domain | Role |
-|---------|--------|------|
-| `26msit006@charusat.edu.in` | `charusat.edu.in` | Student |
-| `tusharmehta.mca@charusat.ac.in` | `charusat.ac.in` | Teacher |
+| Pattern                          | Domain            | Role    |
+| -------------------------------- | ----------------- | ------- |
+| `26msit006@charusat.edu.in`      | `charusat.edu.in` | Student |
+| `tusharmehta.mca@charusat.ac.in` | `charusat.ac.in`  | Teacher |
 
 > [!NOTE]
 > Admin creates ALL accounts. Email domain is used for validation, not self-registration.
@@ -282,6 +282,7 @@ model TeachingAssignment {
 
 > [!NOTE]
 > Add relations to the existing `User` model in `auth.prisma`:
+>
 > ```prisma
 > model User {
 >   ...existing fields...
@@ -570,48 +571,53 @@ apps/server/src/
 ### 4.2 Key API Endpoints
 
 #### Auth Module
-| Method | Path | Role | Description |
-|--------|------|------|-------------|
-| ALL | `/api/auth/*` | Public | Better Auth handler |
-| POST | `/api/auth/device-bind` | Student | Bind device fingerprint on first login |
-| POST | `/api/auth/device-rebind` | Admin | Admin re-binds a student's device |
+
+| Method | Path                      | Role    | Description                            |
+| ------ | ------------------------- | ------- | -------------------------------------- |
+| ALL    | `/api/auth/*`             | Public  | Better Auth handler                    |
+| POST   | `/api/auth/device-bind`   | Student | Bind device fingerprint on first login |
+| POST   | `/api/auth/device-rebind` | Admin   | Admin re-binds a student's device      |
 
 #### Admin Module
-| Method | Path | Role | Description |
-|--------|------|------|-------------|
-| GET/POST | `/api/admin/users` | Admin+ | List/create users |
-| POST | `/api/admin/users/bulk-import` | Admin+ | CSV bulk import students/teachers |
-| GET/POST | `/api/admin/programs` | Admin+ | Program CRUD |
-| GET/POST | `/api/admin/buildings` | Admin+ | Building + GPS CRUD |
-| GET/POST | `/api/admin/rooms` | Admin+ | Room CRUD |
-| GET/POST | `/api/admin/subjects` | Admin+ | Subject CRUD |
-| GET/POST | `/api/admin/timetable` | Admin+ | Timetable CRUD + CSV import |
-| POST | `/api/admin/timetable/import` | Admin+ | Structured CSV/JSON timetable import |
+
+| Method   | Path                           | Role   | Description                          |
+| -------- | ------------------------------ | ------ | ------------------------------------ |
+| GET/POST | `/api/admin/users`             | Admin+ | List/create users                    |
+| POST     | `/api/admin/users/bulk-import` | Admin+ | CSV bulk import students/teachers    |
+| GET/POST | `/api/admin/programs`          | Admin+ | Program CRUD                         |
+| GET/POST | `/api/admin/buildings`         | Admin+ | Building + GPS CRUD                  |
+| GET/POST | `/api/admin/rooms`             | Admin+ | Room CRUD                            |
+| GET/POST | `/api/admin/subjects`          | Admin+ | Subject CRUD                         |
+| GET/POST | `/api/admin/timetable`         | Admin+ | Timetable CRUD + CSV import          |
+| POST     | `/api/admin/timetable/import`  | Admin+ | Structured CSV/JSON timetable import |
 
 #### Session Module
-| Method | Path | Role | Description |
-|--------|------|------|-------------|
-| GET | `/api/sessions/today` | Teacher | Get teacher's sessions for today (from timetable) |
-| POST | `/api/sessions/open` | Teacher | Open a session (start QR rotation) |
-| POST | `/api/sessions/:id/close` | Teacher | Close a session |
-| GET | `/api/sessions/:id/attendance` | Teacher | Get live attendance for session |
+
+| Method | Path                           | Role    | Description                                       |
+| ------ | ------------------------------ | ------- | ------------------------------------------------- |
+| GET    | `/api/sessions/today`          | Teacher | Get teacher's sessions for today (from timetable) |
+| POST   | `/api/sessions/open`           | Teacher | Open a session (start QR rotation)                |
+| POST   | `/api/sessions/:id/close`      | Teacher | Close a session                                   |
+| GET    | `/api/sessions/:id/attendance` | Teacher | Get live attendance for session                   |
 
 #### Attendance Module
-| Method | Path | Role | Description |
-|--------|------|------|-------------|
-| POST | `/api/attendance/submit` | Student | Submit attendance scan |
-| GET | `/api/attendance/my` | Student | Student's own attendance history |
-| GET | `/api/attendance/my/:subjectId` | Student | Per-subject attendance detail |
-| GET | `/api/attendance/report/:sessionId` | Teacher+ | Session attendance report |
-| GET | `/api/attendance/report/subject/:subjectId` | Teacher+ | Subject-wide report |
-| GET | `/api/attendance/export/:format` | Admin+ | Export CSV/PDF |
+
+| Method | Path                                        | Role     | Description                      |
+| ------ | ------------------------------------------- | -------- | -------------------------------- |
+| POST   | `/api/attendance/submit`                    | Student  | Submit attendance scan           |
+| GET    | `/api/attendance/my`                        | Student  | Student's own attendance history |
+| GET    | `/api/attendance/my/:subjectId`             | Student  | Per-subject attendance detail    |
+| GET    | `/api/attendance/report/:sessionId`         | Teacher+ | Session attendance report        |
+| GET    | `/api/attendance/report/subject/:subjectId` | Teacher+ | Subject-wide report              |
+| GET    | `/api/attendance/export/:format`            | Admin+   | Export CSV/PDF                   |
 
 #### Anomaly Module
-| Method | Path | Role | Description |
-|--------|------|------|-------------|
-| GET | `/api/anomalies` | Admin+ | List anomaly alerts |
-| GET | `/api/anomalies/student/:id` | Admin+ | Student's anomaly history |
-| POST | `/api/anomalies/:id/resolve` | Admin+ | Mark anomaly as reviewed |
+
+| Method | Path                         | Role   | Description               |
+| ------ | ---------------------------- | ------ | ------------------------- |
+| GET    | `/api/anomalies`             | Admin+ | List anomaly alerts       |
+| GET    | `/api/anomalies/student/:id` | Admin+ | Student's anomaly history |
+| POST   | `/api/anomalies/:id/resolve` | Admin+ | Mark anomaly as reviewed  |
 
 ---
 
@@ -651,14 +657,16 @@ export function deriveSessionKey(sessionId: string): Buffer {
 /**
  * Generate a signed QR token
  */
-export function generateQrToken(sessionId: string, sessionKey: Buffer): {
+export function generateQrToken(
+  sessionId: string,
+  sessionKey: Buffer,
+): {
   token: string;
   nonce: string;
   issuedAt: number;
   expiresAt: number;
 } {
-  const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(16)))
-    .toString("base64url");
+  const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString("base64url");
   const iat = Math.floor(Date.now() / 1000);
   const exp = iat + 10; // 10-second TTL
 
@@ -682,7 +690,7 @@ export function generateQrToken(sessionId: string, sessionKey: Buffer): {
  */
 export function verifyQrToken(
   token: string,
-  sessionKey: Buffer
+  sessionKey: Buffer,
 ): { valid: true; payload: QrPayload } | { valid: false; reason: string } {
   const [payloadB64, signature] = token.split(".");
   if (!payloadB64 || !signature) return { valid: false, reason: "malformed" };
@@ -695,9 +703,7 @@ export function verifyQrToken(
   if (signature !== expected) return { valid: false, reason: "invalid_signature" };
 
   // Parse payload
-  const payload = JSON.parse(
-    Buffer.from(payloadB64, "base64url").toString()
-  ) as QrPayload;
+  const payload = JSON.parse(Buffer.from(payloadB64, "base64url").toString()) as QrPayload;
 
   // Check expiry against server time
   const now = Math.floor(Date.now() / 1000);
@@ -730,21 +736,21 @@ POST /attendance/submit
 
 ### Validation Steps (fail-fast, cheapest first)
 
-| Step | Check | Action on Fail | Anomaly Flag |
-|------|-------|----------------|--------------|
-| 1 | Parse + verify HMAC signature | Reject | — |
-| 2 | Check `exp` against server clock | Reject ("QR expired") | — |
-| 3 | Nonce check: Redis `GETDEL nonce:{sid}:{nonce}` | Reject ("Already used") | `duplicate_scan` |
-| 4 | Student exists + device bound | Reject | `unbound_device` |
-| 5 | Device ID matches bound device | Reject | `wrong_device` |
-| 6 | Mock location flag | Reject ("Location error") | `mock_location` |
-| 7 | GPS geofence (haversine vs building radius) | Reject ("Location error") | `gps_outside_geofence` |
-| 8 | **[Pluggable]** WiFi BSSID check | Flag only | `bssid_mismatch` |
-| 9 | **[Pluggable]** BLE beacon proximity | Flag only | `beacon_not_detected` |
-| 10 | **[Pluggable]** Device integrity | Flag only | `integrity_failed` |
-| 11 | Impossible travel check | Flag (don't reject) | `impossible_travel` |
-| 12 | Insert attendance row (unique constraint) | Reject ("Already marked") | `duplicate_scan` |
-| 13 | **Async**: audit log, WS live feed update | — | — |
+| Step | Check                                           | Action on Fail            | Anomaly Flag           |
+| ---- | ----------------------------------------------- | ------------------------- | ---------------------- |
+| 1    | Parse + verify HMAC signature                   | Reject                    | —                      |
+| 2    | Check `exp` against server clock                | Reject ("QR expired")     | —                      |
+| 3    | Nonce check: Redis `GETDEL nonce:{sid}:{nonce}` | Reject ("Already used")   | `duplicate_scan`       |
+| 4    | Student exists + device bound                   | Reject                    | `unbound_device`       |
+| 5    | Device ID matches bound device                  | Reject                    | `wrong_device`         |
+| 6    | Mock location flag                              | Reject ("Location error") | `mock_location`        |
+| 7    | GPS geofence (haversine vs building radius)     | Reject ("Location error") | `gps_outside_geofence` |
+| 8    | **[Pluggable]** WiFi BSSID check                | Flag only                 | `bssid_mismatch`       |
+| 9    | **[Pluggable]** BLE beacon proximity            | Flag only                 | `beacon_not_detected`  |
+| 10   | **[Pluggable]** Device integrity                | Flag only                 | `integrity_failed`     |
+| 11   | Impossible travel check                         | Flag (don't reject)       | `impossible_travel`    |
+| 12   | Insert attendance row (unique constraint)       | Reject ("Already marked") | `duplicate_scan`       |
+| 13   | **Async**: audit log, WS live feed update       | —                         | —                      |
 
 > [!IMPORTANT]
 > Client-facing error messages are **generic categories** (location error, QR expired, already marked). The specific failed check is logged server-side only for the admin audit dashboard.
@@ -754,26 +760,24 @@ POST /attendance/submit
 ```typescript
 // apps/server/src/modules/attendance/geofence.ts
 
-export function haversineDistance(
-  lat1: number, lng1: number,
-  lat2: number, lng2: number
-): number {
+export function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371e3; // Earth's radius in meters
   const φ1 = (lat1 * Math.PI) / 180;
   const φ2 = (lat2 * Math.PI) / 180;
   const Δφ = ((lat2 - lat1) * Math.PI) / 180;
   const Δλ = ((lng2 - lng1) * Math.PI) / 180;
 
-  const a = Math.sin(Δφ / 2) ** 2 +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+  const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
 
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 export function isWithinGeofence(
-  studentLat: number, studentLng: number,
-  buildingLat: number, buildingLng: number,
-  radiusMeters: number
+  studentLat: number,
+  studentLng: number,
+  buildingLat: number,
+  buildingLng: number,
+  radiusMeters: number,
 ): boolean {
   return haversineDistance(studentLat, studentLng, buildingLat, buildingLng) <= radiusMeters;
 }
@@ -828,10 +832,17 @@ app.ws("/ws/admin/live", {
 ### 7.3 Live Attendance Feed
 
 When a student successfully scans:
+
 1. Insert attendance row
 2. Publish to WS room `session:{sid}`:
    ```json
-   { "type": "attendance_marked", "student": "name", "enrollmentNo": "26msit006", "count": 23, "total": 50 }
+   {
+     "type": "attendance_marked",
+     "student": "name",
+     "enrollmentNo": "26msit006",
+     "count": 23,
+     "total": 50
+   }
    ```
 3. Publish to `admin:live` for admin dashboard
 
@@ -860,13 +871,13 @@ export const attendanceRedis = new Redis({
 
 ### 8.2 Key Design
 
-| Key Pattern | Type | TTL | Purpose |
-|-------------|------|-----|---------|
-| `att:nonce:{sid}:{nonce}` | string | 10s | Single-use QR nonce (replay protection) |
-| `att:session:{sid}` | hash | session duration | Hot cache: room GPS, radius, BSSID list, beacon UUID |
-| `att:ratelimit:{studentId}` | string (counter) | 60s | Max 5 scan attempts/minute per student |
-| `att:device:{deviceId}:last` | hash | 24h | Last attendance: timestamp, roomId, GPS (for impossible-travel) |
-| `att:session:{sid}:count` | string (counter) | session duration | Quick attendance count (avoid DB query for live counter) |
+| Key Pattern                  | Type             | TTL              | Purpose                                                         |
+| ---------------------------- | ---------------- | ---------------- | --------------------------------------------------------------- |
+| `att:nonce:{sid}:{nonce}`    | string           | 10s              | Single-use QR nonce (replay protection)                         |
+| `att:session:{sid}`          | hash             | session duration | Hot cache: room GPS, radius, BSSID list, beacon UUID            |
+| `att:ratelimit:{studentId}`  | string (counter) | 60s              | Max 5 scan attempts/minute per student                          |
+| `att:device:{deviceId}:last` | hash             | 24h              | Last attendance: timestamp, roomId, GPS (for impossible-travel) |
+| `att:session:{sid}:count`    | string (counter) | session duration | Quick attendance count (avoid DB query for live counter)        |
 
 ### 8.3 Nonce Check (Atomic Lua Script)
 
@@ -935,10 +946,10 @@ apps/web/src/routes/
 ```mermaid
 flowchart TB
     Header["ECJ - Enterprise Computing using Java EE | Session Active<br>Room: Class-9 | Started: 09:10 AM | ⏱ 00:23:45"]
-    
+
     QR["QR CODE<br>(rotating every 5-10s)<br><br>70% width"]
     List["Present: 23/50<br><br>✅ 26msit001 - Rahul P.<br>✅ 26msit002 - Priya S.<br>✅ 26msit003 - Amit K.<br>...<br><br>30% width (scrollable)"]
-    
+
     Footer["[End Session]"]
 
     Header --- QR
@@ -950,6 +961,7 @@ flowchart TB
 ### 9.3 Admin Building Map (shadcn-map)
 
 Admin configures buildings by placing pins on the map:
+
 - Click on map → set building coordinates
 - Drag radius circle → set geofence boundary
 - View in attendance reports: student GPS dots plotted on map after session ends
@@ -1026,11 +1038,11 @@ apps/native/app/
 ```mermaid
 flowchart TB
     Header["Good Morning, Ayush! 👋<br>MCA Sem-1 • Div-I<br><br>🔥 Attendance Streak: 12"]
-    
+
     Schedule["-- Today's Schedule --<br>✅ 09:10 | CC | Lab-11<br>⏳ 11:10 | WDOST | Cls-9 (next)<br>◻ 13:10 | ECJ | Lab-1"]
-    
+
     Overview["-- Subject Overview --<br>CC: 82%<br>WDOST: 64% ⚠<br>ECJ: 91%<br>PNA: 73% ⚠"]
-    
+
     Tabs["[Home] | [Scan] | [History]"]
 
     Header --- Schedule
@@ -1068,23 +1080,23 @@ export interface SecurityCheckPlugin {
 
 ### Available Plugins
 
-| Plugin | File | Status | Description |
-|--------|------|--------|-------------|
-| GPS Geofence | `geofence.ts` | **Active** | Haversine distance check |
-| WiFi BSSID | `bssid-check.ts` | **Stub** | Match against room whitelist |
-| BLE Beacon | `ble-check.ts` | **Stub** | UUID + RSSI threshold |
-| Device Integrity | `integrity-check.ts` | **Stub** | Play Integrity / App Attest |
-| Liveness | `liveness-check.ts` | **Stub** | Face match against enrollment photo |
+| Plugin           | File                 | Status     | Description                         |
+| ---------------- | -------------------- | ---------- | ----------------------------------- |
+| GPS Geofence     | `geofence.ts`        | **Active** | Haversine distance check            |
+| WiFi BSSID       | `bssid-check.ts`     | **Stub**   | Match against room whitelist        |
+| BLE Beacon       | `ble-check.ts`       | **Stub**   | UUID + RSSI threshold               |
+| Device Integrity | `integrity-check.ts` | **Stub**   | Play Integrity / App Attest         |
+| Liveness         | `liveness-check.ts`  | **Stub**   | Face match against enrollment photo |
 
 Plugins are registered in config and loaded dynamically:
 
 ```typescript
 const plugins: SecurityCheckPlugin[] = [
-  new GpsGeofencePlugin(),       // Always enabled
-  new BssidCheckPlugin(),         // Enabled when room has BSSID data
-  new BleBeaconPlugin(),          // Enabled when room has beacon UUID
-  new IntegrityCheckPlugin(),     // Enabled when API keys configured
-  new LivenessCheckPlugin(),      // Enabled when feature flag on
+  new GpsGeofencePlugin(), // Always enabled
+  new BssidCheckPlugin(), // Enabled when room has BSSID data
+  new BleBeaconPlugin(), // Enabled when room has beacon UUID
+  new IntegrityCheckPlugin(), // Enabled when API keys configured
+  new LivenessCheckPlugin(), // Enabled when feature flag on
 ];
 ```
 
@@ -1117,18 +1129,18 @@ Student scans QR → session has room → room has building → building has GPS
 
 ### 13.1 Anomaly Types
 
-| Flag | Trigger | Severity |
-|------|---------|----------|
-| `duplicate_scan` | Same student, same session, second attempt | Low |
-| `gps_outside_geofence` | GPS > building radius | Medium |
-| `mock_location` | Android `isFromMockProvider` = true | High |
-| `wrong_device` | Device ID doesn't match bound device | Critical |
-| `unbound_device` | No device bound to student | Critical |
-| `impossible_travel` | Two locations too fast (< walking speed) | High |
-| `bssid_mismatch` | Wrong WiFi AP (when enabled) | Medium |
-| `beacon_not_detected` | BLE beacon not found (when enabled) | Medium |
-| `integrity_failed` | Rooted/emulator/tampered app | Critical |
-| `rate_limit_exceeded` | > 5 attempts/minute | Medium |
+| Flag                   | Trigger                                    | Severity |
+| ---------------------- | ------------------------------------------ | -------- |
+| `duplicate_scan`       | Same student, same session, second attempt | Low      |
+| `gps_outside_geofence` | GPS > building radius                      | Medium   |
+| `mock_location`        | Android `isFromMockProvider` = true        | High     |
+| `wrong_device`         | Device ID doesn't match bound device       | Critical |
+| `unbound_device`       | No device bound to student                 | Critical |
+| `impossible_travel`    | Two locations too fast (< walking speed)   | High     |
+| `bssid_mismatch`       | Wrong WiFi AP (when enabled)               | Medium   |
+| `beacon_not_detected`  | BLE beacon not found (when enabled)        | Medium   |
+| `integrity_failed`     | Rooted/emulator/tampered app               | Critical |
+| `rate_limit_exceeded`  | > 5 attempts/minute                        | Medium   |
 
 ### 13.2 Impossible Travel Detection
 
@@ -1201,7 +1213,7 @@ services:
     command: redis-server --appendonly yes
     volumes: [redis_data:/data]
 
-  caddy:  # Reverse proxy + TLS
+  caddy: # Reverse proxy + TLS
     image: caddy:2-alpine
     ports: ["80:80", "443:443"]
     volumes: [./Caddyfile:/etc/caddy/Caddyfile]
@@ -1229,6 +1241,7 @@ services:
 > All Phase 1 work must be complete before any other phase begins.
 
 #### Tasks
+
 - [x] Extend Prisma schema with all domain models (academic, campus, timetable, attendance, audit)
 - [x] Run migrations, verify schema
 - [x] Add `role` field to User model
@@ -1243,6 +1256,7 @@ services:
 ### Phase 2: Auth & User Management
 
 #### Tasks
+
 - [x] Auth guards/middleware: `requireAuth`, `requireRole(roles[])`
 - [x] Device binding endpoint + logic
 - [x] Admin user CRUD API (create, list, update, suspend, delete)
@@ -1257,6 +1271,7 @@ services:
 ### Phase 3: Academic Structure & Timetable
 
 #### Tasks
+
 - [x] Academic year CRUD API
 - [x] Program CRUD API
 - [x] Program semester + division CRUD API
@@ -1276,6 +1291,7 @@ services:
 ### Phase 4: Session & QR System (Core Feature)
 
 #### Tasks
+
 - [x] Session lifecycle: open, close, auto-expire
 - [x] QR token generation + HMAC signing
 - [x] WebSocket gateway for QR rotation broadcast
@@ -1292,6 +1308,7 @@ services:
 ### Phase 5: Attendance Submission & Validation (Mobile App)
 
 #### Tasks
+
 - [x] Expo custom dev client setup (prebuild for Android)
 - [x] Install + configure react-native-vision-camera + code-scanner (using expo-camera)
 - [x] QR scanner screen (camera view + decode)
@@ -1316,6 +1333,7 @@ services:
 ### Phase 6: Reports, Analytics & Map
 
 #### Tasks
+
 - [x] Attendance report API: per-session, per-subject, per-student
 - [x] Total percentage calculation per student per subject
 - [x] Below-threshold alerts (< 75% attendance warning)
@@ -1332,6 +1350,7 @@ services:
 ### Phase 7: Anomaly Detection, Audit & Polish
 
 #### Tasks
+
 - [ ] Impossible travel detection logic
 - [ ] Anomaly scoring engine
 - [ ] Anomaly alert persistence + API

@@ -36,7 +36,7 @@ curl -fsSL https://heroui.com/install | bash -s heroui-native
 import { Button } from "heroui-native";
 
 <Button variant="primary" onPress={() => console.log("Pressed!")}>
-	Click me
+  Click me
 </Button>;
 ```
 
@@ -127,13 +127,13 @@ import { HeroUINativeProvider } from "heroui-native";
 import "./global.css";
 
 export default function Layout() {
-	return (
-		<GestureHandlerRootView style={{ flex: 1 }}>
-			<HeroUINativeProvider>
-				<App />
-			</HeroUINativeProvider>
-		</GestureHandlerRootView>
-	);
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <HeroUINativeProvider>
+        <App />
+      </HeroUINativeProvider>
+    </GestureHandlerRootView>
+  );
 }
 ```
 
@@ -156,12 +156,12 @@ HeroUI Native uses **compound component patterns**. Each component has subcompon
 
 ```tsx
 <Card>
-	<Card.Header>{/* Icons, badges */}</Card.Header>
-	<Card.Body>
-		<Card.Title>Title</Card.Title>
-		<Card.Description>Description</Card.Description>
-	</Card.Body>
-	<Card.Footer>{/* Actions */}</Card.Footer>
+  <Card.Header>{/* Icons, badges */}</Card.Header>
+  <Card.Body>
+    <Card.Title>Title</Card.Title>
+    <Card.Description>Description</Card.Description>
+  </Card.Body>
+  <Card.Footer>{/* Actions */}</Card.Footer>
 </Card>
 ```
 
@@ -198,8 +198,8 @@ HeroUI Native uses CSS variables via Tailwind/Uniwind for theming. Theme colors 
 
 ```css
 @theme {
-	--color-accent: hsl(260, 100%, 70%);
-	--color-accent-foreground: hsl(0, 0%, 100%);
+  --color-accent: hsl(260, 100%, 70%);
+  --color-accent-foreground: hsl(0, 0%, 100%);
 }
 ```
 

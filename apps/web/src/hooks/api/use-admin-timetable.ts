@@ -30,7 +30,8 @@ export const useCreateTimetableEntry = () => {
 export const useUpdateTimetableEntry = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, body }: { id: string; body: any }) => unwrapEden(apiClient.api.admin.timetable.entries({ id }).patch(body)),
+    mutationFn: ({ id, body }: { id: string; body: any }) =>
+      unwrapEden(apiClient.api.admin.timetable.entries({ id }).patch(body)),
     onSuccess: (_, { id }) => {
       toast.success("Class updated");
       queryClient.invalidateQueries({ queryKey: timetableKeys.all });
@@ -55,17 +56,21 @@ export const useDeleteTimetableEntry = () => {
 // ─── Bulk Import ──────────────────────────────────────────────────────────────
 export const usePreviewTimetableImport = () => {
   return useMutation({
-    mutationFn: (csv: string) => unwrapEden(apiClient.api.admin.timetable.entries.import.preview.post({ csv })),
+    mutationFn: (csv: string) =>
+      unwrapEden(apiClient.api.admin.timetable.entries.import.preview.post({ csv })),
   });
 };
 
 export const useConfirmTimetableImport = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (rows: any[]) => unwrapEden(apiClient.api.admin.timetable.entries.import.confirm.post({ rows })),
+    mutationFn: (rows: any[]) =>
+      unwrapEden(apiClient.api.admin.timetable.entries.import.confirm.post({ rows })),
     onSuccess: (data) => {
       if (data.errors && data.errors.length > 0) {
-        toast.warning(`Created ${data.created}, skipped ${data.skipped}, errors: ${data.errors.length}`);
+        toast.warning(
+          `Created ${data.created}, skipped ${data.skipped}, errors: ${data.errors.length}`,
+        );
       } else {
         toast.success(`Import successful: ${data.created} created, ${data.skipped} skipped`);
       }

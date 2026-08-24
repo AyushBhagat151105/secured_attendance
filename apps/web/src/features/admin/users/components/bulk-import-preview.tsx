@@ -58,9 +58,7 @@ export function BulkImportPreview({
             {invalidCount} with errors
           </div>
         )}
-        <span className="text-muted-foreground ml-auto text-xs">
-          {rows.length} total rows
-        </span>
+        <span className="text-muted-foreground ml-auto text-xs">{rows.length} total rows</span>
       </div>
 
       {/* Preview table */}
@@ -99,33 +97,33 @@ export function BulkImportPreview({
                 >
                   <TableCell className="text-muted-foreground text-xs">{i + 1}</TableCell>
 
-                  {type === "students" ? (
-                    (() => {
-                      const r = row as StudentPreviewRow;
-                      return (
-                        <>
-                          <TableCell className="font-mono text-xs">{r.enrollmentNo || "—"}</TableCell>
-                          <TableCell className="text-sm">{r.name || "—"}</TableCell>
-                          <TableCell className="text-xs">{r.email || "—"}</TableCell>
-                          <TableCell className="text-xs">{r.programCode || "—"}</TableCell>
-                          <TableCell className="text-xs">{r.semester}</TableCell>
-                          <TableCell className="text-xs">{r.division || "—"}</TableCell>
-                        </>
-                      );
-                    })()
-                  ) : (
-                    (() => {
-                      const r = row as TeacherPreviewRow;
-                      return (
-                        <>
-                          <TableCell className="font-mono text-xs">{r.code || "—"}</TableCell>
-                          <TableCell className="text-sm">{r.name || "—"}</TableCell>
-                          <TableCell className="text-xs">{r.email || "—"}</TableCell>
-                          <TableCell className="text-xs">{r.department || "—"}</TableCell>
-                        </>
-                      );
-                    })()
-                  )}
+                  {type === "students"
+                    ? (() => {
+                        const r = row as StudentPreviewRow;
+                        return (
+                          <>
+                            <TableCell className="font-mono text-xs">
+                              {r.enrollmentNo || "—"}
+                            </TableCell>
+                            <TableCell className="text-sm">{r.name || "—"}</TableCell>
+                            <TableCell className="text-xs">{r.email || "—"}</TableCell>
+                            <TableCell className="text-xs">{r.programCode || "—"}</TableCell>
+                            <TableCell className="text-xs">{r.semester}</TableCell>
+                            <TableCell className="text-xs">{r.division || "—"}</TableCell>
+                          </>
+                        );
+                      })()
+                    : (() => {
+                        const r = row as TeacherPreviewRow;
+                        return (
+                          <>
+                            <TableCell className="font-mono text-xs">{r.code || "—"}</TableCell>
+                            <TableCell className="text-sm">{r.name || "—"}</TableCell>
+                            <TableCell className="text-xs">{r.email || "—"}</TableCell>
+                            <TableCell className="text-xs">{r.department || "—"}</TableCell>
+                          </>
+                        );
+                      })()}
 
                   <TableCell>
                     {hasErrors ? (

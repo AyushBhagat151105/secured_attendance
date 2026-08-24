@@ -24,11 +24,15 @@ export const adminTimetableModule = new Elysia({ prefix: "/timetable" })
     params: IdParam,
     detail: { tags: ["Admin - Timetable"], summary: "Get timetable entry" },
   })
-  .patch("/entries/:id", async ({ params: { id }, body }) => TimetableService.updateTimetableEntry(id, body), {
-    params: IdParam,
-    body: UpdateTimetableEntryBody,
-    detail: { tags: ["Admin - Timetable"], summary: "Update timetable entry" },
-  })
+  .patch(
+    "/entries/:id",
+    async ({ params: { id }, body }) => TimetableService.updateTimetableEntry(id, body),
+    {
+      params: IdParam,
+      body: UpdateTimetableEntryBody,
+      detail: { tags: ["Admin - Timetable"], summary: "Update timetable entry" },
+    },
+  )
   .delete("/entries/:id", async ({ params: { id } }) => TimetableService.deleteTimetableEntry(id), {
     params: IdParam,
     detail: { tags: ["Admin - Timetable"], summary: "Delete timetable entry" },

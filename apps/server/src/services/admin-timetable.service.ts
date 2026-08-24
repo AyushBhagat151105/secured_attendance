@@ -15,16 +15,16 @@ export class TimetableService {
       include: {
         subject: true,
         room: true,
-        divisions: { 
-          include: { 
+        divisions: {
+          include: {
             division: {
               include: {
                 programSemester: {
-                  include: { program: true }
-                }
-              }
-            } 
-          } 
+                  include: { program: true },
+                },
+              },
+            },
+          },
         },
       },
       orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
@@ -37,16 +37,16 @@ export class TimetableService {
       include: {
         subject: true,
         room: true,
-        divisions: { 
-          include: { 
+        divisions: {
+          include: {
             division: {
               include: {
                 programSemester: {
-                  include: { program: true }
-                }
-              }
-            } 
-          } 
+                  include: { program: true },
+                },
+              },
+            },
+          },
         },
       },
     });
@@ -67,10 +67,7 @@ export class TimetableService {
       where: {
         dayOfWeek: data.dayOfWeek,
         id: data.excludeEntryId ? { not: data.excludeEntryId } : undefined,
-        AND: [
-          { startTime: { lt: data.endTime } },
-          { endTime: { gt: data.startTime } },
-        ],
+        AND: [{ startTime: { lt: data.endTime } }, { endTime: { gt: data.startTime } }],
       },
       include: {
         divisions: true,
@@ -82,7 +79,9 @@ export class TimetableService {
       if (data.teacherCodes && entry.teacherCodes) {
         const sharedTeachers = data.teacherCodes.filter((c) => entry.teacherCodes.includes(c));
         if (sharedTeachers.length > 0) {
-          throw new Error(`Teacher(s) ${sharedTeachers.join(", ")} are already booked for another class during this time.`);
+          throw new Error(
+            `Teacher(s) ${sharedTeachers.join(", ")} are already booked for another class during this time.`,
+          );
         }
       }
       if (data.roomId && entry.roomId === data.roomId) {
@@ -95,7 +94,9 @@ export class TimetableService {
         const entryDivs = entry.divisions.map((d) => d.divisionId);
         const sharedDivs = data.divisionIds.filter((id) => entryDivs.includes(id));
         if (sharedDivs.length > 0) {
-          throw new Error(`One or more divisions are already scheduled for another class during this time.`);
+          throw new Error(
+            `One or more divisions are already scheduled for another class during this time.`,
+          );
         }
       }
     }
@@ -178,11 +179,16 @@ export class TimetableService {
 
     // Fetch existing rooms for validation
     const existingRooms = await prisma.room.findMany({ select: { name: true } });
-    const roomNames = new Set(existingRooms.map(r => r.name.toLowerCase()));
+    const roomNames = new Set(existingRooms.map((r) => r.name.toLowerCase()));
 
     for (const row of parsedRows as any[]) {
       // Skip empty periods/breaks where subjectCode is literally empty or a dash
-      if (!row.subjectCode || row.subjectCode.trim() === "—" || row.subjectCode.trim() === "-" || row.subjectCode.trim() === "") {
+      if (
+        !row.subjectCode ||
+        row.subjectCode.trim() === "—" ||
+        row.subjectCode.trim() === "-" ||
+        row.subjectCode.trim() === ""
+      ) {
         continue;
       }
 
@@ -202,7 +208,9 @@ export class TimetableService {
       if (!row.teacherCode) errors.push("Missing teacherCode");
 
       if (row.roomName && !roomNames.has(row.roomName.toLowerCase())) {
-        errors.push(`Room '${row.roomName}' not found. Please create it in Campus Management first.`);
+        errors.push(
+          `Room '${row.roomName}' not found. Please create it in Campus Management first.`,
+        );
       }
 
       if (errors.length === 0) {
@@ -227,7 +235,12 @@ export class TimetableService {
     const errors: string[] = [];
 
     for (const [index, row] of data.rows.entries()) {
-      if (!row.subjectCode || row.subjectCode.trim() === "—" || row.subjectCode.trim() === "-" || row.subjectCode.trim() === "") {
+      if (
+        !row.subjectCode ||
+        row.subjectCode.trim() === "—" ||
+        row.subjectCode.trim() === "-" ||
+        row.subjectCode.trim() === ""
+      ) {
         skipped++;
         continue;
       }
@@ -274,7 +287,7 @@ export class TimetableService {
           },
         });
         if (!programSemester) {
-          const orgSlug = `${program.shortName.toLowerCase()}-sem-${row.semester}-${academicYear.name.toLowerCase().replace(/\s+/g, '-')}`;
+          const orgSlug = `${program.shortName.toLowerCase()}-sem-${row.semester}-${academicYear.name.toLowerCase().replace(/\s+/g, "-")}`;
           programSemester = await prisma.programSemester.create({
             data: {
               programId: program.id,
@@ -323,7 +336,9 @@ export class TimetableService {
           where: { name: row.roomName },
         });
         if (!room) {
-          throw new Error(`Room '${row.roomName}' not found. Please create it in Campus Management first.`);
+          throw new Error(
+            `Room '${row.roomName}' not found. Please create it in Campus Management first.`,
+          );
         }
 
         // 7. Parse dayOfWeek and teachers
@@ -332,11 +347,11 @@ export class TimetableService {
 
         // Validate TeacherProfiles exist
         const teachers = await prisma.teacherProfile.findMany({
-          where: { code: { in: teacherCodes } }
+          where: { code: { in: teacherCodes } },
         });
-        
+
         if (teachers.length !== teacherCodes.length) {
-          const foundCodes = teachers.map(t => t.code);
+          const foundCodes = teachers.map((t) => t.code);
           const missing = teacherCodes.filter((c: string) => !foundCodes.includes(c));
           throw new Error(`Teachers not found: ${missing.join(", ")}`);
         }
@@ -349,14 +364,14 @@ export class TimetableService {
                 teacherProfileId: teacher.id,
                 subjectId: subject.id,
                 divisionId: division.id,
-              }
+              },
             },
             create: {
               teacherProfileId: teacher.id,
               subjectId: subject.id,
               divisionId: division.id,
             },
-            update: {}
+            update: {},
           });
         }
 
@@ -371,8 +386,8 @@ export class TimetableService {
             startTime: row.startTime,
             endTime: row.endTime,
             divisions: {
-              some: { divisionId: division.id }
-            }
+              some: { divisionId: division.id },
+            },
           },
         });
 

@@ -34,7 +34,9 @@ function SessionComponent() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [wsStatus, setWsStatus] = useState<"connecting" | "connected" | "disconnected">("connecting");
+  const [wsStatus, setWsStatus] = useState<"connecting" | "connected" | "disconnected">(
+    "connecting",
+  );
   const [tokens, setTokens] = useState<QrToken[]>([]);
   const [currentToken, setCurrentToken] = useState<QrToken | null>(null);
   const [attendanceCount, setAttendanceCount] = useState(0);
@@ -54,7 +56,7 @@ function SessionComponent() {
 
     // Connect to WebSocket using Eden Treaty
     const ws = subscribeToSession(sessionId);
-    
+
     // @ts-ignore - store the reference for cleanup
     wsRef.current = ws;
 
@@ -65,18 +67,18 @@ function SessionComponent() {
     ws.on("message", (event: any) => {
       const message = event.data;
       if (typeof message !== "object" || !message) return;
-      
+
       if (message.type === "QR_TOKENS_BATCH") {
         // Merge new tokens, keeping only those that haven't expired
-        setTokens(prev => {
+        setTokens((prev) => {
           const now = Date.now();
-          const validOld = prev.filter(t => t.expiresAt > now);
+          const validOld = prev.filter((t) => t.expiresAt > now);
           const newTokens = message.tokens;
-          
+
           // Deduplicate based on nonce
           const merged = [...validOld];
           for (const nt of newTokens) {
-            if (!merged.find(t => t.nonce === nt.nonce)) {
+            if (!merged.find((t) => t.nonce === nt.nonce)) {
               merged.push(nt);
             }
           }
@@ -101,14 +103,14 @@ function SessionComponent() {
   // Rotation Interval: Update current token every 1 second based on activeAfter
   useEffect(() => {
     const interval = setInterval(() => {
-      setTokens(prev => {
+      setTokens((prev) => {
         const now = Date.now();
         // Remove expired tokens
-        const valid = prev.filter(t => t.expiresAt > now);
+        const valid = prev.filter((t) => t.expiresAt > now);
 
         // Find the token that should be active right now
         // It's the one with the largest activeAfter that is <= now
-        const active = [...valid].reverse().find(t => t.activeAfter <= now);
+        const active = [...valid].reverse().find((t) => t.activeAfter <= now);
 
         if (active) {
           setCurrentToken(active);
@@ -143,12 +145,14 @@ function SessionComponent() {
   }
 
   // Generate the payload for the QR code
-  const qrPayload = currentToken ? JSON.stringify({
-    s: sessionId,
-    n: currentToken.nonce,
-    e: currentToken.expiresAt,
-    sig: currentToken.signature
-  }) : "";
+  const qrPayload = currentToken
+    ? JSON.stringify({
+        s: sessionId,
+        n: currentToken.nonce,
+        e: currentToken.expiresAt,
+        sig: currentToken.signature,
+      })
+    : "";
 
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
@@ -192,7 +196,9 @@ function SessionComponent() {
           <Card className="shadow-sm mb-6 border-border">
             <CardContent className="p-5 space-y-4">
               <div>
-                <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider mb-1">Subject</p>
+                <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider mb-1">
+                  Subject
+                </p>
                 <p className="font-semibold text-lg">{activeSession.subject.name}</p>
                 <p className="text-sm text-muted-foreground">{activeSession.subject.code}</p>
               </div>
@@ -201,11 +207,15 @@ function SessionComponent() {
 
               <div className="flex justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider mb-1">Room</p>
+                  <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider mb-1">
+                    Room
+                  </p>
                   <p className="font-semibold">{activeSession.room.name}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider mb-1">Divisions</p>
+                  <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider mb-1">
+                    Divisions
+                  </p>
                   <p className="font-semibold">
                     {activeSession.sessionDivisions.map((d: any) => d.division.name).join(", ")}
                   </p>
@@ -219,7 +229,9 @@ function SessionComponent() {
               <div className="h-16 w-16 bg-emerald-500/10 rounded-full flex items-center justify-center mb-4">
                 <IconUsers className="h-8 w-8 text-emerald-600" />
               </div>
-              <p className="text-sm text-emerald-600/80 font-semibold uppercase tracking-wider mb-2">Live Count</p>
+              <p className="text-sm text-emerald-600/80 font-semibold uppercase tracking-wider mb-2">
+                Live Count
+              </p>
               <h3 className="text-6xl font-bold text-emerald-600 tracking-tighter">
                 {attendanceCount}
               </h3>
@@ -233,9 +245,13 @@ function SessionComponent() {
             variant="destructive"
             className="w-full h-14 text-lg font-bold"
             onClick={() => {
-              if (confirm("Are you sure you want to end this session? No more students will be able to scan.")) {
+              if (
+                confirm(
+                  "Are you sure you want to end this session? No more students will be able to scan.",
+                )
+              ) {
                 closeSessionMutation.mutate(sessionId, {
-                  onSuccess: () => navigate({ to: "/dashboard" })
+                  onSuccess: () => navigate({ to: "/dashboard" }),
                 });
               }
             }}

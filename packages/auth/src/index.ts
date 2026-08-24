@@ -15,7 +15,13 @@ export const auth = betterAuth({
     env.CORS_ORIGIN,
     "native://",
     ...(env.NODE_ENV === "development"
-      ? ["exp://", "exp://**", "exp://192.168.*.*:*/**", "http://192.168.*.*:*", "http://localhost:8081"]
+      ? [
+          "exp://",
+          "exp://**",
+          "exp://192.168.*.*:*/**",
+          "http://192.168.*.*:*",
+          "http://localhost:8081",
+        ]
       : []),
   ],
   emailAndPassword: {
@@ -47,15 +53,17 @@ export const auth = betterAuth({
       create: {
         before: async (user) => {
           const email = user.email.toLowerCase();
-          
+
           if (!email.endsWith("@charusat.edu.in") && !email.endsWith("@charusat.ac.in")) {
-            throw new APIError("BAD_REQUEST", { message: "Invalid email domain. Must be @charusat.edu.in or @charusat.ac.in" });
+            throw new APIError("BAD_REQUEST", {
+              message: "Invalid email domain. Must be @charusat.edu.in or @charusat.ac.in",
+            });
           }
 
           return { data: user };
-        }
-      }
-    }
+        },
+      },
+    },
   },
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
@@ -65,10 +73,12 @@ export const auth = betterAuth({
       });
       if (ctx.path === "/sign-up/email") {
         if (ctx.request) {
-          throw new APIError("FORBIDDEN", { message: "Self-registration is disabled. Contact your administrator." });
+          throw new APIError("FORBIDDEN", {
+            message: "Self-registration is disabled. Contact your administrator.",
+          });
         }
       }
-    })
+    }),
   },
   plugins: [organization(), admin(), bearer(), expo(), jwt()],
 });

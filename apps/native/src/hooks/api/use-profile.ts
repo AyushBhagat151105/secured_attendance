@@ -10,12 +10,12 @@ export const profileKeys = {
 export function useStudentProfile() {
   const { data: session } = authClient.useSession();
   const user = session?.user as any;
-  
+
   return useQuery({
     queryKey: profileKeys.student(),
     queryFn: async () => {
       try {
-        const res = await apiClient.get('/api/student/profile');
+        const res = await apiClient.get("/api/student/profile");
         return res.data;
       } catch (err: any) {
         throw new Error(err.response?.data?.message || err.message || "Failed to load profile");

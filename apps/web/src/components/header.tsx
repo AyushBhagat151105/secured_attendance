@@ -21,19 +21,19 @@ export default function Header() {
   }
 
   const role = (session.user as { role?: string }).role;
-  
+
   // Define links based on role
   const links = [];
-  
+
   if (role === "admin" || role === "super_admin") {
     links.push(
       { to: "/admin", label: "Overview", exact: true },
-      { to: "/admin/users", label: "Users" }
+      { to: "/admin/users", label: "Users" },
     );
   } else if (role === "teacher") {
     links.push(
       { to: "/dashboard", label: "Dashboard", exact: true },
-      { to: "/reports", label: "Reports" }
+      { to: "/reports", label: "Reports" },
     );
   }
 
@@ -47,7 +47,7 @@ export default function Header() {
             </div>
             <span className="font-bold tracking-tight hidden sm:inline-block">CHARUSAT</span>
           </Link>
-          
+
           <nav className="flex items-center gap-1 text-sm font-medium">
             {links.map(({ to, label, exact }) => (
               <Link

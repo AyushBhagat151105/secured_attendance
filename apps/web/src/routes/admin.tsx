@@ -1,10 +1,5 @@
 ﻿import React from "react";
-import {
-  IconChartBar,
-  IconLayoutDashboard,
-  IconShield,
-  IconUsers,
-} from "@tabler/icons-react";
+import { IconChartBar, IconLayoutDashboard, IconShield, IconUsers } from "@tabler/icons-react";
 import { Link, Outlet, createFileRoute, redirect, useLocation } from "@tanstack/react-router";
 
 import { authClient } from "@/lib/auth-client";
@@ -17,11 +12,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
-import {
-  SidebarProvider,
-  SidebarTrigger,
-  SidebarInset,
-} from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 
 export const Route = createFileRoute("/admin")({
@@ -42,8 +33,6 @@ export const Route = createFileRoute("/admin")({
   },
   component: AdminLayout,
 });
-
-
 
 function AdminLayout() {
   const { session } = Route.useRouteContext();
@@ -67,7 +56,7 @@ function AdminLayout() {
                   <Link to="/admin">Admin</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
-              
+
               {pathSegments.length === 0 && (
                 <>
                   <BreadcrumbSeparator className="hidden md:block" />
@@ -80,9 +69,13 @@ function AdminLayout() {
               {pathSegments.map((segment, index) => {
                 const isLast = index === pathSegments.length - 1;
                 // If the segment is long (like a UUID), just say "Details"
-                const formatted = segment.length > 20 
-                  ? "Details" 
-                  : segment.split("-").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+                const formatted =
+                  segment.length > 20
+                    ? "Details"
+                    : segment
+                        .split("-")
+                        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(" ");
 
                 const path = `/admin/${pathSegments.slice(0, index + 1).join("/")}`;
                 const isNonClickable = ["/admin/academic", "/admin/map"].includes(path);

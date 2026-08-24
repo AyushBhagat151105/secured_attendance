@@ -11,7 +11,7 @@ export function useTodaySchedule() {
     queryKey: scheduleKeys.today(),
     queryFn: async () => {
       try {
-        const res = await apiClient.get('/api/student/schedule/today');
+        const res = await apiClient.get("/api/student/schedule/today");
         return res.data;
       } catch (err: any) {
         throw new Error(err.response?.data?.message || err.message || "Failed to load schedule");

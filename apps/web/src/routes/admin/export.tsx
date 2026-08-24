@@ -20,7 +20,7 @@ function AdminExportRoute() {
       if (error) {
         throw new Error((error.value as any)?.message || "Export failed");
       }
-      
+
       const blob = new Blob([data as string], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -30,7 +30,7 @@ function AdminExportRoute() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
+
       toast.success("Export downloaded successfully");
     } catch (err: any) {
       toast.error(err.message);
@@ -56,15 +56,12 @@ function AdminExportRoute() {
             </div>
             <CardTitle>Monthly CSV Export</CardTitle>
             <CardDescription>
-              Download a detailed CSV file containing all closed sessions and attendance percentages from the last 30 days.
+              Download a detailed CSV file containing all closed sessions and attendance percentages
+              from the last 30 days.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button 
-              className="w-full" 
-              onClick={handleExportCSV} 
-              disabled={isExporting}
-            >
+            <Button className="w-full" onClick={handleExportCSV} disabled={isExporting}>
               {isExporting ? (
                 "Generating..."
               ) : (

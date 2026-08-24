@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import { unwrapEden } from "@/lib/fetch-utils";
 
-//  Academic Years 
+//  Academic Years
 export const academicYearKeys = {
   all: ["academicYears"] as const,
   detail: (id: string) => [...academicYearKeys.all, id] as const,
@@ -30,7 +30,8 @@ export const useCreateAcademicYear = () => {
 export const useUpdateAcademicYear = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, body }: { id: string; body: any }) => unwrapEden(apiClient.api.admin.academic.years({ id }).patch(body)),
+    mutationFn: ({ id, body }: { id: string; body: any }) =>
+      unwrapEden(apiClient.api.admin.academic.years({ id }).patch(body)),
     onSuccess: (_, { id }) => {
       toast.success("Academic year updated");
       queryClient.invalidateQueries({ queryKey: academicYearKeys.all });
@@ -67,7 +68,8 @@ export const useCreateProgram = () => {
 export const useUpdateProgram = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, body }: { id: string; body: any }) => unwrapEden(apiClient.api.admin.academic.programs({ id }).patch(body)),
+    mutationFn: ({ id, body }: { id: string; body: any }) =>
+      unwrapEden(apiClient.api.admin.academic.programs({ id }).patch(body)),
     onSuccess: (_, { id }) => {
       toast.success("Program updated");
       queryClient.invalidateQueries({ queryKey: programKeys.all });
@@ -164,7 +166,8 @@ export const useCreateSubject = () => {
 export const useUpdateSubject = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, body }: { id: string; body: any }) => unwrapEden(apiClient.api.admin.academic.subjects({ id }).patch(body)),
+    mutationFn: ({ id, body }: { id: string; body: any }) =>
+      unwrapEden(apiClient.api.admin.academic.subjects({ id }).patch(body)),
     onSuccess: (_, { id }) => {
       toast.success("Subject updated");
       queryClient.invalidateQueries({ queryKey: subjectKeys.all });

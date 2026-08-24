@@ -63,7 +63,6 @@ function parseEnrollmentNo(enrollmentNo: string): {
   };
 }
 
-
 // ─── CSV parsing (plain text, no external lib to keep it lightweight) ─────────
 
 function parseCsvLine(line: string): string[] {
@@ -131,7 +130,8 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
             if (!division) errors.push("division is required");
 
             const parsed = parseEnrollmentNo(enrollmentNo);
-            if (!parsed && enrollmentNo) errors.push("Invalid enrollment_no format (expected: 26msit006)");
+            if (!parsed && enrollmentNo)
+              errors.push("Invalid enrollment_no format (expected: 26msit006)");
 
             const semester = parseInt(semesterStr, 10);
             if (!semesterStr || isNaN(semester)) errors.push("semester must be a number");
@@ -151,7 +151,12 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
           const valid = parsed.filter((r) => r.errors.length === 0);
           const invalid = parsed.filter((r) => r.errors.length > 0);
 
-          return { type: "students", parsed, validCount: valid.length, invalidCount: invalid.length };
+          return {
+            type: "students",
+            parsed,
+            validCount: valid.length,
+            invalidCount: invalid.length,
+          };
         }
 
         if (type === "teachers") {
@@ -178,7 +183,12 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
           const valid = parsed.filter((r) => r.errors.length === 0);
           const invalid = parsed.filter((r) => r.errors.length > 0);
 
-          return { type: "teachers", parsed, validCount: valid.length, invalidCount: invalid.length };
+          return {
+            type: "teachers",
+            parsed,
+            validCount: valid.length,
+            invalidCount: invalid.length,
+          };
         }
 
         return status(400, { message: "type must be 'students' or 'teachers'" });
@@ -223,24 +233,28 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
               });
 
               if (!result?.user) throw new Error("Failed to create user via Better Auth");
-              
+
               // Update role
               const user = await prisma.user.update({
                 where: { id: result.user.id },
-                data: { 
+                data: {
                   role: "student",
-                  requiresPasswordChange: true
+                  requiresPasswordChange: true,
                 },
               });
 
               const parsed = parseEnrollmentNo(row.enrollmentNo);
               const finalProgramCode = parsed?.programCode ?? row.programCode;
-              
+
               // 1. Resolve Academic Year
-              let academicYear = await prisma.academicYear.findFirst({ where: { isCurrent: true } });
+              let academicYear = await prisma.academicYear.findFirst({
+                where: { isCurrent: true },
+              });
               if (!academicYear) {
                 const currentYear = new Date().getFullYear();
-                academicYear = await prisma.academicYear.findFirst({ where: { name: `${currentYear}-${currentYear + 1}` } });
+                academicYear = await prisma.academicYear.findFirst({
+                  where: { name: `${currentYear}-${currentYear + 1}` },
+                });
                 if (!academicYear) {
                   academicYear = await prisma.academicYear.create({
                     data: {
@@ -276,7 +290,7 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
                 },
               });
               if (!programSemester) {
-                const orgSlug = `${program.shortName.toLowerCase()}-sem-${row.semester}-${academicYear.name.toLowerCase().replace(/\s+/g, '-')}`;
+                const orgSlug = `${program.shortName.toLowerCase()}-sem-${row.semester}-${academicYear.name.toLowerCase().replace(/\s+/g, "-")}`;
                 programSemester = await prisma.programSemester.create({
                   data: {
                     programId: program.id,
@@ -344,13 +358,13 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
               });
 
               if (!result?.user) throw new Error("Failed to create user via Better Auth");
-              
+
               // Update role
               const user = await prisma.user.update({
                 where: { id: result.user.id },
-                data: { 
+                data: {
                   role: "teacher",
-                  requiresPasswordChange: true
+                  requiresPasswordChange: true,
                 },
               });
 

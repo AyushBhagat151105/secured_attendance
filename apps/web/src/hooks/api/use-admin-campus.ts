@@ -30,7 +30,8 @@ export const useCreateBuilding = () => {
 export const useUpdateBuilding = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, body }: { id: string; body: any }) => unwrapEden(apiClient.api.admin.campus.buildings({ id }).patch(body)),
+    mutationFn: ({ id, body }: { id: string; body: any }) =>
+      unwrapEden(apiClient.api.admin.campus.buildings({ id }).patch(body)),
     onSuccess: (_, { id }) => {
       toast.success("Building updated");
       queryClient.invalidateQueries({ queryKey: buildingKeys.all });

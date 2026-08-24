@@ -19,12 +19,7 @@ interface DeleteUserAlertProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function DeleteUserAlert({
-  userId,
-  userName,
-  open,
-  onOpenChange,
-}: DeleteUserAlertProps) {
+export function DeleteUserAlert({ userId, userName, open, onOpenChange }: DeleteUserAlertProps) {
   const deleteUser = useDeleteUser();
 
   function handleConfirm() {
@@ -42,7 +37,7 @@ export function DeleteUserAlert({
             <AlertDialogTitle>Delete {userName}?</AlertDialogTitle>
           </div>
           <AlertDialogDescription>
-            This will permanently remove the user and all their associated data from the system. 
+            This will permanently remove the user and all their associated data from the system.
             This action cannot be undone. Are you sure you want to proceed?
           </AlertDialogDescription>
         </AlertDialogHeader>

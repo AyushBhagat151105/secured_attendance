@@ -1,5 +1,6 @@
-﻿import { useForm } from "@tanstack/react-form";
-import z from "zod";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { editUserSchema, type EditUserSchema } from "@secured_attendance/validators";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +12,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { useUpdateUser } from "@/hooks/api/use-admin-users";
 import type { UserRow } from "./user-columns";
 
@@ -28,35 +29,29 @@ interface EditUserDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const editSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  role: z.enum(["student", "teacher", "admin", "super_admin"]),
-  status: z.enum(["active", "suspended", "pending"]),
-});
-
-type EditUserForm = z.infer<typeof editSchema>;
-
 export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps) {
   const update = useUpdateUser();
 
-  const form = useForm({
+  const form = useForm<EditUserSchema>({
+    resolver: zodResolver(editUserSchema),
     defaultValues: {
       name: user.name,
-      role: user.role as EditUserForm["role"],
-      status: (user.studentProfile?.status ?? "active") as EditUserForm["status"],
+      role: user.role as EditUserSchema["role"],
+      status: (user.studentProfile?.status ?? "active") as EditUserSchema["status"],
     },
-    validators: {
-      onSubmit: editSchema,
-    },
-    onSubmit: async ({ value }) => {
-      await update.mutate({ id: user.id, body: {
+  });
+
+  const onSubmit = async (value: EditUserSchema) => {
+    await update.mutate({
+      id: user.id,
+      body: {
         name: value.name,
         role: value.role,
         status: user.role === "student" ? value.status : undefined,
-      }});
-      onOpenChange(false);
-    },
-  });
+      },
+    });
+    onOpenChange(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -66,46 +61,27 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
           <DialogDescription>Update user information and permissions.</DialogDescription>
         </DialogHeader>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            void form.handleSubmit();
-          }}
-          className="space-y-4"
-        >
-          <form.Field name="name">
-            {(field) => (
-              <div className="space-y-1.5">
-                <Label htmlFor={field.name}>Full Name</Label>
-                <Input
-                  id={field.name}
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-                {field.state.meta.errors.map((err) => (
-                  <p key={String(err)} className="text-destructive text-xs">
-                    {String(err)}
-                  </p>
-                ))}
-              </div>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <Controller
+            control={form.control}
+            name="name"
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Full Name</FieldLabel>
+                <Input {...field} id={field.name} aria-invalid={fieldState.invalid} />
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
             )}
-          </form.Field>
+          />
 
-          <form.Field name="role">
-            {(field) => (
-              <div className="space-y-1.5">
-                <Label>Role</Label>
-                <Select
-                  value={field.state.value}
-                  onValueChange={(v) =>
-                    field.handleChange(
-                      v as "student" | "teacher" | "admin" | "super_admin",
-                    )
-                  }
-                >
-                  <SelectTrigger>
+          <Controller
+            control={form.control}
+            name="role"
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Role</FieldLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <SelectTrigger id={field.name} aria-invalid={fieldState.invalid}>
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
@@ -115,22 +91,20 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
                     <SelectItem value="super_admin">Super Admin</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
             )}
-          </form.Field>
+          />
 
           {user.role === "student" && (
-            <form.Field name="status">
-              {(field) => (
-                <div className="space-y-1.5">
-                  <Label>Status</Label>
-                  <Select
-                    value={field.state.value}
-                    onValueChange={(v) =>
-                      field.handleChange(v as "active" | "suspended" | "pending")
-                    }
-                  >
-                    <SelectTrigger>
+            <Controller
+              control={form.control}
+              name="status"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Status</FieldLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <SelectTrigger id={field.name} aria-invalid={fieldState.invalid}>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -139,22 +113,19 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
                       <SelectItem value="suspended">Suspended</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
               )}
-            </form.Field>
+            />
           )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <form.Subscribe>
-              {(state) => (
-                <Button type="submit" disabled={!state.canSubmit || state.isSubmitting}>
-                  {state.isSubmitting ? "Saving..." : "Save Changes"}
-                </Button>
-              )}
-            </form.Subscribe>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

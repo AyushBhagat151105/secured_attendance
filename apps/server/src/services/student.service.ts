@@ -8,14 +8,14 @@ import type { ScanAttendanceDto } from "../models/student.model";
 // Calculate distance in meters between two GPS coordinates using Haversine formula
 function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371e3; // Earth radius in meters
-  const p1 = lat1 * Math.PI / 180;
-  const p2 = lat2 * Math.PI / 180;
+  const p1 = (lat1 * Math.PI) / 180;
+  const p2 = (lat2 * Math.PI) / 180;
   const deltaP = p2 - p1;
   const deltaLon = lon2 - lon1;
   const deltaLambda = (deltaLon * Math.PI) / 180;
-  const a = Math.sin(deltaP / 2) * Math.sin(deltaP / 2) +
-            Math.cos(p1) * Math.cos(p2) *
-            Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+  const a =
+    Math.sin(deltaP / 2) * Math.sin(deltaP / 2) +
+    Math.cos(p1) * Math.cos(p2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
   const d = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * d;
 }
@@ -52,7 +52,11 @@ export class StudentService {
       await attendanceRedis.expire(rateLimitKey, 60);
     }
     if (attempts > 5) {
-      return { success: false, error: "TOO_MANY_REQUESTS", message: "Too many attempts, please try again later" };
+      return {
+        success: false,
+        error: "TOO_MANY_REQUESTS",
+        message: "Too many attempts, please try again later",
+      };
     }
 
     // 0.5 Mock Location Check
@@ -71,7 +75,11 @@ export class StudentService {
     }
 
     if (!profile.divisionId) {
-      return { success: false, error: "BAD_REQUEST", message: "You are not assigned to any division" };
+      return {
+        success: false,
+        error: "BAD_REQUEST",
+        message: "You are not assigned to any division",
+      };
     }
 
     // 2. Fetch session and its details
@@ -80,9 +88,9 @@ export class StudentService {
       include: {
         sessionDivisions: true,
         room: {
-          include: { building: true }
-        }
-      }
+          include: { building: true },
+        },
+      },
     });
 
     if (!session) {
@@ -94,14 +102,18 @@ export class StudentService {
     }
 
     // 3. Validation: Verify student's division is part of this session
-    const isEnrolled = session.sessionDivisions.some(sd => sd.divisionId === profile.divisionId);
+    const isEnrolled = session.sessionDivisions.some((sd) => sd.divisionId === profile.divisionId);
     if (!isEnrolled) {
       return { success: false, error: "FORBIDDEN", message: "You are not enrolled in this class" };
     }
 
     // 4. Validation: Check Expiry
     if (Date.now() > expiresAt) {
-      return { success: false, error: "BAD_REQUEST", message: "QR code has expired. Please scan the current code." };
+      return {
+        success: false,
+        error: "BAD_REQUEST",
+        message: "QR code has expired. Please scan the current code.",
+      };
     }
 
     // 5. Validation: Cryptographic Signature
@@ -122,12 +134,16 @@ export class StudentService {
         studentProfileId_sessionId: {
           studentProfileId: profile.id,
           sessionId: session.id,
-        }
-      }
+        },
+      },
     });
 
     if (existingAttendance) {
-      return { success: false, error: "BAD_REQUEST", message: "You have already marked attendance for this session" };
+      return {
+        success: false,
+        error: "BAD_REQUEST",
+        message: "You have already marked attendance for this session",
+      };
     }
 
     // 7. Validation: Replay Attack (Nonce consume)
@@ -137,9 +153,9 @@ export class StudentService {
       where: {
         sessionId_nonce: {
           sessionId,
-          nonce
-        }
-      }
+          nonce,
+        },
+      },
     });
 
     if (!token) {
@@ -147,7 +163,11 @@ export class StudentService {
     }
 
     if (token.usedAt) {
-      return { success: false, error: "BAD_REQUEST", message: "This QR code has already been used. Please scan the next one." };
+      return {
+        success: false,
+        error: "BAD_REQUEST",
+        message: "This QR code has already been used. Please scan the next one.",
+      };
     }
 
     // Atomically mark token as used
@@ -155,15 +175,19 @@ export class StudentService {
       await prisma.qrToken.update({
         where: {
           id: token.id,
-          usedAt: null // Optimistic concurrency check
+          usedAt: null, // Optimistic concurrency check
         },
         data: {
           usedAt: new Date(),
-          usedBy: profile.id
-        }
+          usedBy: profile.id,
+        },
       });
     } catch (e) {
-      return { success: false, error: "BAD_REQUEST", message: "This QR code has already been used by someone else." };
+      return {
+        success: false,
+        error: "BAD_REQUEST",
+        message: "This QR code has already been used by someone else.",
+      };
     }
 
     // 8. Validation: Geofence
@@ -172,14 +196,14 @@ export class StudentService {
 
     if (gpsLat && gpsLng && session.room.building.gpsLat && session.room.building.gpsLng) {
       const distance = getDistanceInMeters(
-        gpsLat, 
-        gpsLng, 
-        session.room.building.gpsLat, 
-        session.room.building.gpsLng
+        gpsLat,
+        gpsLng,
+        session.room.building.gpsLat,
+        session.room.building.gpsLng,
       );
-      
+
       const allowedRadius = session.room.building.radiusMeters;
-      
+
       if (distance <= allowedRadius) {
         gpsWithinGeofence = true;
       } else {
@@ -199,22 +223,30 @@ export class StudentService {
         gpsLng,
         gpsWithinGeofence,
         anomalyFlags,
-      }
+      },
     });
 
-    logger.info("Attendance marked successfully", { userId, sessionId, attendanceId: attendance.id, gpsWithinGeofence });
+    logger.info("Attendance marked successfully", {
+      userId,
+      sessionId,
+      attendanceId: attendance.id,
+      gpsWithinGeofence,
+    });
 
     // 10. Async Live Feed Update
     if (server) {
       try {
         const count = await prisma.attendance.count({
-          where: { sessionId: session.id }
+          where: { sessionId: session.id },
         });
-        
-        server.publish(`session-${session.id}`, JSON.stringify({
-          type: "ATTENDANCE_COUNT",
-          count
-        }));
+
+        server.publish(
+          `session-${session.id}`,
+          JSON.stringify({
+            type: "ATTENDANCE_COUNT",
+            count,
+          }),
+        );
       } catch (e) {
         logger.error("Failed to publish attendance count to live feed", { error: e });
       }
@@ -223,7 +255,7 @@ export class StudentService {
     return {
       success: true,
       gpsWithinGeofence,
-      attendanceId: attendance.id
+      attendanceId: attendance.id,
     };
   }
 }

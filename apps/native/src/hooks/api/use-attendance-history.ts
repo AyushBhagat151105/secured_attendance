@@ -12,8 +12,8 @@ export function useAttendanceHistory() {
     queryKey: historyKeys.history(),
     queryFn: async ({ pageParam = 1 }) => {
       try {
-        const res = await apiClient.get('/api/student/attendance/my', {
-          params: { page: pageParam.toString(), limit: "20" }
+        const res = await apiClient.get("/api/student/attendance/my", {
+          params: { page: pageParam.toString(), limit: "20" },
         });
         return res.data;
       } catch (err: any) {
@@ -34,7 +34,7 @@ export function useAttendanceStats() {
     queryKey: historyKeys.stats(),
     queryFn: async () => {
       try {
-        const res = await apiClient.get('/api/student/attendance/stats');
+        const res = await apiClient.get("/api/student/attendance/stats");
         return res.data;
       } catch (err: any) {
         throw new Error(err.response?.data?.message || err.message || "Failed to load stats");

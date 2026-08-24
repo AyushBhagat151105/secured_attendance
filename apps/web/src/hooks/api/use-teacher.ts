@@ -17,7 +17,8 @@ export function useTodaySchedule() {
 export function useStartSession() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (timetableEntryId: string) => unwrapEden(apiClient.api.teacher.sessions.post({ timetableEntryId })),
+    mutationFn: (timetableEntryId: string) =>
+      unwrapEden(apiClient.api.teacher.sessions.post({ timetableEntryId })),
     onSuccess: () => {
       toast.success("Session started successfully");
       qc.invalidateQueries({ queryKey: teacherKeys.schedule });
@@ -29,7 +30,8 @@ export function useStartSession() {
 export function useCloseSession() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (sessionId: string) => unwrapEden(apiClient.api.teacher.sessions({ id: sessionId }).close.post({})),
+    mutationFn: (sessionId: string) =>
+      unwrapEden(apiClient.api.teacher.sessions({ id: sessionId }).close.post({})),
     onSuccess: () => {
       toast.success("Session closed successfully");
       qc.invalidateQueries({ queryKey: teacherKeys.schedule });

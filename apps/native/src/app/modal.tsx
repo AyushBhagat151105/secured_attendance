@@ -34,53 +34,53 @@ function Modal() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 16,
   },
   surface: {
     padding: 20,
-    width: '100%',
+    width: "100%",
     maxWidth: 320,
     borderRadius: 8,
-    backgroundColor: '#f3f4f6', // secondary
+    backgroundColor: "#f3f4f6", // secondary
   },
   content: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   iconContainer: {
     width: 48,
     height: 48,
-    backgroundColor: '#e5e7eb', // accent 
+    backgroundColor: "#e5e7eb", // accent
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 12,
   },
   title: {
-    color: '#111827', // foreground
-    fontWeight: '500',
+    color: "#111827", // foreground
+    fontWeight: "500",
     fontSize: 18,
     marginBottom: 4,
   },
   subtitle: {
-    color: '#6b7280', // muted
+    color: "#6b7280", // muted
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 16,
   },
   button: {
-    backgroundColor: '#4f46e5', // primary
+    backgroundColor: "#4f46e5", // primary
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 6,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
   },
   buttonText: {
-    color: 'white',
-    fontWeight: '500',
-  }
+    color: "white",
+    fontWeight: "500",
+  },
 });
 
 export default Modal;

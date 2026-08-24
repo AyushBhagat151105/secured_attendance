@@ -1,6 +1,13 @@
 import { Elysia } from "elysia";
 import { requireRole } from "../middlewares/guards";
-import { UpdateUserBody, UserIdParam, UsersListQuery, CreateTeacherBody, CreateStudentBody, CreateAdminBody } from "../models/admin-users.model";
+import {
+  UpdateUserBody,
+  UserIdParam,
+  UsersListQuery,
+  CreateTeacherBody,
+  CreateStudentBody,
+  CreateAdminBody,
+} from "../models/admin-users.model";
 import { AdminUsersService } from "../services/admin-users.service";
 import { logger } from "../lib/logger";
 
@@ -20,53 +27,33 @@ export const adminUsersModule = new Elysia({ prefix: "/users" })
     { query: UsersListQuery },
   )
 
-  .get(
-    "/:id",
-    async ({ params: { id } }) => AdminUsersService.getUser(id),
-    { params: UserIdParam },
-  )
+  .get("/:id", async ({ params: { id } }) => AdminUsersService.getUser(id), { params: UserIdParam })
 
-  .post(
-    "/teacher",
-    async ({ body }) => AdminUsersService.createTeacher(body),
-    { body: CreateTeacherBody },
-  )
+  .post("/teacher", async ({ body }) => AdminUsersService.createTeacher(body), {
+    body: CreateTeacherBody,
+  })
 
-  .post(
-    "/student",
-    async ({ body }) => AdminUsersService.createStudent(body),
-    { body: CreateStudentBody },
-  )
+  .post("/student", async ({ body }) => AdminUsersService.createStudent(body), {
+    body: CreateStudentBody,
+  })
 
-  .post(
-    "/admin",
-    async ({ body }) => AdminUsersService.createAdmin(body),
-    { body: CreateAdminBody },
-  )
+  .post("/admin", async ({ body }) => AdminUsersService.createAdmin(body), {
+    body: CreateAdminBody,
+  })
 
-  .patch(
-    "/:id",
-    async ({ params: { id }, body }) => AdminUsersService.updateUser(id, body),
-    {
-      params: UserIdParam,
-      body: UpdateUserBody,
-    },
-  )
+  .patch("/:id", async ({ params: { id }, body }) => AdminUsersService.updateUser(id, body), {
+    params: UserIdParam,
+    body: UpdateUserBody,
+  })
 
-  .post(
-    "/:id/suspend",
-    async ({ params: { id } }) => AdminUsersService.suspendUser(id),
-    { params: UserIdParam },
-  )
+  .post("/:id/suspend", async ({ params: { id } }) => AdminUsersService.suspendUser(id), {
+    params: UserIdParam,
+  })
 
-  .delete(
-    "/:id",
-    async ({ params: { id } }) => AdminUsersService.deleteUser(id),
-    { params: UserIdParam },
-  )
+  .delete("/:id", async ({ params: { id } }) => AdminUsersService.deleteUser(id), {
+    params: UserIdParam,
+  })
 
-  .post(
-    "/:id/device-rebind",
-    async ({ params: { id } }) => AdminUsersService.rebindDevice(id),
-    { params: UserIdParam },
-  );
+  .post("/:id/device-rebind", async ({ params: { id } }) => AdminUsersService.rebindDevice(id), {
+    params: UserIdParam,
+  });

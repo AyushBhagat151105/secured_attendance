@@ -48,8 +48,8 @@ export default function DeviceBindingScreen() {
 
       if (hasHardware && isEnrolled) {
         const authResult = await LocalAuthentication.authenticateAsync({
-          promptMessage: 'Authenticate to bind device',
-          cancelLabel: 'Cancel',
+          promptMessage: "Authenticate to bind device",
+          cancelLabel: "Cancel",
           disableDeviceFallback: false,
         });
         if (!authResult.success) {
@@ -60,7 +60,7 @@ export default function DeviceBindingScreen() {
 
       // 2. Hit the real device binding endpoint in our backend
       try {
-        await apiClient.post('/api/auth-custom/device-bind', {
+        await apiClient.post("/api/auth-custom/device-bind", {
           deviceId: deviceInfo.id,
           deviceName: deviceInfo.name,
         });
@@ -85,11 +85,10 @@ export default function DeviceBindingScreen() {
         <View style={styles.iconWrapper}>
           <Ionicons name="hardware-chip" size={48} color={COLORS.primary} />
         </View>
-        <Text style={styles.title}>
-          Secure Your Account
-        </Text>
+        <Text style={styles.title}>Secure Your Account</Text>
         <Text style={styles.subtitle}>
-          Attendance can only be marked from one trusted device. Bind this device to your account now.
+          Attendance can only be marked from one trusted device. Bind this device to your account
+          now.
         </Text>
       </View>
 
@@ -117,7 +116,8 @@ export default function DeviceBindingScreen() {
         </TouchableOpacity>
 
         <Text style={styles.disclaimerText}>
-          Note: This action is permanent. To change devices later, you will need approval from an administrator.
+          Note: This action is permanent. To change devices later, you will need approval from an
+          administrator.
         </Text>
       </View>
     </Container>
@@ -128,32 +128,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 24,
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 32,
   },
   iconWrapper: {
     width: 96,
     height: 96,
-    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+    backgroundColor: "rgba(79, 70, 229, 0.1)",
     borderRadius: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 24,
   },
   title: {
     fontSize: 30,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.foreground,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
     color: COLORS.muted,
-    textAlign: 'center',
+    textAlign: "center",
     paddingHorizontal: 16,
     lineHeight: 20,
   },
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.card,
     padding: 24,
     borderRadius: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -174,8 +174,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.secondary,
     padding: 16,
     borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 16,
   },
   deviceInfoText: {
@@ -187,27 +187,27 @@ const styles = StyleSheet.create({
   },
   deviceInfoValue: {
     color: COLORS.foreground,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   button: {
     backgroundColor: COLORS.primary,
     height: 48,
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
   },
   buttonDisabled: {
     opacity: 0.7,
   },
   buttonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   disclaimerText: {
     fontSize: 12,
-    textAlign: 'center',
+    textAlign: "center",
     color: COLORS.muted,
     marginTop: 8,
   },

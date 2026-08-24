@@ -1,6 +1,12 @@
 import prisma from "@secured_attendance/db";
 import { logger } from "../lib/logger";
-import type { UpdateUserType, UsersListQueryType, CreateTeacherType, CreateStudentType, CreateAdminType } from "../models/admin-users.model";
+import type {
+  UpdateUserType,
+  UsersListQueryType,
+  CreateTeacherType,
+  CreateStudentType,
+  CreateAdminType,
+} from "../models/admin-users.model";
 import { status } from "elysia";
 import { auth } from "@secured_attendance/auth";
 import { env } from "@secured_attendance/env/server";
@@ -139,14 +145,14 @@ export class AdminUsersService {
       });
 
       if (!result?.user) {
-         return status(500, { message: "Failed to create user account" });
+        return status(500, { message: "Failed to create user account" });
       }
 
       await prisma.user.update({
         where: { id: result.user.id },
-        data: { 
+        data: {
           role: "teacher",
-          requiresPasswordChange: true
+          requiresPasswordChange: true,
         },
       });
 
@@ -182,14 +188,14 @@ export class AdminUsersService {
       });
 
       if (!result?.user) {
-         return status(500, { message: "Failed to create user account" });
+        return status(500, { message: "Failed to create user account" });
       }
 
       await prisma.user.update({
         where: { id: result.user.id },
-        data: { 
+        data: {
           role: "student",
-          requiresPasswordChange: true
+          requiresPasswordChange: true,
         },
       });
 
@@ -232,14 +238,14 @@ export class AdminUsersService {
       });
 
       if (!result?.user) {
-         return status(500, { message: "Failed to create user account" });
+        return status(500, { message: "Failed to create user account" });
       }
 
       await prisma.user.update({
         where: { id: result.user.id },
-        data: { 
+        data: {
           role: "admin",
-          requiresPasswordChange: true
+          requiresPasswordChange: true,
         },
       });
 

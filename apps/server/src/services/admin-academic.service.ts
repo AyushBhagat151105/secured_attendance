@@ -87,13 +87,15 @@ export class AcademicService {
 
   static async createProgramSemester(data: CreateProgramSemesterType) {
     const program = await prisma.program.findUnique({ where: { id: data.programId } });
-    const academicYear = await prisma.academicYear.findUnique({ where: { id: data.academicYearId } });
+    const academicYear = await prisma.academicYear.findUnique({
+      where: { id: data.academicYearId },
+    });
 
     if (!program || !academicYear) {
       return status(400, { message: "Invalid program or academic year" });
     }
 
-    const orgSlug = `${program.shortName.toLowerCase()}-sem-${data.semester}-${academicYear.name.toLowerCase().replace(/\s+/g, '-')}`;
+    const orgSlug = `${program.shortName.toLowerCase()}-sem-${data.semester}-${academicYear.name.toLowerCase().replace(/\s+/g, "-")}`;
 
     return prisma.programSemester.create({
       data: {

@@ -49,19 +49,15 @@ export function DeviceRebindDialog({
         </DialogHeader>
 
         <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-sm text-amber-600 dark:text-amber-400">
-          Use this when a student has lost their phone, switched devices, or needs to
-          re-register. The student will be prompted to complete device binding on next login.
+          Use this when a student has lost their phone, switched devices, or needs to re-register.
+          The student will be prompted to complete device binding on next login.
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={rebind.isPending}
-            className="gap-2"
-          >
+          <Button onClick={handleConfirm} disabled={rebind.isPending} className="gap-2">
             <IconRefresh className="h-4 w-4" />
             {rebind.isPending ? "Resetting..." : "Reset Device Binding"}
           </Button>

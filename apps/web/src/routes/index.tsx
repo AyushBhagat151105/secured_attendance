@@ -6,7 +6,7 @@ export const Route = createFileRoute("/")({
   beforeLoad: async () => {
     try {
       const session = await authClient.getSession();
-      
+
       if (!session.data) {
         throw redirect({ to: "/login", replace: true });
       }
@@ -18,11 +18,11 @@ export const Route = createFileRoute("/")({
       if (role === "admin" || role === "super_admin") {
         throw redirect({ to: "/admin", replace: true });
       }
-      
+
       if (role === "teacher") {
         throw redirect({ to: "/dashboard", replace: true });
       }
-      
+
       // Student or other roles
       throw redirect({ to: "/download-app", replace: true });
     } catch (e) {

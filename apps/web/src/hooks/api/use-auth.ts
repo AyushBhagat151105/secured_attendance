@@ -5,7 +5,8 @@ import { unwrapEden } from "@/lib/fetch-utils";
 
 export const useCompleteOnboarding = () => {
   return useMutation({
-    mutationFn: () => unwrapEden((apiClient.api as any)["auth-custom"]["complete-onboarding"].patch()),
+    mutationFn: () =>
+      unwrapEden((apiClient.api as any)["auth-custom"]["complete-onboarding"].patch()),
     onSuccess: () => {
       toast.success("Account setup complete!");
     },

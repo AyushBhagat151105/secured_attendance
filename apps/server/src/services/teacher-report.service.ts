@@ -25,18 +25,18 @@ export const teacherReportModule = new Elysia({ prefix: "/reports" })
             division: {
               include: {
                 students: true,
-              }
-            }
-          }
-        }
+              },
+            },
+          },
+        },
       },
       orderBy: { startTime: "desc" },
     });
 
-    return sessions.map(s => {
+    return sessions.map((s) => {
       const presentCount = s.attendances.length;
       let expectedCount = 0;
-      s.sessionDivisions.forEach(sd => {
+      s.sessionDivisions.forEach((sd) => {
         expectedCount += sd.division.students.length;
       });
 
@@ -63,29 +63,31 @@ export const teacherReportModule = new Elysia({ prefix: "/reports" })
         room: { include: { building: true } },
         subject: true,
         attendances: {
-          include: { studentProfile: { include: { user: true } } }
-        }
-      }
+          include: { studentProfile: { include: { user: true } } },
+        },
+      },
     });
 
     if (!session) return status(404, { message: "Session not found" });
 
     // Verify it belongs to the teacher
     const teacherProfile = await prisma.teacherProfile.findUnique({
-      where: { userId: sessionCookie.user.id }
+      where: { userId: sessionCookie.user.id },
     });
     if (session.teacherProfileId !== teacherProfile?.id) {
       return status(403, { message: "Unauthorized" });
     }
 
-    const points = session.attendances.map(a => ({
-      studentId: a.studentProfileId,
-      studentName: a.studentProfile.user.name,
-      lat: a.gpsLat,
-      lng: a.gpsLng,
-      isWithinGeofence: a.gpsWithinGeofence,
-      isMocked: a.mockLocationFlag,
-    })).filter(p => p.lat !== null && p.lng !== null); // Filter out records without GPS
+    const points = session.attendances
+      .map((a) => ({
+        studentId: a.studentProfileId,
+        studentName: a.studentProfile.user.name,
+        lat: a.gpsLat,
+        lng: a.gpsLng,
+        isWithinGeofence: a.gpsWithinGeofence,
+        isMocked: a.mockLocationFlag,
+      }))
+      .filter((p) => p.lat !== null && p.lng !== null); // Filter out records without GPS
 
     return {
       sessionInfo: {
@@ -98,7 +100,7 @@ export const teacherReportModule = new Elysia({ prefix: "/reports" })
         centerLng: session.room.building.gpsLng,
         radiusMeters: session.room.building.radiusMeters,
       },
-      points
+      points,
     };
   })
 
@@ -115,24 +117,26 @@ export const teacherReportModule = new Elysia({ prefix: "/reports" })
       include: {
         subject: true,
         attendances: {
-          include: { studentProfile: true }
+          include: { studentProfile: true },
         },
         sessionDivisions: {
           include: {
             division: {
-              include: { students: { include: { user: true } } }
-            }
-          }
-        }
-      }
+              include: { students: { include: { user: true } } },
+            },
+          },
+        },
+      },
     });
 
     if (!attendanceSession) return status(404, { message: "Session not found" });
 
-    const expectedStudents = attendanceSession.sessionDivisions.flatMap(sd => sd.division.students);
-    const presentStudentIds = new Set(attendanceSession.attendances.map(a => a.studentProfileId));
+    const expectedStudents = attendanceSession.sessionDivisions.flatMap(
+      (sd) => sd.division.students,
+    );
+    const presentStudentIds = new Set(attendanceSession.attendances.map((a) => a.studentProfileId));
 
-    const result = expectedStudents.map(student => ({
+    const result = expectedStudents.map((student) => ({
       studentId: student.id,
       name: student.user.name,
       email: student.user.email,
@@ -145,7 +149,7 @@ export const teacherReportModule = new Elysia({ prefix: "/reports" })
         subject: attendanceSession.subject.name,
         date: attendanceSession.startTime,
       },
-      students: result
+      students: result,
     };
   })
 
@@ -165,16 +169,19 @@ export const teacherReportModule = new Elysia({ prefix: "/reports" })
         sessionDivisions: {
           include: {
             division: {
-              include: { students: true }
-            }
-          }
-        }
-      }
+              include: { students: true },
+            },
+          },
+        },
+      },
     });
 
-    const subjectStats = new Map<string, { name: string, totalExpected: number, totalPresent: number }>();
+    const subjectStats = new Map<
+      string,
+      { name: string; totalExpected: number; totalPresent: number }
+    >();
 
-    sessions.forEach(s => {
+    sessions.forEach((s) => {
       const subjectId = s.subjectId;
       if (!subjectStats.has(subjectId)) {
         subjectStats.set(subjectId, { name: s.subject.name, totalExpected: 0, totalPresent: 0 });
@@ -182,9 +189,9 @@ export const teacherReportModule = new Elysia({ prefix: "/reports" })
 
       const stat = subjectStats.get(subjectId)!;
       stat.totalPresent += s.attendances.length;
-      
+
       let expectedInSession = 0;
-      s.sessionDivisions.forEach(sd => {
+      s.sessionDivisions.forEach((sd) => {
         expectedInSession += sd.division.students.length;
       });
       stat.totalExpected += expectedInSession;
@@ -193,7 +200,8 @@ export const teacherReportModule = new Elysia({ prefix: "/reports" })
     return Array.from(subjectStats.entries()).map(([id, stat]) => ({
       id,
       name: stat.name,
-      percentage: stat.totalExpected > 0 ? Math.round((stat.totalPresent / stat.totalExpected) * 100) : 0,
+      percentage:
+        stat.totalExpected > 0 ? Math.round((stat.totalPresent / stat.totalExpected) * 100) : 0,
     }));
   })
 
@@ -210,37 +218,42 @@ export const teacherReportModule = new Elysia({ prefix: "/reports" })
       },
       include: {
         subject: true,
-        attendances: { include: { studentProfile: { include: { user: true } } } }
+        attendances: { include: { studentProfile: { include: { user: true } } } },
       },
-      orderBy: { startTime: "asc" }
+      orderBy: { startTime: "asc" },
     });
 
     if (sessions.length === 0) return status(404, { message: "No data found for this subject" });
 
     const divisionIds = new Set<string>();
     const sessionDivisions = await prisma.sessionDivision.findMany({
-      where: { sessionId: { in: sessions.map(s => s.id) } }
+      where: { sessionId: { in: sessions.map((s) => s.id) } },
     });
-    sessionDivisions.forEach(sd => divisionIds.add(sd.divisionId));
+    sessionDivisions.forEach((sd) => divisionIds.add(sd.divisionId));
 
     const expectedStudents = await prisma.studentProfile.findMany({
       where: { divisionId: { in: Array.from(divisionIds) } },
-      include: { user: true }
+      include: { user: true },
     });
 
-    const headers = ["Enrollment", "Name", ...sessions.map(s => new Date(s.startTime).toLocaleDateString())];
-    const rows = expectedStudents.map(student => {
+    const headers = [
+      "Enrollment",
+      "Name",
+      ...sessions.map((s) => new Date(s.startTime).toLocaleDateString()),
+    ];
+    const rows = expectedStudents.map((student) => {
       const row = [student.enrollmentNo || student.id.substring(0, 8), student.user?.name || ""];
-      sessions.forEach(s => {
-        const wasPresent = s.attendances.some(a => a.studentProfileId === student.id);
+      sessions.forEach((s) => {
+        const wasPresent = s.attendances.some((a) => a.studentProfileId === student.id);
         row.push(wasPresent ? "P" : "A");
       });
       return row;
     });
 
-    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    const csvContent = [headers, ...rows].map((e) => e.join(",")).join("\n");
 
     set.headers["Content-Type"] = "text/csv";
-    set.headers["Content-Disposition"] = `attachment; filename="attendance_${sessions[0]?.subject.name.replace(/ /g, "_")}.csv"`;
+    set.headers["Content-Disposition"] =
+      `attachment; filename="attendance_${sessions[0]?.subject.name.replace(/ /g, "_")}.csv"`;
     return csvContent;
   });

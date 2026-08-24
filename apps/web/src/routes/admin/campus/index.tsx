@@ -1,5 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useBuildings, useRooms, useCreateBuilding, useUpdateBuilding, useCreateRoom } from "@/hooks/api/use-admin-campus";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  createBuildingSchema,
+  updateBuildingSchema,
+  createRoomSchema,
+  type CreateBuildingSchema,
+  type UpdateBuildingSchema,
+  type CreateRoomSchema,
+} from "@secured_attendance/validators";
+
+import {
+  useBuildings,
+  useRooms,
+  useCreateBuilding,
+  useUpdateBuilding,
+  useCreateRoom,
+} from "@/hooks/api/use-admin-campus";
 import {
   Table,
   TableBody,
@@ -13,11 +30,39 @@ import { Button } from "@/components/ui/button";
 import { Plus, MapPinIcon } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { useMap } from "react-leaflet";
-import { Map, MapMarker, MapPopup, MapTileLayer, MapZoomControl, MapDrawControl, MapDrawCircle, MapDrawEdit, MapDrawDelete, MapSearchControl, MapCircle, useLeaflet, useMapDrawContext } from "@/components/ui/map";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Map,
+  MapMarker,
+  MapPopup,
+  MapTileLayer,
+  MapZoomControl,
+  MapDrawControl,
+  MapDrawCircle,
+  MapDrawEdit,
+  MapDrawDelete,
+  MapSearchControl,
+  MapCircle,
+  useLeaflet,
+  useMapDrawContext,
+} from "@/components/ui/map";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import React, { useState } from "react";
 
 import { toast } from "sonner";
@@ -48,7 +93,17 @@ function MapSearchControlWrapper() {
   );
 }
 
-function MapEditInitializer({ building, lat, lng, radius }: { building: any, lat: any, lng: any, radius: any }) {
+function MapEditInitializer({
+  building,
+  lat,
+  lng,
+  radius,
+}: {
+  building: any;
+  lat: any;
+  lng: any;
+  radius: any;
+}) {
   const map = useMap();
   const { L } = useLeaflet();
   const drawContext = useMapDrawContext();
@@ -71,12 +126,12 @@ function MapEditInitializer({ building, lat, lng, radius }: { building: any, lat
         radius: building.radiusMeters,
         color: "#ca8a04",
         fillColor: "#ca8a04",
-        weight: 1
+        weight: 1,
       });
-      map.fire(L.Draw.Event.CREATED, { layer: circle, layerType: 'circle' });
+      map.fire(L.Draw.Event.CREATED, { layer: circle, layerType: "circle" });
     } else {
       // Update it dynamically when inputs change!
-      if (lat !== "" && lng !== "") {
+      if (lat !== undefined && lng !== undefined) {
         existingCircle.setLatLng([lat, lng]);
       }
       if (radius > 0) {
@@ -94,281 +149,414 @@ function CampusRoute() {
 
   const createBuilding = useCreateBuilding();
   const updateBuilding = useUpdateBuilding();
-  const createRoom = useCreateRoom();
+  const createRoomMutation = useCreateRoom();
 
   const [isBuildingOpen, setIsBuildingOpen] = useState(false);
   const [isRoomOpen, setIsRoomOpen] = useState(false);
 
-  const [gpsLat, setGpsLat] = useState<number | "">("");
-  const [gpsLng, setGpsLng] = useState<number | "">("");
-  const [radiusMeters, setRadiusMeters] = useState<number>(50);
-
   const [editingBuilding, setEditingBuilding] = useState<any>(null);
-  const [editGpsLat, setEditGpsLat] = useState<number | "">("");
-  const [editGpsLng, setEditGpsLng] = useState<number | "">("");
-  const [editRadiusMeters, setEditRadiusMeters] = useState<number>(50);
 
-  const onAddBuilding = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (gpsLat === "" || gpsLng === "") {
+  const buildingForm = useForm<CreateBuildingSchema>({
+    resolver: zodResolver(createBuildingSchema),
+    defaultValues: {
+      name: "",
+      code: "",
+      gpsLat: 0,
+      gpsLng: 0,
+      radiusMeters: 50,
+    },
+  });
+
+  const editBuildingForm = useForm<UpdateBuildingSchema>({
+    resolver: zodResolver(updateBuildingSchema),
+    defaultValues: {
+      name: "",
+      code: "",
+      gpsLat: 0,
+      gpsLng: 0,
+      radiusMeters: 50,
+    },
+  });
+
+  const roomForm = useForm<CreateRoomSchema>({
+    resolver: zodResolver(createRoomSchema),
+    defaultValues: {
+      name: "",
+      type: "classroom",
+      buildingId: "",
+    },
+  });
+
+  const onAddBuilding = async (value: CreateBuildingSchema) => {
+    if (value.gpsLat === 0 && value.gpsLng === 0) {
       toast.error("Please draw a geofence circle on the map");
       return;
     }
-    const formData = new FormData(e.currentTarget);
-    const body = {
-      name: formData.get("name") as string,
-      code: formData.get("code") as string,
-      gpsLat: Number(gpsLat),
-      gpsLng: Number(gpsLng),
-      radiusMeters: Number(radiusMeters),
-    };
-    await createBuilding.mutateAsync(body);
+    await createBuilding.mutateAsync(value);
+    buildingForm.reset();
     setIsBuildingOpen(false);
-    setGpsLat("");
-    setGpsLng("");
-    setRadiusMeters(50);
   };
 
-  const onEditBuilding = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (editGpsLat === "" || editGpsLng === "") {
-      toast.error("Please specify a valid location");
-      return;
-    }
-    const formData = new FormData(e.currentTarget);
-    const body = {
-      name: formData.get("name") as string,
-      code: formData.get("code") as string,
-      gpsLat: Number(editGpsLat),
-      gpsLng: Number(editGpsLng),
-      radiusMeters: Number(editRadiusMeters),
-    };
-    await updateBuilding.mutateAsync({ id: editingBuilding.id, body });
+  const onEditBuilding = async (value: UpdateBuildingSchema) => {
+    await updateBuilding.mutateAsync({ id: editingBuilding.id, body: value });
     setEditingBuilding(null);
   };
 
-  const onAddRoom = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const body = {
-      name: formData.get("name") as string,
-      type: formData.get("type") as string,
-      buildingId: formData.get("buildingId") as string,
-    };
-    await createRoom.mutateAsync(body);
+  const onAddRoom = async (value: CreateRoomSchema) => {
+    await createRoomMutation.mutateAsync(value);
+    roomForm.reset();
     setIsRoomOpen(false);
   };
+
+  const newGpsLat = buildingForm.watch("gpsLat");
+  const newGpsLng = buildingForm.watch("gpsLng");
+  const newRadiusMeters = buildingForm.watch("radiusMeters");
+
+  const editGpsLat = editBuildingForm.watch("gpsLat");
+  const editGpsLng = editBuildingForm.watch("gpsLng");
+  const editRadiusMeters = editBuildingForm.watch("radiusMeters");
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Campus Management</h2>
         <div className="flex items-center space-x-2">
-          <Dialog open={isBuildingOpen} onOpenChange={setIsBuildingOpen}>
+          <Dialog
+            open={isBuildingOpen}
+            onOpenChange={(open) => {
+              if (!open) buildingForm.reset();
+              setIsBuildingOpen(open);
+            }}
+          >
             <DialogTrigger asChild>
               <Button>
                 <Plus className="mr-2 h-4 w-4" /> Add Building
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-              <form onSubmit={onAddBuilding}>
-                <DialogHeader>
-                  <DialogTitle>Add New Building</DialogTitle>
-                  <DialogDescription>Create a new building with GPS coordinates.</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="name">Building Name</Label>
-                    <Input id="name" name="name" required placeholder="Main Building" />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="code">Code</Label>
-                    <Input id="code" name="code" required placeholder="MB" />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Geofence Area</Label>
-                    <div className="h-100 w-full rounded-md border overflow-hidden relative z-0">
-                      <Map center={[20.5937, 78.9629]} zoom={4} className="h-full w-full">
-                        <MapTileLayer />
-                        <MapZoomControl />
-                        <MapSearchControlWrapper />
-                        <MapDrawControl
-                          onLayersChange={(layers) => {
-                            let found = false;
-                            layers.eachLayer((layer: any) => {
-                              if (layer.getRadius && layer.getLatLng && !found) {
-                                setGpsLat(layer.getLatLng().lat);
-                                setGpsLng(layer.getLatLng().lng);
-                                setRadiusMeters(Math.round(layer.getRadius()));
-                                found = true;
-                              }
-                            });
-                            if (!found) {
-                              setGpsLat("");
-                              setGpsLng("");
-                            }
-                          }}
-                        >
-                          <MapDrawCircle />
-                          <MapDrawEdit />
-                          <MapDrawDelete />
-                        </MapDrawControl>
-                        {gpsLat !== "" && gpsLng !== "" && radiusMeters > 0 && (
-                          <MapCircle
-                            center={[Number(gpsLat), Number(gpsLng)]}
-                            radius={radiusMeters}
-                            className="fill-yellow-600 stroke-yellow-600 stroke-1"
-                          />
+              <form onSubmit={buildingForm.handleSubmit(onAddBuilding)}>
+                  <DialogHeader>
+                    <DialogTitle>Add New Building</DialogTitle>
+                    <DialogDescription>
+                      Create a new building with GPS coordinates.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <Controller
+                      control={buildingForm.control}
+                      name="name"
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel>Building Name</FieldLabel>
+                            <Input {...field} placeholder="Main Building" />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        </Field>
+                      )}
+                    />
+                    <Controller
+                      control={buildingForm.control}
+                      name="code"
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel>Code</FieldLabel>
+                            <Input {...field} placeholder="MB" />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        </Field>
+                      )}
+                    />
+                    <div className="grid gap-2">
+                      <FieldLabel>Geofence Area</FieldLabel>
+                      <div className="h-100 w-full rounded-md border overflow-hidden relative z-0">
+                        <Map center={[20.5937, 78.9629]} zoom={4} className="h-full w-full">
+                          <MapTileLayer />
+                          <MapZoomControl />
+                          <MapSearchControlWrapper />
+                          <MapDrawControl
+                            onLayersChange={(layers) => {
+                              let found = false;
+                              layers.eachLayer((layer: any) => {
+                                if (layer.getRadius && layer.getLatLng && !found) {
+                                  buildingForm.setValue("gpsLat", layer.getLatLng().lat);
+                                  buildingForm.setValue("gpsLng", layer.getLatLng().lng);
+                                  buildingForm.setValue(
+                                    "radiusMeters",
+                                    Math.round(layer.getRadius()),
+                                  );
+                                  found = true;
+                                }
+                              });
+                            }}
+                          >
+                            <MapDrawCircle />
+                            <MapDrawEdit />
+                            <MapDrawDelete />
+                          </MapDrawControl>
+                          {newGpsLat !== 0 && newGpsLng !== 0 && newRadiusMeters > 0 && (
+                            <MapCircle
+                              center={[newGpsLat, newGpsLng]}
+                              radius={newRadiusMeters}
+                              className="fill-yellow-600 stroke-yellow-600 stroke-1"
+                            />
+                          )}
+                        </Map>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <Controller
+                        control={buildingForm.control}
+                        name="gpsLat"
+                        render={({ field, fieldState }) => (
+                          <Field data-invalid={fieldState.invalid}>
+                            <FieldLabel>Latitude</FieldLabel>
+                              <Input {...field} type="number" step="any" placeholder="22.6018" onChange={e => field.onChange(e.target.valueAsNumber)} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                          </Field>
                         )}
-                      </Map>
+                      />
+                      <Controller
+                        control={buildingForm.control}
+                        name="gpsLng"
+                        render={({ field, fieldState }) => (
+                          <Field data-invalid={fieldState.invalid}>
+                            <FieldLabel>Longitude</FieldLabel>
+                              <Input {...field} type="number" step="any" placeholder="72.8194" onChange={e => field.onChange(e.target.valueAsNumber)} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                          </Field>
+                        )}
+                      />
+                      <Controller
+                        control={buildingForm.control}
+                        name="radiusMeters"
+                        render={({ field, fieldState }) => (
+                          <Field data-invalid={fieldState.invalid}>
+                            <FieldLabel>Radius (m)</FieldLabel>
+                              <Input {...field} type="number" onChange={e => field.onChange(e.target.valueAsNumber)} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                          </Field>
+                        )}
+                      />
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="gpsLat">Latitude</Label>
-                      <Input id="gpsLat" type="number" step="any" value={gpsLat} onChange={(e) => setGpsLat(e.target.value ? Number(e.target.value) : "")} required placeholder="22.6018" />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="gpsLng">Longitude</Label>
-                      <Input id="gpsLng" type="number" step="any" value={gpsLng} onChange={(e) => setGpsLng(e.target.value ? Number(e.target.value) : "")} required placeholder="72.8194" />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="radiusMeters">Radius (m)</Label>
-                      <Input id="radiusMeters" type="number" value={radiusMeters} onChange={(e) => setRadiusMeters(Number(e.target.value))} required />
-                    </div>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit" disabled={createBuilding.isPending}>
-                    {createBuilding.isPending ? "Saving..." : "Save Building"}
-                  </Button>
-                </DialogFooter>
-              </form>
+                  <DialogFooter>
+                    <Button type="submit" disabled={buildingForm.formState.isSubmitting}>
+                      {buildingForm.formState.isSubmitting ? "Saving..." : "Save Building"}
+                    </Button>
+                  </DialogFooter>
+                </form>
             </DialogContent>
           </Dialog>
 
-          <Dialog open={!!editingBuilding} onOpenChange={(open) => !open && setEditingBuilding(null)}>
+          <Dialog
+            open={!!editingBuilding}
+            onOpenChange={(open) => !open && setEditingBuilding(null)}
+          >
             <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-              <form onSubmit={onEditBuilding}>
-                <DialogHeader>
-                  <DialogTitle>Edit Building</DialogTitle>
-                  <DialogDescription>Update the building details or geofence coordinates.</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="edit-name">Building Name</Label>
-                    <Input id="edit-name" name="name" required defaultValue={editingBuilding?.name} />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="edit-code">Code</Label>
-                    <Input id="edit-code" name="code" required defaultValue={editingBuilding?.code} />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Geofence Area</Label>
-                    <div className="h-100 w-full rounded-md border overflow-hidden relative z-0">
-                      <Map center={editingBuilding ? [editingBuilding.gpsLat, editingBuilding.gpsLng] : [20.5937, 78.9629]} zoom={16} className="h-full w-full">
-                        <MapTileLayer />
-                        <MapZoomControl />
-                        <MapSearchControlWrapper />
-                        <MapDrawControl
-                          onLayersChange={(layers) => {
-                            let found = false;
-                            layers.eachLayer((layer: any) => {
-                              if (layer.getRadius && layer.getLatLng && !found) {
-                                setEditGpsLat(layer.getLatLng().lat);
-                                setEditGpsLng(layer.getLatLng().lng);
-                                setEditRadiusMeters(Math.round(layer.getRadius()));
-                                found = true;
-                              }
-                            });
-                          }}
+              <form onSubmit={editBuildingForm.handleSubmit(onEditBuilding)}>
+                  <DialogHeader>
+                    <DialogTitle>Edit Building</DialogTitle>
+                    <DialogDescription>
+                      Update the building details or geofence coordinates.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <Controller
+                      control={editBuildingForm.control}
+                      name="name"
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel>Building Name</FieldLabel>
+                            <Input {...field} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        </Field>
+                      )}
+                    />
+                    <Controller
+                      control={editBuildingForm.control}
+                      name="code"
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel>Code</FieldLabel>
+                            <Input {...field} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        </Field>
+                      )}
+                    />
+                    <div className="grid gap-2">
+                      <FieldLabel>Geofence Area</FieldLabel>
+                      <div className="h-100 w-full rounded-md border overflow-hidden relative z-0">
+                        <Map
+                          center={
+                            editingBuilding
+                              ? [editingBuilding.gpsLat, editingBuilding.gpsLng]
+                              : [20.5937, 78.9629]
+                          }
+                          zoom={16}
+                          className="h-full w-full"
                         >
-                          <MapDrawCircle />
-                          <MapDrawEdit />
-                          <MapDrawDelete />
-                        </MapDrawControl>
-                        {editingBuilding && (
-                          <MapEditInitializer building={editingBuilding} lat={editGpsLat} lng={editGpsLng} radius={editRadiusMeters} />
+                          <MapTileLayer />
+                          <MapZoomControl />
+                          <MapSearchControlWrapper />
+                          <MapDrawControl
+                            onLayersChange={(layers) => {
+                              let found = false;
+                              layers.eachLayer((layer: any) => {
+                                if (layer.getRadius && layer.getLatLng && !found) {
+                                  editBuildingForm.setValue("gpsLat", layer.getLatLng().lat);
+                                  editBuildingForm.setValue("gpsLng", layer.getLatLng().lng);
+                                  editBuildingForm.setValue(
+                                    "radiusMeters",
+                                    Math.round(layer.getRadius()),
+                                  );
+                                  found = true;
+                                }
+                              });
+                            }}
+                          >
+                            <MapDrawCircle />
+                            <MapDrawEdit />
+                            <MapDrawDelete />
+                          </MapDrawControl>
+                          {editingBuilding && (
+                            <MapEditInitializer
+                              building={editingBuilding}
+                              lat={editGpsLat}
+                              lng={editGpsLng}
+                              radius={editRadiusMeters}
+                            />
+                          )}
+                        </Map>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <Controller
+                        control={editBuildingForm.control}
+                        name="gpsLat"
+                        render={({ field, fieldState }) => (
+                          <Field data-invalid={fieldState.invalid}>
+                            <FieldLabel>Latitude</FieldLabel>
+                              <Input {...field} type="number" step="any" onChange={e => field.onChange(e.target.valueAsNumber)} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                          </Field>
                         )}
-                      </Map>
+                      />
+                      <Controller
+                        control={editBuildingForm.control}
+                        name="gpsLng"
+                        render={({ field, fieldState }) => (
+                          <Field data-invalid={fieldState.invalid}>
+                            <FieldLabel>Longitude</FieldLabel>
+                              <Input {...field} type="number" step="any" onChange={e => field.onChange(e.target.valueAsNumber)} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                          </Field>
+                        )}
+                      />
+                      <Controller
+                        control={editBuildingForm.control}
+                        name="radiusMeters"
+                        render={({ field, fieldState }) => (
+                          <Field data-invalid={fieldState.invalid}>
+                            <FieldLabel>Radius (m)</FieldLabel>
+                              <Input {...field} type="number" onChange={e => field.onChange(e.target.valueAsNumber)} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                          </Field>
+                        )}
+                      />
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="edit-gpsLat">Latitude</Label>
-                      <Input id="edit-gpsLat" type="number" step="any" value={editGpsLat} onChange={(e) => setEditGpsLat(e.target.value ? Number(e.target.value) : "")} required />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="edit-gpsLng">Longitude</Label>
-                      <Input id="edit-gpsLng" type="number" step="any" value={editGpsLng} onChange={(e) => setEditGpsLng(e.target.value ? Number(e.target.value) : "")} required />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="edit-radiusMeters">Radius (m)</Label>
-                      <Input id="edit-radiusMeters" type="number" value={editRadiusMeters} onChange={(e) => setEditRadiusMeters(Number(e.target.value))} required />
-                    </div>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit" disabled={updateBuilding?.isPending}>
-                    {updateBuilding?.isPending ? <Spinner className="mr-2" /> : null}
-                    Save Changes
-                  </Button>
-                </DialogFooter>
-              </form>
+                  <DialogFooter>
+                    <Button type="submit" disabled={editBuildingForm.formState.isSubmitting}>
+                      {editBuildingForm.formState.isSubmitting ? (
+                        <Spinner className="mr-2" />
+                      ) : null}
+                      Save Changes
+                    </Button>
+                  </DialogFooter>
+                </form>
             </DialogContent>
           </Dialog>
 
-          <Dialog open={isRoomOpen} onOpenChange={setIsRoomOpen}>
+          <Dialog
+            open={isRoomOpen}
+            onOpenChange={(open) => {
+              if (!open) roomForm.reset();
+              setIsRoomOpen(open);
+            }}
+          >
             <DialogTrigger asChild>
               <Button variant="outline">
                 <Plus className="mr-2 h-4 w-4" /> Add Room
               </Button>
             </DialogTrigger>
             <DialogContent>
-              <form onSubmit={onAddRoom}>
-                <DialogHeader>
-                  <DialogTitle>Add New Room</DialogTitle>
-                  <DialogDescription>Create a room and assign it to a building.</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="room-name">Room Name / No</Label>
-                    <Input id="room-name" name="name" required placeholder="101" />
+              <form onSubmit={roomForm.handleSubmit(onAddRoom)}>
+                  <DialogHeader>
+                    <DialogTitle>Add New Room</DialogTitle>
+                    <DialogDescription>
+                      Create a room and assign it to a building.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <Controller
+                      control={roomForm.control}
+                      name="name"
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel>Room Name / No</FieldLabel>
+                            <Input {...field} placeholder="101" />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        </Field>
+                      )}
+                    />
+                    <Controller
+                      control={roomForm.control}
+                      name="type"
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel>Type</FieldLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="classroom">Classroom</SelectItem>
+                              <SelectItem value="lab">Laboratory</SelectItem>
+                              <SelectItem value="hall">Seminar Hall</SelectItem>
+                              <SelectItem value="office">Office</SelectItem>
+                            </SelectContent>
+                          </Select>
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        </Field>
+                      )}
+                    />
+                    <Controller
+                      control={roomForm.control}
+                      name="buildingId"
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel>Building</FieldLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select building" />
+                              </SelectTrigger>
+                            <SelectContent>
+                              {buildings?.map((b) => (
+                                <SelectItem key={b.id} value={b.id}>
+                                  {b.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        </Field>
+                      )}
+                    />
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="type">Type</Label>
-                    <Select name="type" required defaultValue="classroom">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="classroom">Classroom</SelectItem>
-                        <SelectItem value="lab">Laboratory</SelectItem>
-                        <SelectItem value="hall">Seminar Hall</SelectItem>
-                        <SelectItem value="office">Office</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="buildingId">Building</Label>
-                    <Select name="buildingId" required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select building" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {buildings?.map((b) => (
-                          <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit" disabled={createRoom.isPending}>
-                    {createRoom.isPending ? "Saving..." : "Save Room"}
-                  </Button>
-                </DialogFooter>
-              </form>
+                  <DialogFooter>
+                    <Button type="submit" disabled={roomForm.formState.isSubmitting}>
+                      {roomForm.formState.isSubmitting ? "Saving..." : "Save Room"}
+                    </Button>
+                  </DialogFooter>
+                </form>
             </DialogContent>
           </Dialog>
         </div>
@@ -399,16 +587,22 @@ function CampusRoute() {
                     <MapMarker position={[building.gpsLat, building.gpsLng]}>
                       <MapPopup>
                         <div className="font-semibold">{building.name}</div>
-                        <div className="text-xs text-muted-foreground mb-3">{building.code} • Radius: {building.radiusMeters}m</div>
+                        <div className="text-xs text-muted-foreground mb-3">
+                          {building.code} • Radius: {building.radiusMeters}m
+                        </div>
                         <Button
                           size="sm"
                           variant="secondary"
                           className="w-full"
                           onClick={() => {
                             setEditingBuilding(building);
-                            setEditGpsLat(building.gpsLat);
-                            setEditGpsLng(building.gpsLng);
-                            setEditRadiusMeters(building.radiusMeters);
+                            editBuildingForm.reset({
+                              name: building.name,
+                              code: building.code,
+                              gpsLat: building.gpsLat,
+                              gpsLng: building.gpsLng,
+                              radiusMeters: building.radiusMeters,
+                            });
                           }}
                         >
                           Edit Location

@@ -1,4 +1,12 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  createProgramSchema,
+  updateProgramSchema,
+  type CreateProgramSchema,
+} from "@secured_attendance/validators";
+
 import { usePrograms } from "@/hooks/api/use-admin-academic";
 import {
   Table,
@@ -12,11 +20,23 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { useState } from "react";
-import { useCreateProgram, useUpdateProgram, useDeleteProgram } from "@/hooks/api/use-admin-academic";
+import {
+  useCreateProgram,
+  useUpdateProgram,
+  useDeleteProgram,
+} from "@/hooks/api/use-admin-academic";
 import { MoreHorizontal, Pencil, Trash } from "lucide-react";
 import {
   DropdownMenu,
@@ -47,15 +67,17 @@ function ProgramRowActions({ program }: { program: any }) {
   const updateProgram = useUpdateProgram();
   const deleteProgram = useDeleteProgram();
 
-  const onEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const body = {
-      name: formData.get("name") as string,
-      code: formData.get("code") as string,
-      shortName: formData.get("shortName") as string || undefined,
-    };
-    await updateProgram.mutateAsync({ id: program.id, body });
+  const form = useForm<CreateProgramSchema>({
+    resolver: zodResolver(updateProgramSchema),
+    defaultValues: {
+      name: program.name,
+      code: program.code,
+      shortName: program.shortName || "",
+    },
+  });
+
+  const onSubmit = async (value: CreateProgramSchema) => {
+    await updateProgram.mutateAsync({ id: program.id, body: value });
     setShowEdit(false);
   };
 
@@ -76,10 +98,13 @@ function ProgramRowActions({ program }: { program: any }) {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setShowEdit(true)}>
+          <DropdownMenuItem onClick={() => { form.reset(); setShowEdit(true); }}>
             <Pencil className="mr-2 h-4 w-4" /> Edit
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setShowDelete(true)} className="text-destructive focus:text-destructive">
+          <DropdownMenuItem
+            onClick={() => setShowDelete(true)}
+            className="text-destructive focus:text-destructive"
+          >
             <Trash className="mr-2 h-4 w-4" /> Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -87,28 +112,47 @@ function ProgramRowActions({ program }: { program: any }) {
 
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <DialogContent>
-          <form onSubmit={onEditSubmit}>
-            <DialogHeader>
-              <DialogTitle>Edit Program</DialogTitle>
-              <DialogDescription>Update the details of {program.name}.</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor={`name-${program.id}`}>Program Name</Label>
-                <Input id={`name-${program.id}`} name="name" required defaultValue={program.name} />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor={`code-${program.id}`}>Code</Label>
-                <Input id={`code-${program.id}`} name="code" required defaultValue={program.code} />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor={`shortName-${program.id}`}>Short Name</Label>
-                <Input id={`shortName-${program.id}`} name="shortName" defaultValue={program.shortName || ""} />
-              </div>
-            </div>
+          <DialogHeader>
+            <DialogTitle>Edit Program</DialogTitle>
+            <DialogDescription>Update the details of {program.name}.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <Controller
+              control={form.control}
+              name="name"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Program Name</FieldLabel>
+                  <Input {...field} id={field.name} aria-invalid={fieldState.invalid} />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+            <Controller
+              control={form.control}
+              name="code"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Code</FieldLabel>
+                  <Input {...field} id={field.name} aria-invalid={fieldState.invalid} />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+            <Controller
+              control={form.control}
+              name="shortName"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Short Name</FieldLabel>
+                  <Input {...field} id={field.name} aria-invalid={fieldState.invalid} />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
             <DialogFooter>
-              <Button type="submit" disabled={updateProgram.isPending}>
-                {updateProgram.isPending ? "Saving..." : "Save Changes"}
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </form>
@@ -120,17 +164,14 @@ function ProgramRowActions({ program }: { program: any }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the <strong>{program.name}</strong> program.
-              This action cannot be undone.
+              This will permanently delete the <strong>{program.name}</strong> program. This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                onDeleteConfirm();
-              }}
+              onClick={(e) => { e.preventDefault(); onDeleteConfirm(); }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleteProgram.isPending}
             >
@@ -148,15 +189,14 @@ function ProgramsRoute() {
   const createProgram = useCreateProgram();
   const [isOpen, setIsOpen] = useState(false);
 
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const body = {
-      name: formData.get("name") as string,
-      code: formData.get("code") as string,
-      shortName: formData.get("shortName") as string || "",
-    };
-    await createProgram.mutateAsync(body);
+  const form = useForm<CreateProgramSchema>({
+    resolver: zodResolver(createProgramSchema),
+    defaultValues: { name: "", code: "", shortName: "" },
+  });
+
+  const onSubmit = async (value: CreateProgramSchema) => {
+    await createProgram.mutateAsync(value);
+    form.reset();
     setIsOpen(false);
   };
 
@@ -167,33 +207,50 @@ function ProgramsRoute() {
         <div className="flex items-center space-x-2">
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" /> Add Program
-              </Button>
+              <Button><Plus className="mr-2 h-4 w-4" /> Add Program</Button>
             </DialogTrigger>
             <DialogContent>
-              <form onSubmit={onSubmit}>
-                <DialogHeader>
-                  <DialogTitle>Add New Program</DialogTitle>
-                  <DialogDescription>Create an academic program (e.g. B.Tech, M.Tech).</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="name">Program Name</Label>
-                    <Input id="name" name="name" required placeholder="Bachelor of Technology" />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="code">Code</Label>
-                    <Input id="code" name="code" required placeholder="B.Tech" />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="shortName">Short Name (Optional)</Label>
-                    <Input id="shortName" name="shortName" placeholder="BT" />
-                  </div>
-                </div>
+              <DialogHeader>
+                <DialogTitle>Add New Program</DialogTitle>
+                <DialogDescription>Create an academic program (e.g. B.Tech, M.Tech).</DialogDescription>
+              </DialogHeader>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <Controller
+                  control={form.control}
+                  name="name"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>Program Name</FieldLabel>
+                      <Input {...field} id={field.name} placeholder="Bachelor of Technology" aria-invalid={fieldState.invalid} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="code"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>Code</FieldLabel>
+                      <Input {...field} id={field.name} placeholder="B.Tech" aria-invalid={fieldState.invalid} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="shortName"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>Short Name (Optional)</FieldLabel>
+                      <Input {...field} id={field.name} placeholder="BT" aria-invalid={fieldState.invalid} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
                 <DialogFooter>
-                  <Button type="submit" disabled={createProgram.isPending}>
-                    {createProgram.isPending ? "Saving..." : "Save Program"}
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? "Saving..." : "Save Program"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -208,9 +265,7 @@ function ProgramsRoute() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center p-8">
-              <Spinner />
-            </div>
+            <div className="flex justify-center p-8"><Spinner /></div>
           ) : (
             <Table>
               <TableHeader>
@@ -227,18 +282,14 @@ function ProgramsRoute() {
                   <TableRow key={program.id}>
                     <TableCell className="font-medium">{program.code}</TableCell>
                     <TableCell>{program.name}</TableCell>
-                    <TableCell>{program.shortName}</TableCell>
+                    <TableCell>{program.shortName || "-"}</TableCell>
                     <TableCell>{new Date(program.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <ProgramRowActions program={program} />
-                    </TableCell>
+                    <TableCell><ProgramRowActions program={program} /></TableCell>
                   </TableRow>
                 ))}
                 {(!programs || programs.length === 0) && (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center">
-                      No programs found.
-                    </TableCell>
+                    <TableCell colSpan={5} className="h-24 text-center">No programs found.</TableCell>
                   </TableRow>
                 )}
               </TableBody>

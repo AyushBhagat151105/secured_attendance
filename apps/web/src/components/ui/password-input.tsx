@@ -1,20 +1,16 @@
-﻿import * as React from "react"
-import { IconEye, IconEyeOff } from "@tabler/icons-react"
-import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from "./input-group"
+﻿import * as React from "react";
+import { IconEye, IconEyeOff } from "@tabler/icons-react";
+import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from "./input-group";
 
 export interface PasswordInputProps extends React.ComponentProps<typeof InputGroupInput> {}
 
 const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
   ({ className, ...props }, ref) => {
-    const [showPassword, setShowPassword] = React.useState(false)
+    const [showPassword, setShowPassword] = React.useState(false);
 
     return (
       <InputGroup className={className}>
-        <InputGroupInput
-          type={showPassword ? "text" : "password"}
-          ref={ref}
-          {...props}
-        />
+        <InputGroupInput type={showPassword ? "text" : "password"} ref={ref} {...props} />
         <InputGroupAddon align="inline-end">
           <InputGroupButton
             type="button"
@@ -27,9 +23,9 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
           </InputGroupButton>
         </InputGroupAddon>
       </InputGroup>
-    )
-  }
-)
-PasswordInput.displayName = "PasswordInput"
+    );
+  },
+);
+PasswordInput.displayName = "PasswordInput";
 
-export { PasswordInput }
+export { PasswordInput };

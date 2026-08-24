@@ -1,7 +1,8 @@
-﻿import { useForm } from "@tanstack/react-form";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import z from "zod";
+import { signUpSchema, type SignUpSchema } from "@secured_attendance/validators";
 
 import { authClient } from "@/lib/auth-client";
 import { IconLoader2 } from "@tabler/icons-react";
@@ -9,7 +10,7 @@ import { IconLoader2 } from "@tabler/icons-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { PasswordInput } from "./ui/password-input";
-import { Label } from "./ui/label";
+import { Field, FieldLabel, FieldError } from "./ui/field";
 
 export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void }) {
   const navigate = useNavigate({
@@ -17,38 +18,33 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
   });
   const { isPending } = authClient.useSession();
 
-  const form = useForm({
+  const form = useForm<SignUpSchema>({
+    resolver: zodResolver(signUpSchema),
     defaultValues: {
       email: "",
       password: "",
       name: "",
     },
-    onSubmit: async ({ value }) => {
-      await authClient.signUp.email(
-        {
-          email: value.email,
-          password: value.password,
-          name: value.name,
-        },
-        {
-          onSuccess: () => {
-            toast.success("Account created successfully");
-            window.location.href = "/";
-          },
-          onError: (error) => {
-            toast.error(error.error.message || error.error.statusText);
-          },
-        },
-      );
-    },
-    validators: {
-      onSubmit: z.object({
-        name: z.string().min(2, "Name must be at least 2 characters"),
-        email: z.email("Invalid email address"),
-        password: z.string().min(8, "Password must be at least 8 characters"),
-      }),
-    },
   });
+
+  const onSubmit = async (value: SignUpSchema) => {
+    await authClient.signUp.email(
+      {
+        email: value.email,
+        password: value.password,
+        name: value.name,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Account created successfully");
+          window.location.href = "/";
+        },
+        onError: (error) => {
+          toast.error(error.error.message || error.error.statusText);
+        },
+      },
+    );
+  };
 
   if (isPending) {
     return (
@@ -65,107 +61,81 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
         <p className="text-muted-foreground">Sign up for a new administrative account.</p>
       </div>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          form.handleSubmit();
-        }}
-        className="space-y-4"
-      >
-        <form.Field name="name">
-          {(field) => (
-            <div className="space-y-2">
-              <Label htmlFor={field.name} className="font-medium">Full Name</Label>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <Controller
+          control={form.control}
+          name="name"
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={field.name} className="font-medium">Full Name</FieldLabel>
               <Input
+                {...field}
                 id={field.name}
-                name={field.name}
                 placeholder="John Doe"
                 className="h-11 bg-background"
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
+                aria-invalid={fieldState.invalid}
               />
-              {field.state.meta.errors.map((error) => (
-                <p key={error?.message} className="text-destructive text-sm font-medium">
-                  {error?.message}
-                </p>
-              ))}
-            </div>
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
-        </form.Field>
+        />
 
-        <form.Field name="email">
-          {(field) => (
-            <div className="space-y-2">
-              <Label htmlFor={field.name} className="font-medium">Email address</Label>
+        <Controller
+          control={form.control}
+          name="email"
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={field.name} className="font-medium">Email address</FieldLabel>
               <Input
+                {...field}
                 id={field.name}
-                name={field.name}
                 type="email"
                 placeholder="name@charusat.edu.in"
                 className="h-11 bg-background"
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
+                aria-invalid={fieldState.invalid}
               />
-              {field.state.meta.errors.map((error) => (
-                <p key={error?.message} className="text-destructive text-sm font-medium">
-                  {error?.message}
-                </p>
-              ))}
-            </div>
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
-        </form.Field>
+        />
 
-        <form.Field name="password">
-          {(field) => (
-            <div className="space-y-2">
-              <Label htmlFor={field.name} className="font-medium">Password</Label>
+        <Controller
+          control={form.control}
+          name="password"
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={field.name} className="font-medium">Password</FieldLabel>
               <PasswordInput
+                {...field}
                 id={field.name}
-                name={field.name}
                 placeholder="••••••••"
                 className="h-11 bg-background"
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
+                aria-invalid={fieldState.invalid}
               />
-              {field.state.meta.errors.map((error) => (
-                <p key={error?.message} className="text-destructive text-sm font-medium">
-                  {error?.message}
-                </p>
-              ))}
-            </div>
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
-        </form.Field>
+        />
 
-        <form.Subscribe>
-          {(state) => (
-            <Button
-              type="submit"
-              className="w-full h-11 text-base font-medium mt-4"
-              disabled={!state.canSubmit || state.isSubmitting}
-            >
-              {state.isSubmitting ? (
-                <>
-                  <IconLoader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Creating account...
-                </>
-              ) : (
-                "Create Account"
-              )}
-            </Button>
+        <Button
+          type="submit"
+          className="w-full h-11 text-base font-medium mt-4"
+          disabled={form.formState.isSubmitting}
+        >
+          {form.formState.isSubmitting ? (
+            <>
+              <IconLoader2 className="mr-2 h-5 w-5 animate-spin" />
+              Creating account...
+            </>
+          ) : (
+            "Create Account"
           )}
-        </form.Subscribe>
+        </Button>
       </form>
 
       <div className="mt-8 text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <button
-          onClick={onSwitchToSignIn}
-          className="font-semibold text-primary hover:underline"
-        >
+        <button onClick={onSwitchToSignIn} className="font-semibold text-primary hover:underline">
           Sign in
         </button>
       </div>

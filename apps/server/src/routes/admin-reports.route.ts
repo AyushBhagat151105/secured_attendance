@@ -9,13 +9,13 @@ export const adminReportModule = new Elysia({ prefix: "/reports" })
   .get("/analytics", async () => {
     // Basic program wide data for the dashboard
     const totalSessions = await prisma.attendanceSession.count();
-    
+
     // We can count total attendances marked
     const totalAttendances = await prisma.attendance.count();
-    
+
     // Count active sessions currently
     const activeSessions = await prisma.attendanceSession.count({
-      where: { status: "active" }
+      where: { status: "active" },
     });
 
     // Find sessions with low attendance for a "below threshold alerts" list
@@ -26,11 +26,11 @@ export const adminReportModule = new Elysia({ prefix: "/reports" })
         subject: true,
         attendances: true,
         sessionDivisions: {
-          include: { division: { include: { students: true } } }
-        }
+          include: { division: { include: { students: true } } },
+        },
       },
       orderBy: { startTime: "desc" },
-      take: 20
+      take: 20,
     });
 
     const alerts = [];
@@ -40,8 +40,8 @@ export const adminReportModule = new Elysia({ prefix: "/reports" })
     for (const s of recentSessions) {
       const presentCount = s.attendances.length;
       let expectedCount = 0;
-      s.sessionDivisions.forEach(sd => expectedCount += sd.division.students.length);
-      
+      s.sessionDivisions.forEach((sd) => (expectedCount += sd.division.students.length));
+
       if (expectedCount > 0) {
         const percentage = Math.round((presentCount / expectedCount) * 100);
         sumPercentage += percentage;
@@ -54,7 +54,7 @@ export const adminReportModule = new Elysia({ prefix: "/reports" })
             date: s.startTime,
             percentage,
             presentCount,
-            expectedCount
+            expectedCount,
           });
         }
       }
@@ -69,7 +69,7 @@ export const adminReportModule = new Elysia({ prefix: "/reports" })
         activeSessions,
         averageAttendance,
       },
-      alerts
+      alerts,
     };
   })
 
@@ -81,21 +81,23 @@ export const adminReportModule = new Elysia({ prefix: "/reports" })
         room: { include: { building: true } },
         subject: true,
         attendances: {
-          include: { studentProfile: { include: { user: true } } }
-        }
-      }
+          include: { studentProfile: { include: { user: true } } },
+        },
+      },
     });
 
     if (!session) return status(404, { message: "Session not found" });
 
-    const points = session.attendances.map(a => ({
-      studentId: a.studentProfileId,
-      studentName: a.studentProfile.user.name,
-      lat: a.gpsLat,
-      lng: a.gpsLng,
-      isWithinGeofence: a.gpsWithinGeofence,
-      isMocked: a.mockLocationFlag,
-    })).filter(p => p.lat !== null && p.lng !== null); // Filter out records without GPS
+    const points = session.attendances
+      .map((a) => ({
+        studentId: a.studentProfileId,
+        studentName: a.studentProfile.user.name,
+        lat: a.gpsLat,
+        lng: a.gpsLng,
+        isWithinGeofence: a.gpsWithinGeofence,
+        isMocked: a.mockLocationFlag,
+      }))
+      .filter((p) => p.lat !== null && p.lng !== null); // Filter out records without GPS
 
     return {
       sessionInfo: {
@@ -108,7 +110,7 @@ export const adminReportModule = new Elysia({ prefix: "/reports" })
         centerLng: session.room.building.gpsLng,
         radiusMeters: session.room.building.radiusMeters,
       },
-      points
+      points,
     };
   })
 
@@ -121,24 +123,32 @@ export const adminReportModule = new Elysia({ prefix: "/reports" })
     const sessions = await prisma.attendanceSession.findMany({
       where: {
         startTime: { gte: thirtyDaysAgo },
-        status: "closed"
+        status: "closed",
       },
       include: {
         subject: true,
         teacherProfile: { include: { user: true } },
         attendances: true,
         sessionDivisions: {
-          include: { division: { include: { students: true } } }
-        }
+          include: { division: { include: { students: true } } },
+        },
       },
-      orderBy: { startTime: "asc" }
+      orderBy: { startTime: "asc" },
     });
 
-    const headers = ["Session ID", "Date", "Subject", "Teacher", "Expected Students", "Present Students", "Attendance %"];
-    const rows = sessions.map(s => {
+    const headers = [
+      "Session ID",
+      "Date",
+      "Subject",
+      "Teacher",
+      "Expected Students",
+      "Present Students",
+      "Attendance %",
+    ];
+    const rows = sessions.map((s) => {
       const presentCount = s.attendances.length;
       let expectedCount = 0;
-      s.sessionDivisions.forEach(sd => expectedCount += sd.division.students.length);
+      s.sessionDivisions.forEach((sd) => (expectedCount += sd.division.students.length));
       const percentage = expectedCount > 0 ? Math.round((presentCount / expectedCount) * 100) : 0;
 
       return [
@@ -148,11 +158,11 @@ export const adminReportModule = new Elysia({ prefix: "/reports" })
         `"${s.teacherProfile.user.name}"`,
         expectedCount.toString(),
         presentCount.toString(),
-        `${percentage}%`
+        `${percentage}%`,
       ];
     });
 
-    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    const csvContent = [headers, ...rows].map((e) => e.join(",")).join("\n");
 
     set.headers["Content-Type"] = "text/csv";
     set.headers["Content-Disposition"] = `attachment; filename="system_attendance_export.csv"`;

@@ -95,9 +95,9 @@ class AdminUsersService {
    * Reset a student's device binding so they can re-register from a new device.
    */
   async rebindDevice(userId: string) {
-    const { data, error } = await apiClient.api.admin.users({ id: userId })["device-rebind"].post(
-      {},
-    );
+    const { data, error } = await apiClient.api.admin
+      .users({ id: userId })
+      ["device-rebind"].post({});
 
     if (error) throw new Error(error.value?.message ?? "Failed to rebind device");
     return data;

@@ -13,7 +13,8 @@ export function useTeacherSessionsReport() {
 export function useDeleteSession() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (sessionId: string) => unwrapEden(apiClient.api.teacher.sessions({ id: sessionId }).delete()),
+    mutationFn: (sessionId: string) =>
+      unwrapEden(apiClient.api.teacher.sessions({ id: sessionId }).delete()),
     onSuccess: () => {
       toast.success("Session deleted successfully");
       qc.invalidateQueries({ queryKey: ["teacher", "reports", "sessions"] });

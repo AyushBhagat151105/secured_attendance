@@ -25,7 +25,7 @@ export const CreateTimetableEntryBody = t.Object({
   roomId: t.String(),
   dayOfWeek: t.Number({ minimum: 0, maximum: 6 }),
   startTime: t.String(), // "09:10"
-  endTime: t.String(),   // "10:10"
+  endTime: t.String(), // "10:10"
   type: t.Optional(t.String()),
   teacherCodes: t.Array(t.String()),
   divisionIds: t.Array(t.String()), // Linked divisions

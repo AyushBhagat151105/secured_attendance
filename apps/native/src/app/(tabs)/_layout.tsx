@@ -48,7 +48,7 @@ export default function TabLayout() {
           title: "Scan",
           tabBarLabel: () => null,
           tabBarIcon: ({ color, focused }) => (
-            <View 
+            <View
               style={{
                 width: 56,
                 height: 56,

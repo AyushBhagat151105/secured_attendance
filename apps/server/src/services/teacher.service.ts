@@ -56,11 +56,12 @@ export class TeacherService {
     });
 
     // Attach completedSessionId to schedule entries
-    const scheduleWithCompletion = schedule.map(entry => {
+    const scheduleWithCompletion = schedule.map((entry) => {
       const completedSession = todaysSessions.find(
-        s => s.subjectId === entry.subjectId && s.roomId === entry.roomId && s.status === "closed"
+        (s) =>
+          s.subjectId === entry.subjectId && s.roomId === entry.roomId && s.status === "closed",
       );
-      
+
       return {
         ...entry,
         completedSessionId: completedSession?.id,
@@ -123,8 +124,8 @@ export class TeacherService {
         room: {
           include: {
             building: true,
-          }
-        }
+          },
+        },
       },
     });
 
@@ -138,8 +139,9 @@ export class TeacherService {
 
     // Validate Geofence Configuration
     if (!entry.room?.building?.gpsLat || !entry.room?.building?.radiusMeters) {
-      return status(400, { 
-        message: "GEOFENCE_NOT_CONFIGURED: The geofence for this classroom has not been set up. Please contact the administrator to set the building's GPS coordinates before taking attendance." 
+      return status(400, {
+        message:
+          "GEOFENCE_NOT_CONFIGURED: The geofence for this classroom has not been set up. Please contact the administrator to set the building's GPS coordinates before taking attendance.",
       });
     }
 
@@ -207,15 +209,19 @@ export class TeacherService {
     }
 
     const attendanceCount = await prisma.attendance.count({
-      where: { sessionId }
+      where: { sessionId },
     });
 
     if (attendanceCount === 0) {
       await prisma.attendanceSession.delete({
-        where: { id: sessionId }
+        where: { id: sessionId },
       });
       logger.info("Session deleted (0 attendance)", { sessionId, teacherCode: profile.code });
-      return { success: true, deleted: true, message: "Session deleted because it had 0 attendance" };
+      return {
+        success: true,
+        deleted: true,
+        message: "Session deleted because it had 0 attendance",
+      };
     }
 
     const closed = await prisma.attendanceSession.update({

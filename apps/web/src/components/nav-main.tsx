@@ -1,9 +1,5 @@
-﻿import { Link, useRouterState } from "@tanstack/react-router"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+﻿import { Link, useRouterState } from "@tanstack/react-router";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -14,24 +10,24 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from "@/components/ui/sidebar"
-import { IconChevronRight } from "@tabler/icons-react"
+} from "@/components/ui/sidebar";
+import { IconChevronRight } from "@tabler/icons-react";
 
 export function NavMain({
   items,
 }: {
   items: {
-    title: string
-    url: string
-    icon: React.ReactNode
-    isActive?: boolean
+    title: string;
+    url: string;
+    icon: React.ReactNode;
+    isActive?: boolean;
     items?: {
-      title: string
-      url: string
-    }[]
-  }[]
+      title: string;
+      url: string;
+    }[];
+  }[];
 }) {
-  const router = useRouterState()
+  const router = useRouterState();
 
   return (
     <SidebarGroup>
@@ -40,7 +36,11 @@ export function NavMain({
         {items.map((item) => (
           <Collapsible key={item.title} asChild defaultOpen={item.isActive}>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={item.title} isActive={router.location.pathname === item.url}>
+              <SidebarMenuButton
+                asChild
+                tooltip={item.title}
+                isActive={router.location.pathname === item.url}
+              >
                 <Link to={item.url}>
                   {item.icon}
                   <span>{item.title}</span>
@@ -50,8 +50,7 @@ export function NavMain({
                 <>
                   <CollapsibleTrigger asChild>
                     <SidebarMenuAction className="data-[state=open]:rotate-90">
-                      <IconChevronRight
-                      />
+                      <IconChevronRight />
                       <span className="sr-only">Toggle</span>
                     </SidebarMenuAction>
                   </CollapsibleTrigger>
@@ -59,7 +58,10 @@ export function NavMain({
                     <SidebarMenuSub>
                       {item.items?.map((subItem) => (
                         <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild isActive={router.location.pathname === subItem.url}>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={router.location.pathname === subItem.url}
+                          >
                             <Link to={subItem.url}>
                               <span>{subItem.title}</span>
                             </Link>
@@ -75,5 +77,5 @@ export function NavMain({
         ))}
       </SidebarMenu>
     </SidebarGroup>
-  )
+  );
 }

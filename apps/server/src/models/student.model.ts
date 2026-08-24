@@ -31,10 +31,12 @@ export const ScheduleSlot = t.Object({
     id: t.String(),
     name: t.String(),
   }),
-  activeSession: t.Optional(t.Object({
-    id: t.String(),
-    status: t.String(),
-  })),
+  activeSession: t.Optional(
+    t.Object({
+      id: t.String(),
+      status: t.String(),
+    }),
+  ),
   attendanceStatus: t.Optional(t.String()),
 });
 
@@ -66,13 +68,15 @@ export const HistoryResponse = t.Object({
 export const AttendanceStats = t.Object({
   streak: t.Number(),
   overallPercentage: t.Number(),
-  bySubject: t.Array(t.Object({
-    subjectId: t.String(),
-    subjectName: t.String(),
-    percentage: t.Number(),
-    attended: t.Number(),
-    total: t.Number(),
-  })),
+  bySubject: t.Array(
+    t.Object({
+      subjectId: t.String(),
+      subjectName: t.String(),
+      percentage: t.Number(),
+      attended: t.Number(),
+      total: t.Number(),
+    }),
+  ),
 });
 
 export const StudentProfileResponse = t.Object({

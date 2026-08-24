@@ -46,7 +46,11 @@ function TimetableImportPage() {
   } | null>(null);
 
   const [isImporting, setIsImporting] = useState(false);
-  const [finalResult, setFinalResult] = useState<{ created: number; skipped: number; errors: string[] } | null>(null);
+  const [finalResult, setFinalResult] = useState<{
+    created: number;
+    skipped: number;
+    errors: string[];
+  } | null>(null);
 
   const preview = usePreviewTimetableImport();
   const confirm = useConfirmTimetableImport();
@@ -91,8 +95,11 @@ function TimetableImportPage() {
     <div className="mx-auto max-w-4xl space-y-6 p-8">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Link to="/admin/timetable" className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}>
-            <IconArrowLeft className="h-4 w-4" />
+        <Link
+          to="/admin/timetable"
+          className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
+        >
+          <IconArrowLeft className="h-4 w-4" />
         </Link>
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Bulk Import Timetable</h1>
@@ -117,11 +124,7 @@ function TimetableImportPage() {
             >
               {i < stepIndex ? <IconCheck className="h-3.5 w-3.5" /> : i + 1}
             </div>
-            <span
-              className={
-                i === stepIndex ? "font-medium" : "text-muted-foreground"
-              }
-            >
+            <span className={i === stepIndex ? "font-medium" : "text-muted-foreground"}>
               {label}
             </span>
             {i < 2 && <IconChevronRight className="h-4 w-4 text-muted-foreground" />}
@@ -139,10 +142,7 @@ function TimetableImportPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
-            <BulkImportDropzone
-              onFileSelected={handleFileSelected}
-              isLoading={preview.isPending}
-            />
+            <BulkImportDropzone onFileSelected={handleFileSelected} isLoading={preview.isPending} />
 
             {preview.isPending && (
               <p className="text-center text-sm text-muted-foreground">Parsing CSV...</p>
@@ -211,15 +211,23 @@ function TimetableImportPage() {
                           <TableCell className="text-muted-foreground text-xs">{i + 1}</TableCell>
                           <TableCell className="text-xs">{row.programCode || "—"}</TableCell>
                           <TableCell className="text-xs">{row.semester || "—"}</TableCell>
-                          <TableCell className="text-xs font-semibold">{row.subjectCode || "—"}</TableCell>
+                          <TableCell className="text-xs font-semibold">
+                            {row.subjectCode || "—"}
+                          </TableCell>
                           <TableCell className="text-xs">{row.dayOfWeek || "—"}</TableCell>
-                          <TableCell className="text-xs whitespace-nowrap">{row.startTime} - {row.endTime}</TableCell>
+                          <TableCell className="text-xs whitespace-nowrap">
+                            {row.startTime} - {row.endTime}
+                          </TableCell>
                           <TableCell className="text-xs">{row.roomName || "—"}</TableCell>
                           <TableCell>
                             {hasErrors ? (
                               <div className="space-y-0.5">
                                 {row.errors.map((err: string, j: number) => (
-                                  <Badge key={j} variant="destructive" className="text-[10px] py-0 leading-tight">
+                                  <Badge
+                                    key={j}
+                                    variant="destructive"
+                                    className="text-[10px] py-0 leading-tight"
+                                  >
                                     {err}
                                   </Badge>
                                 ))}
@@ -248,9 +256,7 @@ function TimetableImportPage() {
                 className="gap-2"
               >
                 <IconUpload className="h-4 w-4" />
-                {isImporting
-                  ? "Importing..."
-                  : `Import ${previewData.validCount} schedules`}
+                {isImporting ? "Importing..." : `Import ${previewData.validCount} schedules`}
               </Button>
             </div>
           </CardContent>
@@ -266,7 +272,8 @@ function TimetableImportPage() {
             <div>
               <h2 className="text-lg font-semibold">Import Complete</h2>
               <p className="text-muted-foreground text-sm mt-1">
-                {finalResult.created} schedules created · {finalResult.skipped} skipped (already exist)
+                {finalResult.created} schedules created · {finalResult.skipped} skipped (already
+                exist)
               </p>
               {finalResult.errors?.length > 0 && (
                 <p className="text-destructive text-sm mt-1">
@@ -278,7 +285,9 @@ function TimetableImportPage() {
               <Button variant="outline" onClick={handleReset}>
                 Import More
               </Button>
-              <Link to="/admin/timetable" className={cn(buttonVariants())}>View Timetable</Link>
+              <Link to="/admin/timetable" className={cn(buttonVariants())}>
+                View Timetable
+              </Link>
             </div>
           </CardContent>
         </Card>

@@ -1,7 +1,7 @@
 import { createHmac } from "node:crypto";
 import { env } from "@secured_attendance/env/server";
 
-const MASTER_SECRET = env.QR_SIGNING_SECRET 
+const MASTER_SECRET = env.QR_SIGNING_SECRET
   ? Buffer.from(env.QR_SIGNING_SECRET, "base64")
   : Buffer.from(crypto.getRandomValues(new Uint8Array(32))); // Fallback for dev
 
@@ -18,8 +18,10 @@ export function deriveSessionKey(sessionId: string): Buffer {
   return hmac.digest();
 }
 
-
-export function generateQrToken(sessionId: string, sessionKey: Buffer): {
+export function generateQrToken(
+  sessionId: string,
+  sessionKey: Buffer,
+): {
   token: string;
   nonce: string;
   issuedAt: number;
@@ -27,7 +29,7 @@ export function generateQrToken(sessionId: string, sessionKey: Buffer): {
 } {
   const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString("base64url");
   const iat = Math.floor(Date.now() / 1000);
-  const exp = iat + 10; 
+  const exp = iat + 10;
 
   const payload = JSON.stringify({ sid: sessionId, nonce, iat, exp });
   const payloadB64 = Buffer.from(payload).toString("base64url");
@@ -46,7 +48,7 @@ export function generateQrToken(sessionId: string, sessionKey: Buffer): {
 
 export function verifyQrToken(
   token: string,
-  sessionKey: Buffer
+  sessionKey: Buffer,
 ): { valid: true; payload: QrPayload } | { valid: false; reason: string } {
   const parts = token.split(".");
   if (parts.length !== 2) return { valid: false, reason: "malformed" };

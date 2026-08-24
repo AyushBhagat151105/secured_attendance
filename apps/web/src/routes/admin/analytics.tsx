@@ -1,7 +1,13 @@
 ﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAdminAnalytics } from "@/hooks/api/use-reports";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { IconAlertTriangle, IconUsers, IconCalendarEvent, IconPercentage, IconMapPin } from "@tabler/icons-react";
+import {
+  IconAlertTriangle,
+  IconUsers,
+  IconCalendarEvent,
+  IconPercentage,
+  IconMapPin,
+} from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/admin/analytics")({
@@ -19,9 +25,7 @@ function AdminAnalyticsRoute() {
     <div className="space-y-8 p-4 sm:p-8 max-w-7xl mx-auto w-full">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Program Analytics</h1>
-        <p className="text-muted-foreground text-lg">
-          Overview of system-wide attendance health.
-        </p>
+        <p className="text-muted-foreground text-lg">Overview of system-wide attendance health.</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -85,11 +89,22 @@ function AdminAnalyticsRoute() {
                 <CardContent>
                   <div className="flex flex-col gap-4">
                     <div className="flex items-end justify-between">
-                      <span className="text-2xl font-bold text-red-700 dark:text-red-500">{alert.percentage}%</span>
-                      <span className="text-sm text-red-600/80">{alert.presentCount} / {alert.expectedCount} Present</span>
+                      <span className="text-2xl font-bold text-red-700 dark:text-red-500">
+                        {alert.percentage}%
+                      </span>
+                      <span className="text-sm text-red-600/80">
+                        {alert.presentCount} / {alert.expectedCount} Present
+                      </span>
                     </div>
-                    <Link to="/admin/map/$sessionId" params={{ sessionId: alert.sessionId }} className="w-full">
-                      <Button variant="outline" className="w-full border-red-200 text-red-700 hover:bg-red-100 hover:text-red-800 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/50">
+                    <Link
+                      to="/admin/map/$sessionId"
+                      params={{ sessionId: alert.sessionId }}
+                      className="w-full"
+                    >
+                      <Button
+                        variant="outline"
+                        className="w-full border-red-200 text-red-700 hover:bg-red-100 hover:text-red-800 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/50"
+                      >
                         <IconMapPin className="mr-2 h-4 w-4" />
                         View GPS Map
                       </Button>

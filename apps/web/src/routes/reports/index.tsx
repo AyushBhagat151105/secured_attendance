@@ -1,6 +1,10 @@
 ﻿import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
-import { useTeacherSessionsReport, useTeacherSubjectsReport, useDeleteSession } from "@/hooks/api/use-reports";
+import {
+  useTeacherSessionsReport,
+  useTeacherSubjectsReport,
+  useDeleteSession,
+} from "@/hooks/api/use-reports";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +18,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { IconDownload, IconArrowRight, IconBook2, IconClockHour4, IconPercentage, IconTrash } from "@tabler/icons-react";
+import {
+  IconDownload,
+  IconArrowRight,
+  IconBook2,
+  IconClockHour4,
+  IconPercentage,
+  IconTrash,
+} from "@tabler/icons-react";
 
 export const Route = createFileRoute("/reports/")({
   beforeLoad: async () => {
@@ -69,7 +80,10 @@ function ReportsDashboard() {
                     variant="outline"
                     className="w-full gap-2"
                     onClick={() => {
-                      window.open(`${import.meta.env.VITE_API_URL || "http://localhost:3000"}/api/teacher/reports/export/${sub.id}`, '_blank');
+                      window.open(
+                        `${import.meta.env.VITE_API_URL || "http://localhost:3000"}/api/teacher/reports/export/${sub.id}`,
+                        "_blank",
+                      );
                     }}
                   >
                     <IconDownload className="h-4 w-4" />
@@ -92,9 +106,10 @@ function ReportsDashboard() {
             <p className="text-muted-foreground">No closed sessions found.</p>
           ) : (
             sessions?.slice(0, 10).map((session: any) => {
-              const attendancePercent = session.expectedCount > 0
-                ? Math.round((session.presentCount / session.expectedCount) * 100) 
-                : 0;
+              const attendancePercent =
+                session.expectedCount > 0
+                  ? Math.round((session.presentCount / session.expectedCount) * 100)
+                  : 0;
 
               return (
                 <Card key={session.id}>
@@ -124,9 +139,9 @@ function ReportsDashboard() {
                         {import.meta.env.DEV && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button 
-                                size="icon" 
-                                variant="ghost" 
+                              <Button
+                                size="icon"
+                                variant="ghost"
                                 className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                                 disabled={deleteSession.isPending}
                               >
@@ -137,12 +152,13 @@ function ReportsDashboard() {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This will permanently delete this session and all associated attendance records. This action cannot be undone.
+                                  This will permanently delete this session and all associated
+                                  attendance records. This action cannot be undone.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction 
+                                <AlertDialogAction
                                   onClick={() => deleteSession.mutate(session.id)}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >

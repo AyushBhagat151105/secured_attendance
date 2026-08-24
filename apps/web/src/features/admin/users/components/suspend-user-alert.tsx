@@ -19,12 +19,7 @@ interface SuspendUserAlertProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function SuspendUserAlert({
-  userId,
-  userName,
-  open,
-  onOpenChange,
-}: SuspendUserAlertProps) {
+export function SuspendUserAlert({ userId, userName, open, onOpenChange }: SuspendUserAlertProps) {
   const suspendUser = useSuspendUser();
 
   function handleConfirm() {

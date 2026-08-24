@@ -24,11 +24,15 @@ export const adminCampusModule = new Elysia({ prefix: "/campus" })
     params: IdParam,
     detail: { tags: ["Admin - Campus"], summary: "Get building" },
   })
-  .patch("/buildings/:id", async ({ params: { id }, body }) => CampusService.updateBuilding(id, body), {
-    params: IdParam,
-    body: UpdateBuildingBody,
-    detail: { tags: ["Admin - Campus"], summary: "Update building" },
-  })
+  .patch(
+    "/buildings/:id",
+    async ({ params: { id }, body }) => CampusService.updateBuilding(id, body),
+    {
+      params: IdParam,
+      body: UpdateBuildingBody,
+      detail: { tags: ["Admin - Campus"], summary: "Update building" },
+    },
+  )
   .delete("/buildings/:id", async ({ params: { id } }) => CampusService.deleteBuilding(id), {
     params: IdParam,
     detail: { tags: ["Admin - Campus"], summary: "Delete building" },

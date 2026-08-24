@@ -9,7 +9,7 @@ import Animated, {
   withRepeat,
   withTiming,
   withSequence,
-  Easing
+  Easing,
 } from "react-native-reanimated";
 import { useScanAttendance } from "@/hooks/api/use-attendance";
 import { getDeviceFingerprint } from "@/lib/device";
@@ -47,10 +47,10 @@ export default function ScanScreen() {
       linePosition.value = withRepeat(
         withSequence(
           withTiming(250, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0, { duration: 2000, easing: Easing.inOut(Easing.ease) })
+          withTiming(0, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
         ),
         -1, // infinite
-        true // reverse
+        true, // reverse
       );
     }
   }, [scanStatus]);
@@ -88,7 +88,7 @@ export default function ScanScreen() {
       let payload;
       try {
         const rawPayload = JSON.parse(data);
-        
+
         // Map short keys to expected long keys if needed
         payload = {
           sessionId: rawPayload.sessionId || rawPayload.s,
@@ -130,7 +130,11 @@ export default function ScanScreen() {
       };
 
       try {
-        const result = await scanAttendance(payloadData) as { success: boolean; gpsWithinGeofence: boolean; attendanceId: string };
+        const result = (await scanAttendance(payloadData)) as {
+          success: boolean;
+          gpsWithinGeofence: boolean;
+          attendanceId: string;
+        };
 
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setScanStatus("success");
@@ -141,8 +145,12 @@ export default function ScanScreen() {
           setStatusMessage("Marked, but GPS was outside the classroom area.");
         }
       } catch (error: any) {
-        const message = error.message?.toLowerCase() || '';
-        if (message.includes('network') || message.includes('failed to fetch') || message.includes('timeout')) {
+        const message = error.message?.toLowerCase() || "";
+        if (
+          message.includes("network") ||
+          message.includes("failed to fetch") ||
+          message.includes("timeout")
+        ) {
           await savePendingAttendance(payloadData);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           setScanStatus("success");
@@ -151,7 +159,6 @@ export default function ScanScreen() {
           throw error;
         }
       }
-
     } catch (error: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setScanStatus("error");
@@ -182,7 +189,6 @@ export default function ScanScreen() {
         onBarcodeScanned={isScanning ? handleBarcodeScanned : undefined}
       >
         <View style={styles.overlayContainer}>
-
           <View style={styles.topTextContainer}>
             <Text style={styles.topTitle}>Scan to Attend</Text>
             <Text style={styles.topSubtitle}>
@@ -233,7 +239,6 @@ export default function ScanScreen() {
               <Text style={styles.statusSubtitle}>{statusMessage}</Text>
             </View>
           )}
-
         </View>
       </CameraView>
     </View>
@@ -247,8 +252,8 @@ const styles = StyleSheet.create({
   },
   permissionContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 24,
     backgroundColor: COLORS.background,
   },
@@ -257,20 +262,20 @@ const styles = StyleSheet.create({
     height: 80,
     backgroundColor: COLORS.secondary,
     borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 16,
   },
   permissionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.foreground,
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   permissionSubtitle: {
     color: COLORS.muted,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 32,
     paddingHorizontal: 16,
   },
@@ -278,47 +283,47 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     height: 48,
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
   },
   buttonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   overlayContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   topTextContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 64,
     left: 0,
     right: 0,
-    alignItems: 'center',
+    alignItems: "center",
     paddingHorizontal: 24,
   },
   topTitle: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 8,
   },
   topSubtitle: {
-    color: 'rgba(255,255,255,0.8)',
-    textAlign: 'center',
-    fontWeight: '500',
+    color: "rgba(255,255,255,0.8)",
+    textAlign: "center",
+    fontWeight: "500",
   },
   reticleContainer: {
     width: 256,
     height: 256,
-    position: 'relative',
+    position: "relative",
   },
   corner: {
-    position: 'absolute',
+    position: "absolute",
     width: 48,
     height: 48,
     borderColor: COLORS.primary,
@@ -352,12 +357,12 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 16,
   },
   scanningLineContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 16,
     right: 16,
-    height: '100%',
-    overflow: 'hidden',
+    height: "100%",
+    overflow: "hidden",
   },
   scanningLine: {
     height: 2,
@@ -370,60 +375,60 @@ const styles = StyleSheet.create({
   statusBoxDark: {
     width: 256,
     height: 256,
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    backgroundColor: "rgba(0,0,0,0.8)",
     borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: "rgba(255,255,255,0.1)",
   },
   statusTextProcessing: {
-    color: '#ffffff',
+    color: "#ffffff",
     marginTop: 16,
-    fontWeight: '500',
+    fontWeight: "500",
     fontSize: 18,
   },
   statusBoxSuccess: {
     width: 256,
     height: 256,
-    backgroundColor: 'rgba(16, 185, 129, 0.9)',
+    backgroundColor: "rgba(16, 185, 129, 0.9)",
     borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: "rgba(255,255,255,0.2)",
   },
   statusBoxError: {
     width: 256,
     height: 256,
-    backgroundColor: 'rgba(239, 68, 68, 0.9)',
+    backgroundColor: "rgba(239, 68, 68, 0.9)",
     borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: "rgba(255,255,255,0.2)",
   },
   statusIconWrapper: {
     width: 80,
     height: 80,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: "rgba(255,255,255,0.2)",
     borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 16,
   },
   statusTitle: {
-    color: '#ffffff',
-    fontWeight: 'bold',
+    color: "#ffffff",
+    fontWeight: "bold",
     fontSize: 24,
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   statusSubtitle: {
-    color: 'rgba(255,255,255,0.9)',
-    textAlign: 'center',
+    color: "rgba(255,255,255,0.9)",
+    textAlign: "center",
     fontSize: 14,
   },
 });

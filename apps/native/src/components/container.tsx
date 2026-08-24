@@ -15,7 +15,7 @@ export function Container({ children, style, ...props }: PropsWithChildren<Props
       style={[{ flex: 1, backgroundColor: bgColor }, style]}
       {...props}
     >
-      <KeyboardAwareScrollView 
+      <KeyboardAwareScrollView
         contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + 20 }}
         showsVerticalScrollIndicator={false}
       >

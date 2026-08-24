@@ -27,10 +27,12 @@ function SessionDetailRoute() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold">{data.sessionInfo.subject}</h1>
-            <p className="text-muted-foreground">{new Date(data.sessionInfo.date).toLocaleString()}</p>
+            <p className="text-muted-foreground">
+              {new Date(data.sessionInfo.date).toLocaleString()}
+            </p>
           </div>
         </div>
-        
+
         <Link to="/reports/map/$sessionId" params={{ sessionId }}>
           <Button variant="outline">
             <IconMap className="h-4 w-4 mr-2" />
@@ -52,10 +54,15 @@ function SessionDetailRoute() {
             </div>
             <div className="divide-y">
               {data.students.length === 0 ? (
-                <div className="p-4 text-center text-muted-foreground">No students found for this session.</div>
+                <div className="p-4 text-center text-muted-foreground">
+                  No students found for this session.
+                </div>
               ) : (
                 data.students.map((student: any) => (
-                  <div key={student.studentId} className="grid grid-cols-4 items-center p-3 text-sm">
+                  <div
+                    key={student.studentId}
+                    className="grid grid-cols-4 items-center p-3 text-sm"
+                  >
                     <div className="text-muted-foreground font-mono">{student.rollNumber}</div>
                     <div className="col-span-2 font-medium">{student.name}</div>
                     <div className="text-right flex justify-end">

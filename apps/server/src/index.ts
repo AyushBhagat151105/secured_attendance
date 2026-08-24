@@ -24,7 +24,7 @@ const app = new Elysia()
   )
   .all("/api/auth/*", async (context) => {
     const { request, status } = context;
-    
+
     if (request.url.includes("change-password")) {
       const session = await auth.api.getSession({ headers: request.headers });
       logger.warn("[index.ts] User on change-password:", session?.user || "NO USER");
@@ -45,7 +45,7 @@ const app = new Elysia()
           version: "1.0.0",
         },
       },
-    })
+    }),
   )
   .use(adminModule)
   .use(authModule)

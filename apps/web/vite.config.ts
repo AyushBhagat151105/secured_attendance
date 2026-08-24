@@ -10,7 +10,7 @@ export default defineConfig({
     dedupe: ["react", "react-dom"],
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "server": path.resolve(__dirname, "../server"),
+      server: path.resolve(__dirname, "../server"),
     },
   },
   server: {

@@ -43,9 +43,7 @@ export const UpdateUserBody = t.Object({
       t.Literal("super_admin"),
     ]),
   ),
-  status: t.Optional(
-    t.Union([t.Literal("active"), t.Literal("suspended"), t.Literal("pending")]),
-  ),
+  status: t.Optional(t.Union([t.Literal("active"), t.Literal("suspended"), t.Literal("pending")])),
 });
 
 export const UsersListQuery = t.Object({
@@ -62,12 +60,7 @@ export const UsersListQuery = t.Object({
   ),
   search: t.Optional(t.String()),
   status: t.Optional(
-    t.Union([
-      t.Literal("active"),
-      t.Literal("suspended"),
-      t.Literal("pending"),
-      t.Literal(""),
-    ]),
+    t.Union([t.Literal("active"), t.Literal("suspended"), t.Literal("pending"), t.Literal("")]),
   ),
 });
 

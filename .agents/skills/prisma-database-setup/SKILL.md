@@ -79,12 +79,12 @@ MongoDB should not follow the Prisma 7 SQL adapter workflow. Use the latest Pris
 Example (PostgreSQL):
 
 ```ts
-import 'dotenv/config'
-import { PrismaClient } from '../generated/client'
-import { PrismaPg } from '@prisma/adapter-pg'
+import "dotenv/config";
+import { PrismaClient } from "../generated/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
-const prisma = new PrismaClient({ adapter })
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
 ```
 
 ## Prisma Client Setup (Required)
@@ -116,11 +116,11 @@ Prisma Client must be installed and generated for any database.
 1. For SQL providers, instantiate Prisma Client with the database-specific driver adapter:
 
    ```typescript
-   import { PrismaClient } from '../generated/client'
-   import { PrismaPg } from '@prisma/adapter-pg'
+   import { PrismaClient } from "../generated/client";
+   import { PrismaPg } from "@prisma/adapter-pg";
 
-   const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
-   const prisma = new PrismaClient({ adapter })
+   const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+   const prisma = new PrismaClient({ adapter });
    ```
 
 1. Re-run `prisma generate` after every schema change.

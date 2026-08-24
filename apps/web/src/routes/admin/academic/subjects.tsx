@@ -1,4 +1,12 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  createSubjectSchema,
+  updateSubjectSchema,
+  type CreateSubjectSchema,
+} from "@secured_attendance/validators";
+
 import { useSubjects } from "@/hooks/api/use-admin-academic";
 import {
   Table,
@@ -12,12 +20,31 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { useState } from "react";
-import { useCreateSubject, useUpdateSubject, useDeleteSubject, usePrograms } from "@/hooks/api/use-admin-academic";
+import {
+  useCreateSubject,
+  useUpdateSubject,
+  useDeleteSubject,
+  usePrograms,
+} from "@/hooks/api/use-admin-academic";
 import { MoreHorizontal, Pencil, Trash } from "lucide-react";
 import {
   DropdownMenu,
@@ -49,16 +76,18 @@ function SubjectRowActions({ subject }: { subject: any }) {
   const updateSubject = useUpdateSubject();
   const deleteSubject = useDeleteSubject();
 
-  const onEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const body = {
-      name: formData.get("name") as string,
-      code: formData.get("code") as string,
-      shortName: formData.get("shortName") as string || undefined,
-      programId: formData.get("programId") as string,
-    };
-    await updateSubject.mutateAsync({ id: subject.id, body });
+  const form = useForm<CreateSubjectSchema>({
+    resolver: zodResolver(updateSubjectSchema),
+    defaultValues: {
+      name: subject.name,
+      code: subject.code,
+      shortName: subject.shortName || "",
+      programId: subject.programId,
+    },
+  });
+
+  const onSubmit = async (value: CreateSubjectSchema) => {
+    await updateSubject.mutateAsync({ id: subject.id, body: value });
     setShowEdit(false);
   };
 
@@ -79,10 +108,13 @@ function SubjectRowActions({ subject }: { subject: any }) {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setShowEdit(true)}>
+          <DropdownMenuItem onClick={() => { form.reset(); setShowEdit(true); }}>
             <Pencil className="mr-2 h-4 w-4" /> Edit
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setShowDelete(true)} className="text-destructive focus:text-destructive">
+          <DropdownMenuItem
+            onClick={() => setShowDelete(true)}
+            className="text-destructive focus:text-destructive"
+          >
             <Trash className="mr-2 h-4 w-4" /> Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -90,41 +122,67 @@ function SubjectRowActions({ subject }: { subject: any }) {
 
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <DialogContent>
-          <form onSubmit={onEditSubmit}>
-            <DialogHeader>
-              <DialogTitle>Edit Subject</DialogTitle>
-              <DialogDescription>Update the details of {subject.name}.</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor={`name-${subject.id}`}>Subject Name</Label>
-                <Input id={`name-${subject.id}`} name="name" required defaultValue={subject.name} />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor={`code-${subject.id}`}>Code</Label>
-                <Input id={`code-${subject.id}`} name="code" required defaultValue={subject.code} />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor={`shortName-${subject.id}`}>Short Name</Label>
-                <Input id={`shortName-${subject.id}`} name="shortName" defaultValue={subject.shortName || ""} />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor={`programId-${subject.id}`}>Program</Label>
-                <Select name="programId" required defaultValue={subject.programId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select program" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {programs?.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.code}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+          <DialogHeader>
+            <DialogTitle>Edit Subject</DialogTitle>
+            <DialogDescription>Update the details of {subject.name}.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <Controller
+              control={form.control}
+              name="name"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Subject Name</FieldLabel>
+                  <Input {...field} id={field.name} aria-invalid={fieldState.invalid} />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+            <Controller
+              control={form.control}
+              name="code"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Code</FieldLabel>
+                  <Input {...field} id={field.name} aria-invalid={fieldState.invalid} />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+            <Controller
+              control={form.control}
+              name="shortName"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Short Name</FieldLabel>
+                  <Input {...field} id={field.name} aria-invalid={fieldState.invalid} />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+            <Controller
+              control={form.control}
+              name="programId"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Program</FieldLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <SelectTrigger id={field.name} aria-invalid={fieldState.invalid}>
+                      <SelectValue placeholder="Select program" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {programs?.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.code}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
             <DialogFooter>
-              <Button type="submit" disabled={updateSubject.isPending}>
-                {updateSubject.isPending ? "Saving..." : "Save Changes"}
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </form>
@@ -136,17 +194,14 @@ function SubjectRowActions({ subject }: { subject: any }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the <strong>{subject.name}</strong> subject.
-              This action cannot be undone.
+              This will permanently delete the <strong>{subject.name}</strong> subject. This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                onDeleteConfirm();
-              }}
+              onClick={(e) => { e.preventDefault(); onDeleteConfirm(); }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleteSubject.isPending}
             >
@@ -165,16 +220,14 @@ function SubjectsRoute() {
   const createSubject = useCreateSubject();
   const [isOpen, setIsOpen] = useState(false);
 
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const body = {
-      name: formData.get("name") as string,
-      code: formData.get("code") as string,
-      shortName: formData.get("shortName") as string || undefined,
-      programId: formData.get("programId") as string,
-    };
-    await createSubject.mutateAsync(body);
+  const form = useForm<CreateSubjectSchema>({
+    resolver: zodResolver(createSubjectSchema),
+    defaultValues: { name: "", code: "", shortName: "", programId: "" },
+  });
+
+  const onSubmit = async (value: CreateSubjectSchema) => {
+    await createSubject.mutateAsync(value);
+    form.reset();
     setIsOpen(false);
   };
 
@@ -185,46 +238,70 @@ function SubjectsRoute() {
         <div className="flex items-center space-x-2">
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" /> Add Subject
-              </Button>
+              <Button><Plus className="mr-2 h-4 w-4" /> Add Subject</Button>
             </DialogTrigger>
             <DialogContent>
-              <form onSubmit={onSubmit}>
-                <DialogHeader>
-                  <DialogTitle>Add New Subject</DialogTitle>
-                  <DialogDescription>Create a subject and map it to a program.</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="name">Subject Name</Label>
-                    <Input id="name" name="name" required placeholder="Data Structures" />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="code">Code</Label>
-                    <Input id="code" name="code" required placeholder="CS201" />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="shortName">Short Name (Optional)</Label>
-                    <Input id="shortName" name="shortName" placeholder="DS" />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="programId">Program</Label>
-                    <Select name="programId" required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select program" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {programs?.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>{p.code}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+              <DialogHeader>
+                <DialogTitle>Add New Subject</DialogTitle>
+                <DialogDescription>Create a subject and map it to a program.</DialogDescription>
+              </DialogHeader>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <Controller
+                  control={form.control}
+                  name="name"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>Subject Name</FieldLabel>
+                      <Input {...field} id={field.name} placeholder="Data Structures" aria-invalid={fieldState.invalid} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="code"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>Code</FieldLabel>
+                      <Input {...field} id={field.name} placeholder="CS201" aria-invalid={fieldState.invalid} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="shortName"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>Short Name (Optional)</FieldLabel>
+                      <Input {...field} id={field.name} placeholder="DS" aria-invalid={fieldState.invalid} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="programId"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>Program</FieldLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger id={field.name} aria-invalid={fieldState.invalid}>
+                          <SelectValue placeholder="Select program" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {programs?.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>{p.code}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
                 <DialogFooter>
-                  <Button type="submit" disabled={createSubject.isPending}>
-                    {createSubject.isPending ? "Saving..." : "Save Subject"}
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? "Saving..." : "Save Subject"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -239,9 +316,7 @@ function SubjectsRoute() {
         </CardHeader>
         <CardContent>
           {isLoadingSubjects ? (
-            <div className="flex justify-center p-8">
-              <Spinner />
-            </div>
+            <div className="flex justify-center p-8"><Spinner /></div>
           ) : (
             <Table>
               <TableHeader>
@@ -260,16 +335,12 @@ function SubjectsRoute() {
                     <TableCell>{subject.name}</TableCell>
                     <TableCell>{subject.shortName || "-"}</TableCell>
                     <TableCell>{subject.program?.code || "-"}</TableCell>
-                    <TableCell>
-                      <SubjectRowActions subject={subject} />
-                    </TableCell>
+                    <TableCell><SubjectRowActions subject={subject} /></TableCell>
                   </TableRow>
                 ))}
                 {(!subjects || subjects.length === 0) && (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center">
-                      No subjects found.
-                    </TableCell>
+                    <TableCell colSpan={5} className="h-24 text-center">No subjects found.</TableCell>
                   </TableRow>
                 )}
               </TableBody>

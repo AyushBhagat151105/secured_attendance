@@ -6,9 +6,8 @@ export const queueRedis = new Redis({
   host: env.REDIS_HOST,
   port: env.REDIS_PORT,
   password: env.REDIS_PASSWORD,
-  maxRetriesPerRequest: null, 
+  maxRetriesPerRequest: null,
 });
-
 
 export const connection = queueRedis;
 
@@ -54,7 +53,7 @@ export const auditWorker = new Worker(
       throw e;
     }
   },
-  { connection: queueRedis }
+  { connection: queueRedis },
 );
 
 auditWorker.on("completed", (job: Job) => {

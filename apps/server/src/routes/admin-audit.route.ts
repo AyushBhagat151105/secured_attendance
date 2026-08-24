@@ -8,7 +8,7 @@ export const adminAuditModule = new Elysia({ prefix: "/audit-logs" })
     "/",
     async ({ query }) => {
       const { limit = 50, offset = 0, eventType, actor } = query;
-      
+
       const where: any = {};
       if (eventType) where.eventType = eventType;
       if (actor) where.actor = actor;
@@ -22,7 +22,7 @@ export const adminAuditModule = new Elysia({ prefix: "/audit-logs" })
         }),
         prisma.auditLog.count({ where }),
       ]);
-      
+
       return { logs, total };
     },
     {
@@ -32,5 +32,5 @@ export const adminAuditModule = new Elysia({ prefix: "/audit-logs" })
         eventType: t.Optional(t.String()),
         actor: t.Optional(t.String()),
       }),
-    }
+    },
   );

@@ -18,7 +18,7 @@ function RouteComponent() {
       <div className="hidden lg:flex w-1/2 bg-zinc-950 relative flex-col justify-between border-r border-border p-12 overflow-hidden">
         {/* Subtle decorative background gradient */}
         <div className="absolute inset-0 bg-linear-to-tr from-indigo-900/20 to-emerald-900/20" />
-        
+
         <div className="relative z-10 flex items-center gap-3">
           <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
             <IconShieldCheck className="text-primary-foreground h-6 w-6" />
@@ -31,8 +31,8 @@ function RouteComponent() {
             Secured Attendance System
           </h1>
           <p className="text-lg text-zinc-400 max-w-md">
-            A high-assurance, geofenced, and cryptographically secured attendance 
-            platform for students and faculty.
+            A high-assurance, geofenced, and cryptographically secured attendance platform for
+            students and faculty.
           </p>
         </div>
 

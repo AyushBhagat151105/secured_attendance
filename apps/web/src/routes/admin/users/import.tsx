@@ -1,9 +1,4 @@
-import {
-  IconArrowLeft,
-  IconCheck,
-  IconChevronRight,
-  IconUpload,
-} from "@tabler/icons-react";
+import { IconArrowLeft, IconCheck, IconChevronRight, IconUpload } from "@tabler/icons-react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
@@ -50,7 +45,11 @@ function ImportPage() {
 
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
-  const [finalResult, setFinalResult] = useState<{ created: number; skipped: number; errors: string[] } | null>(null);
+  const [finalResult, setFinalResult] = useState<{
+    created: number;
+    skipped: number;
+    errors: string[];
+  } | null>(null);
 
   const previewMutation = useBulkImportPreview();
   const confirmMutation = useBulkImportConfirm();
@@ -80,14 +79,17 @@ function ImportPage() {
     try {
       for (let i = 0; i < validRows.length; i += CHUNK_SIZE) {
         const chunk = validRows.slice(i, i + CHUNK_SIZE);
-        const result = (await confirmMutation.mutateAsync({ type: previewData.type, rows: chunk })) as any;
-        
+        const result = (await confirmMutation.mutateAsync({
+          type: previewData.type,
+          rows: chunk,
+        })) as any;
+
         totalCreated += result?.created ?? 0;
         totalSkipped += result?.skipped ?? 0;
         if (result?.errors) {
           totalErrors.push(...result.errors);
         }
-        
+
         setImportProgress(Math.min(100, Math.round(((i + chunk.length) / validRows.length) * 100)));
       }
     } catch (e) {
@@ -117,7 +119,7 @@ function ImportPage() {
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link to="/admin/users" className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}>
-            <IconArrowLeft className="h-4 w-4" />
+          <IconArrowLeft className="h-4 w-4" />
         </Link>
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Bulk Import</h1>
@@ -142,11 +144,7 @@ function ImportPage() {
             >
               {i < stepIndex ? <IconCheck className="h-3.5 w-3.5" /> : i + 1}
             </div>
-            <span
-              className={
-                i === stepIndex ? "font-medium" : "text-muted-foreground"
-              }
-            >
+            <span className={i === stepIndex ? "font-medium" : "text-muted-foreground"}>
               {label}
             </span>
             {i < 2 && <IconChevronRight className="h-4 w-4 text-muted-foreground" />}
@@ -166,10 +164,7 @@ function ImportPage() {
           <CardContent className="space-y-5">
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Import Type</label>
-              <Select
-                value={importType}
-                onValueChange={(v) => setImportType(v as ImportType)}
-              >
+              <Select value={importType} onValueChange={(v) => setImportType(v as ImportType)}>
                 <SelectTrigger className="w-48">
                   <SelectValue />
                 </SelectTrigger>
@@ -225,7 +220,9 @@ function ImportPage() {
                 {isImporting && (
                   <div className="space-y-1.5">
                     <Progress value={importProgress} className="h-2" />
-                    <p className="text-xs text-center text-muted-foreground">{importProgress}% completed</p>
+                    <p className="text-xs text-center text-muted-foreground">
+                      {importProgress}% completed
+                    </p>
                   </div>
                 )}
               </div>
@@ -265,7 +262,9 @@ function ImportPage() {
               <Button variant="outline" onClick={handleReset}>
                 Import More
               </Button>
-              <Link to="/admin/users" className={cn(buttonVariants())}>View Users</Link>
+              <Link to="/admin/users" className={cn(buttonVariants())}>
+                View Users
+              </Link>
             </div>
           </CardContent>
         </Card>

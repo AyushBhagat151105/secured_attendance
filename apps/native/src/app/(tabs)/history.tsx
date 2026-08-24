@@ -23,23 +23,26 @@ const COLORS = {
 
 export default function HistoryScreen() {
   const [viewMode, setViewMode] = useState<"recent" | "subjects">("recent");
-  
-  const { 
-    data: historyData, 
+
+  const {
+    data: historyData,
     isLoading: historyLoading,
     fetchNextPage,
     hasNextPage,
-    isFetchingNextPage
+    isFetchingNextPage,
   } = useAttendanceHistory();
-  
+
   const { data: stats, isLoading: statsLoading } = useAttendanceStats();
 
-  const historyItems = historyData?.pages.flatMap(page => page.items) || [];
+  const historyItems = historyData?.pages.flatMap((page) => page.items) || [];
 
   const renderHistoryItem = ({ item }: { item: any }) => {
     const isPresent = item.status === "PRESENT";
-    const date = new Date(item.date).toLocaleDateString('en-US', { 
-      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+    const date = new Date(item.date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
 
     return (
@@ -81,11 +84,11 @@ export default function HistoryScreen() {
           </Text>
           <Text style={[styles.percentageText, colorStyle]}>{percentage}%</Text>
         </View>
-        
+
         <View style={styles.progressBarBg}>
           <View style={[styles.progressBarFill, bgStyle, { width: `${percentage}%` }]} />
         </View>
-        
+
         <View style={styles.statFooter}>
           <Text style={styles.mutedText}>{item.attended} Attended</Text>
           <Text style={styles.mutedText}>{item.total} Total Sessions</Text>
@@ -98,10 +101,10 @@ export default function HistoryScreen() {
     <Container style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.pageTitle}>Attendance</Text>
-        
+
         {/* Segmented Control */}
         <View style={styles.segmentedControl}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.segmentButton, viewMode === "recent" && styles.segmentButtonActive]}
             onPress={() => setViewMode("recent")}
           >
@@ -109,7 +112,7 @@ export default function HistoryScreen() {
               Recent
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.segmentButton, viewMode === "subjects" && styles.segmentButtonActive]}
             onPress={() => setViewMode("subjects")}
           >
@@ -137,37 +140,51 @@ export default function HistoryScreen() {
                 if (hasNextPage) fetchNextPage();
               }}
               onEndReachedThreshold={0.5}
-              ListFooterComponent={() => 
-                isFetchingNextPage ? <ActivityIndicator size="small" color={COLORS.primary} style={{ marginVertical: 16, alignSelf: 'center' }} /> : null
+              ListFooterComponent={() =>
+                isFetchingNextPage ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={COLORS.primary}
+                    style={{ marginVertical: 16, alignSelf: "center" }}
+                  />
+                ) : null
               }
             />
           ) : (
             <View style={styles.centerAll}>
-              <Ionicons name="document-text-outline" size={48} color={COLORS.muted} style={{ marginBottom: 12 }} />
+              <Ionicons
+                name="document-text-outline"
+                size={48}
+                color={COLORS.muted}
+                style={{ marginBottom: 12 }}
+              />
               <Text style={styles.emptyTitle}>No Records Yet</Text>
               <Text style={styles.emptySub}>Your attendance history will appear here.</Text>
             </View>
           )
+        ) : statsLoading ? (
+          <View style={styles.centerAll}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+          </View>
+        ) : stats?.bySubject && stats.bySubject.length > 0 ? (
+          <FlatList
+            data={stats.bySubject}
+            renderItem={renderSubjectStat}
+            keyExtractor={(item) => item.subjectId}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 20 }}
+          />
         ) : (
-          statsLoading ? (
-            <View style={styles.centerAll}>
-              <ActivityIndicator size="large" color={COLORS.primary} />
-            </View>
-          ) : stats?.bySubject && stats.bySubject.length > 0 ? (
-            <FlatList
-              data={stats.bySubject}
-              renderItem={renderSubjectStat}
-              keyExtractor={(item) => item.subjectId}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 20 }}
+          <View style={styles.centerAll}>
+            <Ionicons
+              name="pie-chart-outline"
+              size={48}
+              color={COLORS.muted}
+              style={{ marginBottom: 12 }}
             />
-          ) : (
-            <View style={styles.centerAll}>
-              <Ionicons name="pie-chart-outline" size={48} color={COLORS.muted} style={{ marginBottom: 12 }} />
-              <Text style={styles.emptyTitle}>No Stats Available</Text>
-              <Text style={styles.emptySub}>Attend classes to see your statistics.</Text>
-            </View>
-          )
+            <Text style={styles.emptyTitle}>No Stats Available</Text>
+            <Text style={styles.emptySub}>Attend classes to see your statistics.</Text>
+          </View>
         )}
       </View>
     </Container>
@@ -186,12 +203,12 @@ const styles = StyleSheet.create({
   },
   pageTitle: {
     fontSize: 30,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.foreground,
     marginBottom: 24,
   },
   segmentedControl: {
-    flexDirection: 'row',
+    flexDirection: "row",
     backgroundColor: COLORS.secondary,
     padding: 4,
     borderRadius: 8,
@@ -200,19 +217,19 @@ const styles = StyleSheet.create({
   segmentButton: {
     flex: 1,
     paddingVertical: 8,
-    alignItems: 'center',
+    alignItems: "center",
     borderRadius: 6,
   },
   segmentButtonActive: {
     backgroundColor: COLORS.card,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 1,
     elevation: 2,
   },
   segmentText: {
-    fontWeight: '500',
+    fontWeight: "500",
     color: COLORS.muted,
   },
   segmentTextActive: {
@@ -228,12 +245,12 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     borderWidth: 1,
     borderColor: COLORS.border,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -244,13 +261,13 @@ const styles = StyleSheet.create({
   },
   subjectTitle: {
     color: COLORS.foreground,
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 16,
     marginBottom: 4,
   },
   rowInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   mutedText: {
     color: COLORS.muted,
@@ -269,7 +286,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   textSuccess: {
     color: COLORS.success,
@@ -290,43 +307,43 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.destructive,
   },
   statHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   percentageText: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginLeft: 8,
   },
   progressBarBg: {
     height: 8,
-    width: '100%',
+    width: "100%",
     backgroundColor: COLORS.secondary,
     borderRadius: 9999,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: 8,
   },
   progressBarFill: {
-    height: '100%',
+    height: "100%",
   },
   statFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   centerAll: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyTitle: {
     color: COLORS.foreground,
-    fontWeight: '500',
+    fontWeight: "500",
     fontSize: 18,
     marginBottom: 4,
   },
   emptySub: {
     color: COLORS.muted,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

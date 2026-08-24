@@ -23,7 +23,7 @@ function StackLayout() {
   const segments = useSegments();
   const router = useRouter();
   const [timeoutReached, setTimeoutReached] = useState(false);
-  
+
   const { data: session, isPending: sessionPending } = authClient.useSession();
   const { data: profile, isLoading: profilePending } = useStudentProfile();
 
@@ -54,9 +54,18 @@ function StackLayout() {
     } else if (session) {
       if (user.requiresPasswordChange && path !== "(auth)/reset-password") {
         router.replace("/(auth)/reset-password" as any);
-      } else if (!user.requiresPasswordChange && user.role === "student" && profile && !profile.deviceBound && path !== "(auth)/device-binding") {
+      } else if (
+        !user.requiresPasswordChange &&
+        user.role === "student" &&
+        profile &&
+        !profile.deviceBound &&
+        path !== "(auth)/device-binding"
+      ) {
         router.replace("/(auth)/device-binding" as any);
-      } else if (!user.requiresPasswordChange && (user.role !== "student" || (profile && profile.deviceBound))) {
+      } else if (
+        !user.requiresPasswordChange &&
+        (user.role !== "student" || (profile && profile.deviceBound))
+      ) {
         if (inAuthGroup) {
           router.replace("/(tabs)" as any);
         }
@@ -68,7 +77,10 @@ function StackLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="(auth)" />
-      <Stack.Screen name="modal" options={{ title: "Modal", presentation: "modal", headerShown: true }} />
+      <Stack.Screen
+        name="modal"
+        options={{ title: "Modal", presentation: "modal", headerShown: true }}
+      />
     </Stack>
   );
 }

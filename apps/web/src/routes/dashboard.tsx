@@ -1,9 +1,30 @@
 import { createFileRoute, redirect, useNavigate, Link } from "@tanstack/react-router";
-import { IconCalendarEvent, IconUsersGroup, IconQrcode, IconClockPlay, IconArrowRight, IconChalkboard } from "@tabler/icons-react";
+import {
+  IconCalendarEvent,
+  IconUsersGroup,
+  IconQrcode,
+  IconClockPlay,
+  IconArrowRight,
+  IconChalkboard,
+} from "@tabler/icons-react";
 import { authClient } from "@/lib/auth-client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import { useState } from "react";
 import { useStartSession, useTodaySchedule } from "@/hooks/api/use-teacher";
@@ -40,9 +61,7 @@ function RouteComponent() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Teacher Dashboard</h1>
-          <p className="text-muted-foreground text-lg">
-            Welcome back, {session?.user.name}
-          </p>
+          <p className="text-muted-foreground text-lg">Welcome back, {session?.user.name}</p>
         </div>
         {hasActiveSession ? (
           <Button
@@ -79,7 +98,9 @@ function RouteComponent() {
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <IconCalendarEvent className="h-12 w-12 text-muted-foreground/30 mb-4" />
                 <h3 className="font-medium text-foreground text-lg">No classes scheduled</h3>
-                <p className="text-sm text-muted-foreground mt-1">You don't have any sessions assigned for today.</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  You don't have any sessions assigned for today.
+                </p>
               </div>
             ) : (
               <div className="divide-y divide-border">
@@ -87,7 +108,10 @@ function RouteComponent() {
                   const isActive = dashboardData?.activeSession?.subjectId === entry.subject.id;
 
                   return (
-                    <div key={entry.id} className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-muted/30 transition-colors">
+                    <div
+                      key={entry.id}
+                      className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-muted/30 transition-colors"
+                    >
                       <div className="flex items-start gap-4">
                         <div className="flex flex-col items-center justify-center min-w-20 px-3 py-2 bg-muted rounded-md border border-border">
                           <span className="text-sm font-medium">{entry.startTime}</span>
@@ -103,28 +127,40 @@ function RouteComponent() {
                           </div>
                           <p className="text-muted-foreground text-sm flex items-center gap-1.5 mt-1">
                             <IconChalkboard className="h-4 w-4" />
-                            Room {entry.room.name} Div: {entry.divisions.map((d: any) => d.division.name).join(", ")}
+                            Room {entry.room.name} Div:{" "}
+                            {entry.divisions.map((d: any) => d.division.name).join(", ")}
                           </p>
                         </div>
                       </div>
 
                       {entry.completedSessionId ? (
-                        <Link to="/reports/session/$sessionId" params={{ sessionId: entry.completedSessionId }}>
-                          <Button variant="secondary" className="w-full sm:w-auto shrink-0 border-green-500/20 bg-green-500/10 text-green-600 hover:bg-green-500/20">
+                        <Link
+                          to="/reports/session/$sessionId"
+                          params={{ sessionId: entry.completedSessionId }}
+                        >
+                          <Button
+                            variant="secondary"
+                            className="w-full sm:w-auto shrink-0 border-green-500/20 bg-green-500/10 text-green-600 hover:bg-green-500/20"
+                          >
                             Completed View Report
                           </Button>
                         </Link>
                       ) : (
                         <Button
-                          disabled={startSessionMutation.isPending || (hasActiveSession && !isActive)}
+                          disabled={
+                            startSessionMutation.isPending || (hasActiveSession && !isActive)
+                          }
                           onClick={() => {
                             startSessionMutation.mutate(entry.id, {
-                              onSuccess: (data: any) => navigate({ to: `/session/${data.id}` as any }),
+                              onSuccess: (data: any) =>
+                                navigate({ to: `/session/${data.id}` as any }),
                               onError: (err: any) => {
                                 if (err.message.includes("GEOFENCE_NOT_CONFIGURED")) {
-                                  setGeofenceError(err.message.replace("GEOFENCE_NOT_CONFIGURED: ", ""));
+                                  setGeofenceError(
+                                    err.message.replace("GEOFENCE_NOT_CONFIGURED: ", ""),
+                                  );
                                 }
-                              }
+                              },
                             });
                           }}
                           variant={isActive ? "secondary" : "default"}
@@ -168,7 +204,9 @@ function RouteComponent() {
             <div className="flex flex-col items-center justify-center py-8 text-center border border-dashed border-border rounded-md bg-muted/30">
               <IconUsersGroup className="h-10 w-10 text-muted-foreground/30 mb-3" />
               <h3 className="font-medium text-foreground">No recent data</h3>
-              <p className="text-sm text-muted-foreground mt-1">Start a session to collect attendance data.</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Start a session to collect attendance data.
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -178,9 +216,7 @@ function RouteComponent() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Geofence Not Configured</DialogTitle>
-            <DialogDescription className="pt-2 text-base">
-              {geofenceError}
-            </DialogDescription>
+            <DialogDescription className="pt-2 text-base">{geofenceError}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button onClick={() => setGeofenceError(null)}>Understood</Button>

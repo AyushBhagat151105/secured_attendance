@@ -29,7 +29,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     // Attempt to sync pending offline attendance scans on load
-    syncPendingAttendance().then(syncedCount => {
+    syncPendingAttendance().then((syncedCount) => {
       if (syncedCount > 0) {
         console.log(`Synced ${syncedCount} pending attendance records`);
       }
@@ -39,7 +39,11 @@ export default function HomeScreen() {
   const user = session?.user;
   const firstName = user?.name?.split(" ")[0] || "Student";
 
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  const today = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
 
   const renderScheduleItem = ({ item }: { item: any }) => (
     <View style={styles.card}>
@@ -47,7 +51,9 @@ export default function HomeScreen() {
         <Text style={styles.subjectName}>{item.subject.name}</Text>
         <View style={styles.rowInfo}>
           <Ionicons name="time-outline" size={14} color={COLORS.muted} />
-          <Text style={styles.infoText}>{item.startTime} - {item.endTime}</Text>
+          <Text style={styles.infoText}>
+            {item.startTime} - {item.endTime}
+          </Text>
         </View>
         <View style={styles.rowDetails}>
           <View style={styles.rowInfo}>
@@ -62,21 +68,56 @@ export default function HomeScreen() {
       </View>
 
       {item.attendanceStatus === "PRESENT" ? (
-        <View style={[styles.scanButton, { backgroundColor: COLORS.success + '20', paddingHorizontal: 12, paddingVertical: 6, flexDirection: 'row', alignItems: 'center' }]}>
-          <Ionicons name="checkmark-circle" size={16} color={COLORS.success} style={{ marginRight: 4 }} />
-          <Text style={{ color: COLORS.success, fontWeight: '600', fontSize: 12 }}>Present</Text>
+        <View
+          style={[
+            styles.scanButton,
+            {
+              backgroundColor: COLORS.success + "20",
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              flexDirection: "row",
+              alignItems: "center",
+            },
+          ]}
+        >
+          <Ionicons
+            name="checkmark-circle"
+            size={16}
+            color={COLORS.success}
+            style={{ marginRight: 4 }}
+          />
+          <Text style={{ color: COLORS.success, fontWeight: "600", fontSize: 12 }}>Present</Text>
         </View>
       ) : item.attendanceStatus === "ABSENT" ? (
-        <View style={[styles.scanButton, { backgroundColor: COLORS.destructive + '20', paddingHorizontal: 12, paddingVertical: 6, flexDirection: 'row', alignItems: 'center' }]}>
-          <Ionicons name="close-circle" size={16} color={COLORS.destructive} style={{ marginRight: 4 }} />
-          <Text style={{ color: COLORS.destructive, fontWeight: '600', fontSize: 12 }}>Missed</Text>
+        <View
+          style={[
+            styles.scanButton,
+            {
+              backgroundColor: COLORS.destructive + "20",
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              flexDirection: "row",
+              alignItems: "center",
+            },
+          ]}
+        >
+          <Ionicons
+            name="close-circle"
+            size={16}
+            color={COLORS.destructive}
+            style={{ marginRight: 4 }}
+          />
+          <Text style={{ color: COLORS.destructive, fontWeight: "600", fontSize: 12 }}>Missed</Text>
         </View>
       ) : item.activeSession ? (
         <TouchableOpacity
           onPress={() => router.push("/(tabs)/scan")}
-          style={[styles.scanButton, { backgroundColor: COLORS.primary, paddingHorizontal: 16, paddingVertical: 8 }]}
+          style={[
+            styles.scanButton,
+            { backgroundColor: COLORS.primary, paddingHorizontal: 16, paddingVertical: 8 },
+          ]}
         >
-          <Text style={{ color: 'white', fontWeight: '600' }}>Scan</Text>
+          <Text style={{ color: "white", fontWeight: "600" }}>Scan</Text>
         </TouchableOpacity>
       ) : null}
     </View>
@@ -104,14 +145,14 @@ export default function HomeScreen() {
         ) : (
           <View style={styles.statsRow}>
             <View style={styles.statBox}>
-              <View style={[styles.iconCircle, { backgroundColor: 'rgba(249, 115, 22, 0.2)' }]}>
+              <View style={[styles.iconCircle, { backgroundColor: "rgba(249, 115, 22, 0.2)" }]}>
                 <Text style={{ fontSize: 20 }}>🔥</Text>
               </View>
               <Text style={styles.statValue}>{stats?.streak || 0}</Text>
               <Text style={styles.statLabel}>Day Streak</Text>
             </View>
             <View style={styles.statBox}>
-              <View style={[styles.iconCircle, { backgroundColor: 'rgba(16, 185, 129, 0.2)' }]}>
+              <View style={[styles.iconCircle, { backgroundColor: "rgba(16, 185, 129, 0.2)" }]}>
                 <Ionicons name="pie-chart" size={20} color={COLORS.success} />
               </View>
               <Text style={styles.statValue}>
@@ -144,9 +185,16 @@ export default function HomeScreen() {
             />
           ) : (
             <View style={styles.emptyState}>
-              <Ionicons name="calendar-clear-outline" size={48} color={COLORS.muted} style={{ marginBottom: 12 }} />
+              <Ionicons
+                name="calendar-clear-outline"
+                size={48}
+                color={COLORS.muted}
+                style={{ marginBottom: 12 }}
+              />
               <Text style={styles.emptyStateTitle}>No Classes Today</Text>
-              <Text style={styles.emptyStateSub}>Take a break or check your upcoming schedule.</Text>
+              <Text style={styles.emptyStateSub}>
+                Take a break or check your upcoming schedule.
+              </Text>
             </View>
           )}
         </View>
@@ -164,7 +212,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 24,
     paddingBottom: 16,
-    backgroundColor: 'rgba(79, 70, 229, 0.05)',
+    backgroundColor: "rgba(79, 70, 229, 0.05)",
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     borderBottomLeftRadius: 24,
@@ -172,43 +220,43 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 24,
   },
   dateText: {
     color: COLORS.muted,
-    fontWeight: '500',
+    fontWeight: "500",
     marginBottom: 4,
   },
   greetingText: {
     fontSize: 30,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.foreground,
   },
   avatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(79, 70, 229, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "rgba(79, 70, 229, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
-    borderColor: 'rgba(79, 70, 229, 0.3)',
+    borderColor: "rgba(79, 70, 229, 0.3)",
   },
   avatarText: {
     color: COLORS.primary,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 18,
   },
   statsLoading: {
     height: 96,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   statsRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 16,
   },
   statBox: {
@@ -216,10 +264,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.card,
     padding: 16,
     borderRadius: 16,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
     borderColor: COLORS.border,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -230,20 +278,20 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 8,
   },
   statValue: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.foreground,
   },
   statLabel: {
     fontSize: 10,
     color: COLORS.muted,
-    fontWeight: '600',
-    textTransform: 'uppercase',
+    fontWeight: "600",
+    textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   scheduleSection: {
@@ -252,14 +300,14 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.foreground,
   },
   listContainer: {
@@ -271,12 +319,12 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     borderWidth: 1,
     borderColor: COLORS.border,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -288,18 +336,18 @@ const styles = StyleSheet.create({
   },
   subjectName: {
     color: COLORS.foreground,
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 16,
     marginBottom: 4,
   },
   rowInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 4,
   },
   rowDetails: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   infoText: {
     color: COLORS.muted,
@@ -311,13 +359,13 @@ const styles = StyleSheet.create({
   },
   centerAll: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyState: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: COLORS.card,
     borderRadius: 12,
     borderWidth: 1,
@@ -326,12 +374,12 @@ const styles = StyleSheet.create({
   },
   emptyStateTitle: {
     color: COLORS.foreground,
-    fontWeight: '500',
+    fontWeight: "500",
     fontSize: 18,
     marginBottom: 4,
   },
   emptyStateSub: {
     color: COLORS.muted,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

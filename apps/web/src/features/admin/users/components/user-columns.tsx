@@ -43,7 +43,7 @@ export interface UserRow {
     deviceBound: boolean;
     deviceModel?: string | null;
     programCode: string;
-    division?: { 
+    division?: {
       name: string;
       programSemester?: { semester: number };
     };
@@ -56,9 +56,7 @@ export interface UserRow {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function getRoleBadgeVariant(
-  role: string,
-): "default" | "secondary" | "outline" | "destructive" {
+function getRoleBadgeVariant(role: string): "default" | "secondary" | "outline" | "destructive" {
   switch (role) {
     case "super_admin":
       return "destructive";
@@ -105,7 +103,10 @@ function ActionCell({ user }: { user: UserRow }) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger
-          className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "aria-expanded:bg-accent")}
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "icon" }),
+            "aria-expanded:bg-accent",
+          )}
           aria-label="User actions"
         >
           <IconDots className="h-4 w-4" />
@@ -128,9 +129,7 @@ function ActionCell({ user }: { user: UserRow }) {
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => setSuspendOpen(true)}
-          >
+          <DropdownMenuItem onClick={() => setSuspendOpen(true)}>
             <IconLock className="mr-2 h-4 w-4" />
             Suspend
           </DropdownMenuItem>
@@ -146,9 +145,24 @@ function ActionCell({ user }: { user: UserRow }) {
       </DropdownMenu>
 
       <EditUserDialog user={user} open={editOpen} onOpenChange={setEditOpen} />
-      <SuspendUserAlert userId={user.id} userName={user.name} open={suspendOpen} onOpenChange={setSuspendOpen} />
-      <DeleteUserAlert userId={user.id} userName={user.name} open={deleteOpen} onOpenChange={setDeleteOpen} />
-      <DeviceRebindDialog userId={user.id} userName={user.name} open={rebindOpen} onOpenChange={setRebindOpen} />
+      <SuspendUserAlert
+        userId={user.id}
+        userName={user.name}
+        open={suspendOpen}
+        onOpenChange={setSuspendOpen}
+      />
+      <DeleteUserAlert
+        userId={user.id}
+        userName={user.name}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+      />
+      <DeviceRebindDialog
+        userId={user.id}
+        userName={user.name}
+        open={rebindOpen}
+        onOpenChange={setRebindOpen}
+      />
     </>
   );
 }
@@ -212,11 +226,7 @@ export const userColumns: LegacyColumnDef<UserRow>[] = [
     cell: ({ row }) => {
       const user = row.original;
       const status = user.studentProfile?.status ?? "active";
-      return (
-        <Badge variant={getStatusBadgeVariant(status)}>
-          {status}
-        </Badge>
-      );
+      return <Badge variant={getStatusBadgeVariant(status)}>{status}</Badge>;
     },
   },
   {
@@ -288,9 +298,7 @@ export const studentColumns: LegacyColumnDef<UserRow>[] = [
     id: "division",
     header: "Division",
     cell: ({ row }) => (
-      <span className="text-sm">
-        {row.original.studentProfile?.division?.name ?? "—"}
-      </span>
+      <span className="text-sm">{row.original.studentProfile?.division?.name ?? "—"}</span>
     ),
   },
   userColumns[3], // Status
@@ -314,9 +322,7 @@ export const teacherColumns: LegacyColumnDef<UserRow>[] = [
     id: "department",
     header: "Department",
     cell: ({ row }) => (
-      <span className="text-sm">
-        {row.original.teacherProfile?.department ?? "—"}
-      </span>
+      <span className="text-sm">{row.original.teacherProfile?.department ?? "—"}</span>
     ),
   },
   userColumns[5], // Joined
@@ -329,4 +335,3 @@ export const adminColumns: LegacyColumnDef<UserRow>[] = [
   userColumns[5], // Joined
   userColumns[6], // Actions
 ];
-
