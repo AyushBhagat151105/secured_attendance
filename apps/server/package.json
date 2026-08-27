@@ -9,7 +9,7 @@
     "test": "vitest run --passWithNoTests",
     "dev": "bun run --hot src/index.ts",
     "start": "bun run dist/index.js",
-    "db:seed": "bun run src/modules/auth/seed.ts"
+    "db:seed": "bun run src/lib/seed.ts"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.2",

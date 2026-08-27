@@ -44,6 +44,9 @@ export const createRoomSchema = z.object({
 });
 export type CreateRoomSchema = z.infer<typeof createRoomSchema>;
 
+export const updateRoomSchema = createRoomSchema;
+export type UpdateRoomSchema = z.infer<typeof updateRoomSchema>;
+
 export const createSubjectSchema = z.object({
   name: z.string().min(1, "Subject name is required"),
   code: z.string().min(1, "Code is required"),

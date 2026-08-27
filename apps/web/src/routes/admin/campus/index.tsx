@@ -5,9 +5,11 @@ import {
   createBuildingSchema,
   updateBuildingSchema,
   createRoomSchema,
+  updateRoomSchema,
   type CreateBuildingSchema,
   type UpdateBuildingSchema,
   type CreateRoomSchema,
+  type UpdateRoomSchema,
 } from "@secured_attendance/validators";
 
 import {
@@ -16,6 +18,8 @@ import {
   useCreateBuilding,
   useUpdateBuilding,
   useCreateRoom,
+  useUpdateRoom,
+  useDeleteRoom,
 } from "@/hooks/api/use-admin-campus";
 import {
   Table,
@@ -27,8 +31,24 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, MapPinIcon } from "lucide-react";
+import { Plus, MapPinIcon, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useMap } from "react-leaflet";
 import {
   Map,
@@ -155,6 +175,11 @@ function CampusRoute() {
   const [isRoomOpen, setIsRoomOpen] = useState(false);
 
   const [editingBuilding, setEditingBuilding] = useState<any>(null);
+  const [editingRoom, setEditingRoom] = useState<any>(null);
+  const [deletingRoom, setDeletingRoom] = useState<any>(null);
+
+  const updateRoom = useUpdateRoom();
+  const deleteRoom = useDeleteRoom();
 
   const buildingForm = useForm<CreateBuildingSchema>({
     resolver: zodResolver(createBuildingSchema),
@@ -187,6 +212,15 @@ function CampusRoute() {
     },
   });
 
+  const editRoomForm = useForm<UpdateRoomSchema>({
+    resolver: zodResolver(updateRoomSchema),
+    defaultValues: {
+      name: "",
+      type: "classroom",
+      buildingId: "",
+    },
+  });
+
   const onAddBuilding = async (value: CreateBuildingSchema) => {
     if (value.gpsLat === 0 && value.gpsLng === 0) {
       toast.error("Please draw a geofence circle on the map");
@@ -206,6 +240,17 @@ function CampusRoute() {
     await createRoomMutation.mutateAsync(value);
     roomForm.reset();
     setIsRoomOpen(false);
+  };
+
+  const onEditRoom = async (value: UpdateRoomSchema) => {
+    await updateRoom.mutateAsync({ id: editingRoom.id, body: value });
+    setEditingRoom(null);
+  };
+
+  const onDeleteRoom = async () => {
+    if (!deletingRoom) return;
+    await deleteRoom.mutateAsync(deletingRoom.id);
+    setDeletingRoom(null);
   };
 
   const newGpsLat = buildingForm.watch("gpsLat");
@@ -235,114 +280,114 @@ function CampusRoute() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
               <form onSubmit={buildingForm.handleSubmit(onAddBuilding)}>
-                  <DialogHeader>
-                    <DialogTitle>Add New Building</DialogTitle>
-                    <DialogDescription>
-                      Create a new building with GPS coordinates.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <Controller
-                      control={buildingForm.control}
-                      name="name"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Building Name</FieldLabel>
-                            <Input {...field} placeholder="Main Building" />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                        </Field>
-                      )}
-                    />
-                    <Controller
-                      control={buildingForm.control}
-                      name="code"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Code</FieldLabel>
-                            <Input {...field} placeholder="MB" />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                        </Field>
-                      )}
-                    />
-                    <div className="grid gap-2">
-                      <FieldLabel>Geofence Area</FieldLabel>
-                      <div className="h-100 w-full rounded-md border overflow-hidden relative z-0">
-                        <Map center={[20.5937, 78.9629]} zoom={4} className="h-full w-full">
-                          <MapTileLayer />
-                          <MapZoomControl />
-                          <MapSearchControlWrapper />
-                          <MapDrawControl
-                            onLayersChange={(layers) => {
-                              let found = false;
-                              layers.eachLayer((layer: any) => {
-                                if (layer.getRadius && layer.getLatLng && !found) {
-                                  buildingForm.setValue("gpsLat", layer.getLatLng().lat);
-                                  buildingForm.setValue("gpsLng", layer.getLatLng().lng);
-                                  buildingForm.setValue(
-                                    "radiusMeters",
-                                    Math.round(layer.getRadius()),
-                                  );
-                                  found = true;
-                                }
-                              });
-                            }}
-                          >
-                            <MapDrawCircle />
-                            <MapDrawEdit />
-                            <MapDrawDelete />
-                          </MapDrawControl>
-                          {newGpsLat !== 0 && newGpsLng !== 0 && newRadiusMeters > 0 && (
-                            <MapCircle
-                              center={[newGpsLat, newGpsLng]}
-                              radius={newRadiusMeters}
-                              className="fill-yellow-600 stroke-yellow-600 stroke-1"
-                            />
-                          )}
-                        </Map>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <Controller
-                        control={buildingForm.control}
-                        name="gpsLat"
-                        render={({ field, fieldState }) => (
-                          <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel>Latitude</FieldLabel>
-                              <Input {...field} type="number" step="any" placeholder="22.6018" onChange={e => field.onChange(e.target.valueAsNumber)} />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                          </Field>
+                <DialogHeader>
+                  <DialogTitle>Add New Building</DialogTitle>
+                  <DialogDescription>
+                    Create a new building with GPS coordinates.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <Controller
+                    control={buildingForm.control}
+                    name="name"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Building Name</FieldLabel>
+                        <Input {...field} placeholder="Main Building" />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    control={buildingForm.control}
+                    name="code"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Code</FieldLabel>
+                        <Input {...field} placeholder="MB" />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <div className="grid gap-2">
+                    <FieldLabel>Geofence Area</FieldLabel>
+                    <div className="h-100 w-full rounded-md border overflow-hidden relative z-0">
+                      <Map center={[20.5937, 78.9629]} zoom={4} className="h-full w-full">
+                        <MapTileLayer />
+                        <MapZoomControl />
+                        <MapSearchControlWrapper />
+                        <MapDrawControl
+                          onLayersChange={(layers) => {
+                            let found = false;
+                            layers.eachLayer((layer: any) => {
+                              if (layer.getRadius && layer.getLatLng && !found) {
+                                buildingForm.setValue("gpsLat", layer.getLatLng().lat);
+                                buildingForm.setValue("gpsLng", layer.getLatLng().lng);
+                                buildingForm.setValue(
+                                  "radiusMeters",
+                                  Math.round(layer.getRadius()),
+                                );
+                                found = true;
+                              }
+                            });
+                          }}
+                        >
+                          <MapDrawCircle />
+                          <MapDrawEdit />
+                          <MapDrawDelete />
+                        </MapDrawControl>
+                        {newGpsLat !== 0 && newGpsLng !== 0 && newRadiusMeters > 0 && (
+                          <MapCircle
+                            center={[newGpsLat, newGpsLng]}
+                            radius={newRadiusMeters}
+                            className="fill-yellow-600 stroke-yellow-600 stroke-1"
+                          />
                         )}
-                      />
-                      <Controller
-                        control={buildingForm.control}
-                        name="gpsLng"
-                        render={({ field, fieldState }) => (
-                          <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel>Longitude</FieldLabel>
-                              <Input {...field} type="number" step="any" placeholder="72.8194" onChange={e => field.onChange(e.target.valueAsNumber)} />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                          </Field>
-                        )}
-                      />
-                      <Controller
-                        control={buildingForm.control}
-                        name="radiusMeters"
-                        render={({ field, fieldState }) => (
-                          <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel>Radius (m)</FieldLabel>
-                              <Input {...field} type="number" onChange={e => field.onChange(e.target.valueAsNumber)} />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                          </Field>
-                        )}
-                      />
+                      </Map>
                     </div>
                   </div>
-                  <DialogFooter>
-                    <Button type="submit" disabled={buildingForm.formState.isSubmitting}>
-                      {buildingForm.formState.isSubmitting ? "Saving..." : "Save Building"}
-                    </Button>
-                  </DialogFooter>
-                </form>
+                  <div className="grid grid-cols-3 gap-4">
+                    <Controller
+                      control={buildingForm.control}
+                      name="gpsLat"
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel>Latitude</FieldLabel>
+                          <Input {...field} type="number" step="any" placeholder="22.6018" onChange={e => field.onChange(e.target.valueAsNumber)} />
+                          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        </Field>
+                      )}
+                    />
+                    <Controller
+                      control={buildingForm.control}
+                      name="gpsLng"
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel>Longitude</FieldLabel>
+                          <Input {...field} type="number" step="any" placeholder="72.8194" onChange={e => field.onChange(e.target.valueAsNumber)} />
+                          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        </Field>
+                      )}
+                    />
+                    <Controller
+                      control={buildingForm.control}
+                      name="radiusMeters"
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel>Radius (m)</FieldLabel>
+                          <Input {...field} type="number" onChange={e => field.onChange(e.target.valueAsNumber)} />
+                          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        </Field>
+                      )}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit" disabled={buildingForm.formState.isSubmitting}>
+                    {buildingForm.formState.isSubmitting ? "Saving..." : "Save Building"}
+                  </Button>
+                </DialogFooter>
+              </form>
             </DialogContent>
           </Dialog>
 
@@ -352,126 +397,126 @@ function CampusRoute() {
           >
             <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
               <form onSubmit={editBuildingForm.handleSubmit(onEditBuilding)}>
-                  <DialogHeader>
-                    <DialogTitle>Edit Building</DialogTitle>
-                    <DialogDescription>
-                      Update the building details or geofence coordinates.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <Controller
-                      control={editBuildingForm.control}
-                      name="name"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Building Name</FieldLabel>
-                            <Input {...field} />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                        </Field>
-                      )}
-                    />
-                    <Controller
-                      control={editBuildingForm.control}
-                      name="code"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Code</FieldLabel>
-                            <Input {...field} />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                        </Field>
-                      )}
-                    />
-                    <div className="grid gap-2">
-                      <FieldLabel>Geofence Area</FieldLabel>
-                      <div className="h-100 w-full rounded-md border overflow-hidden relative z-0">
-                        <Map
-                          center={
-                            editingBuilding
-                              ? [editingBuilding.gpsLat, editingBuilding.gpsLng]
-                              : [20.5937, 78.9629]
-                          }
-                          zoom={16}
-                          className="h-full w-full"
+                <DialogHeader>
+                  <DialogTitle>Edit Building</DialogTitle>
+                  <DialogDescription>
+                    Update the building details or geofence coordinates.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <Controller
+                    control={editBuildingForm.control}
+                    name="name"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Building Name</FieldLabel>
+                        <Input {...field} />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    control={editBuildingForm.control}
+                    name="code"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Code</FieldLabel>
+                        <Input {...field} />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <div className="grid gap-2">
+                    <FieldLabel>Geofence Area</FieldLabel>
+                    <div className="h-100 w-full rounded-md border overflow-hidden relative z-0">
+                      <Map
+                        center={
+                          editingBuilding
+                            ? [editingBuilding.gpsLat, editingBuilding.gpsLng]
+                            : [20.5937, 78.9629]
+                        }
+                        zoom={16}
+                        className="h-full w-full"
+                      >
+                        <MapTileLayer />
+                        <MapZoomControl />
+                        <MapSearchControlWrapper />
+                        <MapDrawControl
+                          onLayersChange={(layers) => {
+                            let found = false;
+                            layers.eachLayer((layer: any) => {
+                              if (layer.getRadius && layer.getLatLng && !found) {
+                                editBuildingForm.setValue("gpsLat", layer.getLatLng().lat);
+                                editBuildingForm.setValue("gpsLng", layer.getLatLng().lng);
+                                editBuildingForm.setValue(
+                                  "radiusMeters",
+                                  Math.round(layer.getRadius()),
+                                );
+                                found = true;
+                              }
+                            });
+                          }}
                         >
-                          <MapTileLayer />
-                          <MapZoomControl />
-                          <MapSearchControlWrapper />
-                          <MapDrawControl
-                            onLayersChange={(layers) => {
-                              let found = false;
-                              layers.eachLayer((layer: any) => {
-                                if (layer.getRadius && layer.getLatLng && !found) {
-                                  editBuildingForm.setValue("gpsLat", layer.getLatLng().lat);
-                                  editBuildingForm.setValue("gpsLng", layer.getLatLng().lng);
-                                  editBuildingForm.setValue(
-                                    "radiusMeters",
-                                    Math.round(layer.getRadius()),
-                                  );
-                                  found = true;
-                                }
-                              });
-                            }}
-                          >
-                            <MapDrawCircle />
-                            <MapDrawEdit />
-                            <MapDrawDelete />
-                          </MapDrawControl>
-                          {editingBuilding && (
-                            <MapEditInitializer
-                              building={editingBuilding}
-                              lat={editGpsLat}
-                              lng={editGpsLng}
-                              radius={editRadiusMeters}
-                            />
-                          )}
-                        </Map>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <Controller
-                        control={editBuildingForm.control}
-                        name="gpsLat"
-                        render={({ field, fieldState }) => (
-                          <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel>Latitude</FieldLabel>
-                              <Input {...field} type="number" step="any" onChange={e => field.onChange(e.target.valueAsNumber)} />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                          </Field>
+                          <MapDrawCircle />
+                          <MapDrawEdit />
+                          <MapDrawDelete />
+                        </MapDrawControl>
+                        {editingBuilding && (
+                          <MapEditInitializer
+                            building={editingBuilding}
+                            lat={editGpsLat}
+                            lng={editGpsLng}
+                            radius={editRadiusMeters}
+                          />
                         )}
-                      />
-                      <Controller
-                        control={editBuildingForm.control}
-                        name="gpsLng"
-                        render={({ field, fieldState }) => (
-                          <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel>Longitude</FieldLabel>
-                              <Input {...field} type="number" step="any" onChange={e => field.onChange(e.target.valueAsNumber)} />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                          </Field>
-                        )}
-                      />
-                      <Controller
-                        control={editBuildingForm.control}
-                        name="radiusMeters"
-                        render={({ field, fieldState }) => (
-                          <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel>Radius (m)</FieldLabel>
-                              <Input {...field} type="number" onChange={e => field.onChange(e.target.valueAsNumber)} />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                          </Field>
-                        )}
-                      />
+                      </Map>
                     </div>
                   </div>
-                  <DialogFooter>
-                    <Button type="submit" disabled={editBuildingForm.formState.isSubmitting}>
-                      {editBuildingForm.formState.isSubmitting ? (
-                        <Spinner className="mr-2" />
-                      ) : null}
-                      Save Changes
-                    </Button>
-                  </DialogFooter>
-                </form>
+                  <div className="grid grid-cols-3 gap-4">
+                    <Controller
+                      control={editBuildingForm.control}
+                      name="gpsLat"
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel>Latitude</FieldLabel>
+                          <Input {...field} type="number" step="any" onChange={e => field.onChange(e.target.valueAsNumber)} />
+                          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        </Field>
+                      )}
+                    />
+                    <Controller
+                      control={editBuildingForm.control}
+                      name="gpsLng"
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel>Longitude</FieldLabel>
+                          <Input {...field} type="number" step="any" onChange={e => field.onChange(e.target.valueAsNumber)} />
+                          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        </Field>
+                      )}
+                    />
+                    <Controller
+                      control={editBuildingForm.control}
+                      name="radiusMeters"
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel>Radius (m)</FieldLabel>
+                          <Input {...field} type="number" onChange={e => field.onChange(e.target.valueAsNumber)} />
+                          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        </Field>
+                      )}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit" disabled={editBuildingForm.formState.isSubmitting}>
+                    {editBuildingForm.formState.isSubmitting ? (
+                      <Spinner className="mr-2" />
+                    ) : null}
+                    Save Changes
+                  </Button>
+                </DialogFooter>
+              </form>
             </DialogContent>
           </Dialog>
 
@@ -489,74 +534,74 @@ function CampusRoute() {
             </DialogTrigger>
             <DialogContent>
               <form onSubmit={roomForm.handleSubmit(onAddRoom)}>
-                  <DialogHeader>
-                    <DialogTitle>Add New Room</DialogTitle>
-                    <DialogDescription>
-                      Create a room and assign it to a building.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <Controller
-                      control={roomForm.control}
-                      name="name"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Room Name / No</FieldLabel>
-                            <Input {...field} placeholder="101" />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                        </Field>
-                      )}
-                    />
-                    <Controller
-                      control={roomForm.control}
-                      name="type"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Type</FieldLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select type" />
-                              </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="classroom">Classroom</SelectItem>
-                              <SelectItem value="lab">Laboratory</SelectItem>
-                              <SelectItem value="hall">Seminar Hall</SelectItem>
-                              <SelectItem value="office">Office</SelectItem>
-                            </SelectContent>
-                          </Select>
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                        </Field>
-                      )}
-                    />
-                    <Controller
-                      control={roomForm.control}
-                      name="buildingId"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Building</FieldLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select building" />
-                              </SelectTrigger>
-                            <SelectContent>
-                              {buildings?.map((b) => (
-                                <SelectItem key={b.id} value={b.id}>
-                                  {b.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                        </Field>
-                      )}
-                    />
-                  </div>
-                  <DialogFooter>
-                    <Button type="submit" disabled={roomForm.formState.isSubmitting}>
-                      {roomForm.formState.isSubmitting ? "Saving..." : "Save Room"}
-                    </Button>
-                  </DialogFooter>
-                </form>
+                <DialogHeader>
+                  <DialogTitle>Add New Room</DialogTitle>
+                  <DialogDescription>
+                    Create a room and assign it to a building.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <Controller
+                    control={roomForm.control}
+                    name="name"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Room Name / No</FieldLabel>
+                        <Input {...field} placeholder="101" />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    control={roomForm.control}
+                    name="type"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Type</FieldLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="classroom">Classroom</SelectItem>
+                            <SelectItem value="lab">Laboratory</SelectItem>
+                            <SelectItem value="hall">Seminar Hall</SelectItem>
+                            <SelectItem value="office">Office</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    control={roomForm.control}
+                    name="buildingId"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Building</FieldLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select building" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {buildings?.map((b) => (
+                              <SelectItem key={b.id} value={b.id}>
+                                {b.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                </div>
+                <DialogFooter>
+                  <Button type="submit" disabled={roomForm.formState.isSubmitting}>
+                    {roomForm.formState.isSubmitting ? "Saving..." : "Save Room"}
+                  </Button>
+                </DialogFooter>
+              </form>
             </DialogContent>
           </Dialog>
         </div>
@@ -637,6 +682,7 @@ function CampusRoute() {
                     <TableHead>Name</TableHead>
                     <TableHead>Building</TableHead>
                     <TableHead>Type</TableHead>
+                    <TableHead className="w-[80px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -645,11 +691,41 @@ function CampusRoute() {
                       <TableCell className="font-medium">{room.name}</TableCell>
                       <TableCell>{room.building?.code || "-"}</TableCell>
                       <TableCell className="capitalize">{room.type}</TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setEditingRoom(room);
+                                editRoomForm.reset({
+                                  name: room.name,
+                                  type: room.type,
+                                  buildingId: room.buildingId,
+                                });
+                              }}
+                            >
+                              <Edit className="mr-2 h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => setDeletingRoom(room)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
                     </TableRow>
                   ))}
                   {(!rooms || rooms.length === 0) && (
                     <TableRow>
-                      <TableCell colSpan={3} className="h-24 text-center">
+                      <TableCell colSpan={4} className="h-24 text-center">
                         No rooms found.
                       </TableCell>
                     </TableRow>
@@ -660,6 +736,111 @@ function CampusRoute() {
           </CardContent>
         </Card>
       </div>
+      <Dialog
+        open={!!editingRoom}
+        onOpenChange={(open) => !open && setEditingRoom(null)}
+      >
+        <DialogContent>
+          <form onSubmit={editRoomForm.handleSubmit(onEditRoom)}>
+            <DialogHeader>
+              <DialogTitle>Edit Room</DialogTitle>
+              <DialogDescription>
+                Update room details and assignment.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <Controller
+                control={editRoomForm.control}
+                name="name"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Room Name / No</FieldLabel>
+                    <Input {...field} />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+              <Controller
+                control={editRoomForm.control}
+                name="type"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Type</FieldLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="classroom">Classroom</SelectItem>
+                        <SelectItem value="lab">Laboratory</SelectItem>
+                        <SelectItem value="hall">Seminar Hall</SelectItem>
+                        <SelectItem value="office">Office</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+              <Controller
+                control={editRoomForm.control}
+                name="buildingId"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Building</FieldLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select building" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {buildings?.map((b) => (
+                          <SelectItem key={b.id} value={b.id}>
+                            {b.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={editRoomForm.formState.isSubmitting}>
+                {editRoomForm.formState.isSubmitting ? (
+                  <Spinner className="mr-2" />
+                ) : null}
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog
+        open={!!deletingRoom}
+        onOpenChange={(open) => !open && setDeletingRoom(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the room <span className="font-semibold">{deletingRoom?.name}</span>.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={onDeleteRoom}
+              disabled={deleteRoom.isPending}
+            >
+              {deleteRoom.isPending ? <Spinner className="mr-2" /> : null}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
