@@ -1,4 +1,4 @@
-﻿import { Text, View, StyleSheet, FlatList, TouchableOpacity } from "react-native";
+import { Text, View, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import { Container } from "@/components/container";
 import { useAttendanceHistory, useAttendanceStats } from "@/hooks/api/use-attendance-history";
 import { ActivityIndicator } from "react-native";
@@ -48,10 +48,10 @@ export default function HistoryScreen() {
     return (
       <View style={styles.historyCard}>
         <View style={styles.cardContent}>
-          <Text style={styles.subjectTitle}>{item.session.subject.name}</Text>
+          <Text style={styles.subjectTitle}>{item.session?.subject?.name || "Unknown Subject"}</Text>
           <View style={styles.rowInfo}>
             <Text style={styles.mutedText}>{date}</Text>
-            <Text style={styles.mutedText}> • {item.session.room.name}</Text>
+            <Text style={styles.mutedText}> • {item.session?.room?.name || "Unknown Room"}</Text>
           </View>
         </View>
         <View style={[styles.badge, isPresent ? styles.badgeSuccess : styles.badgeDestructive]}>
@@ -98,7 +98,7 @@ export default function HistoryScreen() {
   };
 
   return (
-    <Container style={styles.container}>
+    <Container style={styles.container} scroll={false}>
       <View style={styles.header}>
         <Text style={styles.pageTitle}>Attendance</Text>
 
@@ -133,7 +133,7 @@ export default function HistoryScreen() {
             <FlatList
               data={historyItems}
               renderItem={renderHistoryItem}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item, index) => item.id?.toString() || index.toString()}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: 20 }}
               onEndReached={() => {
@@ -170,7 +170,7 @@ export default function HistoryScreen() {
           <FlatList
             data={stats.bySubject}
             renderItem={renderSubjectStat}
-            keyExtractor={(item) => item.subjectId}
+            keyExtractor={(item, index) => item.subjectId?.toString() || index.toString()}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 20 }}
           />

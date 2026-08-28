@@ -1,4 +1,4 @@
-﻿import { Text, View, StyleSheet, TouchableOpacity, FlatList } from "react-native";
+import { Text, View, StyleSheet, TouchableOpacity, FlatList } from "react-native";
 import { Container } from "@/components/container";
 import { useTodaySchedule } from "@/hooks/api/use-schedule";
 import { useAttendanceStats } from "@/hooks/api/use-attendance-history";
@@ -48,7 +48,7 @@ export default function HomeScreen() {
   const renderScheduleItem = ({ item }: { item: any }) => (
     <View style={styles.card}>
       <View style={styles.cardContent}>
-        <Text style={styles.subjectName}>{item.subject.name}</Text>
+        <Text style={styles.subjectName}>{item.subject?.name || "Unknown Subject"}</Text>
         <View style={styles.rowInfo}>
           <Ionicons name="time-outline" size={14} color={COLORS.muted} />
           <Text style={styles.infoText}>
@@ -56,13 +56,13 @@ export default function HomeScreen() {
           </Text>
         </View>
         <View style={styles.rowDetails}>
-          <View style={styles.rowInfo}>
+          <View style={[styles.rowInfo, { marginRight: 12 }]}>
             <Ionicons name="location-outline" size={14} color={COLORS.muted} />
-            <Text style={styles.infoText}>{item.room.name}</Text>
+            <Text style={styles.infoText}>{item.room?.name || "No Room"}</Text>
           </View>
-          <View style={[styles.rowInfo, { marginLeft: 12 }]}>
+          <View style={styles.rowInfo}>
             <Ionicons name="person-outline" size={14} color={COLORS.muted} />
-            <Text style={styles.infoText}>{item.teacher.name}</Text>
+            <Text style={styles.infoText}>{item.teacher?.name || "Unknown Teacher"}</Text>
           </View>
         </View>
       </View>
@@ -124,7 +124,7 @@ export default function HomeScreen() {
   );
 
   return (
-    <Container style={styles.container}>
+    <Container style={styles.container} scroll={false}>
       {/* Header Area */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
@@ -179,7 +179,7 @@ export default function HomeScreen() {
             <FlatList
               data={schedule}
               renderItem={renderScheduleItem}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item, index) => item.id?.toString() || index.toString()}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: 20 }}
             />

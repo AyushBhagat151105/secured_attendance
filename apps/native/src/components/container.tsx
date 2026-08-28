@@ -1,11 +1,13 @@
-﻿import { type PropsWithChildren } from "react";
-import { ViewProps } from "react-native";
+import { type PropsWithChildren } from "react";
+import { ViewProps, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
-type Props = ViewProps & {};
+type Props = ViewProps & {
+  scroll?: boolean;
+};
 
-export function Container({ children, style, ...props }: PropsWithChildren<Props>) {
+export function Container({ children, style, scroll = true, ...props }: PropsWithChildren<Props>) {
   const insets = useSafeAreaInsets();
   const bgColor = "#ffffff";
 
@@ -15,12 +17,16 @@ export function Container({ children, style, ...props }: PropsWithChildren<Props
       style={[{ flex: 1, backgroundColor: bgColor }, style]}
       {...props}
     >
-      <KeyboardAwareScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + 20 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {children}
-      </KeyboardAwareScrollView>
+      {scroll ? (
+        <KeyboardAwareScrollView
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + 20 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {children}
+        </KeyboardAwareScrollView>
+      ) : (
+        <View style={{ flex: 1, paddingBottom: insets.bottom }}>{children}</View>
+      )}
     </SafeAreaView>
   );
 }

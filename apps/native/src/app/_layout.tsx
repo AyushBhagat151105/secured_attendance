@@ -1,4 +1,4 @@
-﻿import "@/global.css";
+import "@/global.css";
 import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
 import { Platform } from "react-native";
@@ -48,10 +48,12 @@ function StackLayout() {
     const path = segments.join("/");
 
     // If session is null (or we timed out trying to reach the server)
-    if (!session && !inAuthGroup) {
-      // Redirect to the sign-in page.
-      router.replace("/(auth)/sign-in" as any);
-    } else if (session) {
+    if (!session || !user) {
+      if (!inAuthGroup) {
+        // Redirect to the sign-in page.
+        router.replace("/(auth)/sign-in" as any);
+      }
+    } else {
       if (user.requiresPasswordChange && path !== "(auth)/reset-password") {
         router.replace("/(auth)/reset-password" as any);
       } else if (
