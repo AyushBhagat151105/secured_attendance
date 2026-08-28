@@ -12,6 +12,7 @@ export const buildingKeys = {
 export const useBuildings = () =>
   useQuery({
     queryKey: buildingKeys.all,
+    staleTime: 1000 * 60 * 5,
     queryFn: () => unwrapEden(apiClient.api.admin.campus.buildings.get()),
   });
 
@@ -50,6 +51,7 @@ export const roomKeys = {
 export const useRooms = () =>
   useQuery({
     queryKey: roomKeys.all,
+    staleTime: 1000 * 60 * 5,
     queryFn: () => unwrapEden(apiClient.api.admin.campus.rooms.get()),
   });
 

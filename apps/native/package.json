@@ -10,6 +10,7 @@
     "@hookform/resolvers": "^3.10.0",
     "@secured_attendance/env": "workspace:*",
     "@secured_attendance/validators": "workspace:*",
+    "@shopify/flash-list": "^2.3.2",
     "@tanstack/react-query": "^5.101.4",
     "axios": "^1.19.0",
     "better-auth": "catalog:",

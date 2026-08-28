@@ -1,6 +1,7 @@
 import prisma from "@secured_attendance/db";
 import { status } from "elysia";
 import { logger } from "../lib/logger";
+import { queueAuditLog } from "../lib/audit";
 import crypto from "crypto";
 
 export class TeacherService {
@@ -177,6 +178,18 @@ export class TeacherService {
 
     logger.info("Session started", { sessionId: session.id, teacherCode: profile.code });
 
+    void queueAuditLog({
+      eventType: "session.opened",
+      actor: userId,
+      actorRole: "teacher",
+      targetId: session.id,
+      details: {
+        subjectId: entry.subjectId,
+        roomId: entry.roomId,
+        teacherCode: profile.code,
+      },
+    });
+
     return session;
   }
 
@@ -233,6 +246,14 @@ export class TeacherService {
     });
 
     logger.info("Session closed", { sessionId: closed.id, teacherCode: profile.code });
+
+    void queueAuditLog({
+      eventType: "session.closed",
+      actor: userId,
+      actorRole: "teacher",
+      targetId: sessionId,
+      details: { attendanceCount, teacherCode: profile.code },
+    });
 
     return { success: true, deleted: false, session: closed };
   }

@@ -1,6 +1,7 @@
 import { Queue, Worker, type Job } from "bullmq";
 import Redis from "ioredis";
 import { env } from "@secured_attendance/env/server";
+import { logger } from "./logger";
 
 export const queueRedis = new Redis({
   host: env.REDIS_HOST,
@@ -23,7 +24,7 @@ export interface NotificationJobData {
   type: string;
   title?: string;
   message?: string;
-  data?: any;
+  data?: unknown;
 }
 
 export const auditQueue = new Queue("audit-log", {
@@ -47,9 +48,9 @@ export const auditWorker = new Worker(
           userAgent: job.data.userAgent,
         },
       });
-      console.log(`[Audit] Logged event: ${job.data.eventType}`);
+      logger.info("Audit event logged", { eventType: job.data.eventType, jobId: job.id });
     } catch (e) {
-      console.error(`[Audit] Failed to log event: ${job.data.eventType}`, e);
+      logger.error("Failed to write audit log", { eventType: job.data.eventType, jobId: job.id, error: e });
       throw e;
     }
   },
@@ -57,9 +58,10 @@ export const auditWorker = new Worker(
 );
 
 auditWorker.on("completed", (job: Job) => {
-  console.log(`Job ${job.id} has completed!`);
+  logger.debug("Audit job completed", { jobId: job.id });
 });
 
 auditWorker.on("failed", (job: Job | undefined, err: Error) => {
-  console.error(`Job ${job?.id} has failed with ${err.message}`);
+  logger.error("Audit job failed", { jobId: job?.id, error: err.message });
 });
+

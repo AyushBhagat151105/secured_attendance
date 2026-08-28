@@ -10,6 +10,7 @@ export const teacherKeys = {
 export function useTodaySchedule() {
   return useQuery({
     queryKey: teacherKeys.schedule,
+    staleTime: 1000 * 60 * 5,
     queryFn: () => unwrapEden(apiClient.api.teacher.schedule.today.get()),
   });
 }

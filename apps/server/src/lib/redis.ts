@@ -1,5 +1,6 @@
 import { Redis } from "ioredis";
 import { env } from "@secured_attendance/env/server";
+import { logger } from "./logger";
 
 export const attendanceRedis = new Redis({
   host: env.REDIS_HOST,
@@ -9,9 +10,9 @@ export const attendanceRedis = new Redis({
 });
 
 attendanceRedis.on("connect", () => {
-  console.log("Redis (Attendance) connected");
+  logger.info("Redis (Attendance) connected");
 });
 
 attendanceRedis.on("error", (err) => {
-  console.error("Redis (Attendance) connection error:", err);
+  logger.error("Redis (Attendance) connection error", { err });
 });

@@ -2,6 +2,8 @@ import prisma from "@secured_attendance/db";
 
 import { logger } from "../lib/logger";
 import { attendanceRedis } from "../lib/redis";
+import { queueAuditLog } from "../lib/audit";
+import { checkImpossibleTravel, reportAnomaly } from "./anomaly.service";
 import crypto from "crypto";
 import type { ScanAttendanceDto } from "../models/student.model";
 
@@ -52,6 +54,13 @@ export class StudentService {
       await attendanceRedis.expire(rateLimitKey, 60);
     }
     if (attempts > 5) {
+      void queueAuditLog({
+        eventType: "attendance.rate_limit_exceeded",
+        actor: userId,
+        actorRole: "student",
+        targetId: sessionId,
+        details: { attempts },
+      });
       return {
         success: false,
         error: "TOO_MANY_REQUESTS",
@@ -62,8 +71,16 @@ export class StudentService {
     // 0.5 Mock Location Check
     if (mockFlag) {
       logger.warn("Mock location detected", { userId, sessionId });
+      void queueAuditLog({
+        eventType: "attendance.rejected",
+        actor: userId,
+        actorRole: "student",
+        targetId: sessionId,
+        details: { reason: "mock_location" },
+      });
       return { success: false, error: "BAD_REQUEST", message: "Location error" };
     }
+
 
     // 1. Get student profile
     const profile = await prisma.studentProfile.findUnique({
@@ -207,11 +224,36 @@ export class StudentService {
       if (distance <= allowedRadius) {
         gpsWithinGeofence = true;
       } else {
-        anomalyFlags.push(`gps_outside_geofence_${Math.round(distance)}m`);
-        // We log the exact distance for audit, but we just tell the client they are outside.
+        anomalyFlags.push(`gps_outside_geofence`);
+        // Queue anomaly alert asynchronously — don't block the response
+        void reportAnomaly({
+          userId,
+          type: "IMPOSSIBLE_TRAVEL",
+          severity: "MEDIUM",
+          details: {
+            reason: "gps_outside_geofence",
+            distanceMeters: Math.round(distance),
+            allowedRadius,
+            studentGps: { lat: gpsLat, lng: gpsLng },
+            buildingGps: { lat: session.room.building.gpsLat, lng: session.room.building.gpsLng },
+            buildingName: session.room.building.name,
+          },
+        });
+        void queueAuditLog({
+          eventType: "attendance.gps_outside_geofence",
+          actor: userId,
+          actorRole: "student",
+          targetId: sessionId,
+          details: { distanceMeters: Math.round(distance), allowedRadius },
+        });
       }
     } else {
       anomalyFlags.push("gps_missing");
+    }
+
+    // 8.5 Impossible Travel Check (async, non-blocking)
+    if (gpsLat && gpsLng) {
+      void checkImpossibleTravel(profile.id, userId, gpsLat, gpsLng, new Date());
     }
 
     // 9. Persist Attendance
@@ -233,7 +275,19 @@ export class StudentService {
       gpsWithinGeofence,
     });
 
-    // 10. Async Live Feed Update
+    // 10. Async Audit Log + Live Feed Update
+    void queueAuditLog({
+      eventType: "attendance.submitted",
+      actor: userId,
+      actorRole: "student",
+      targetId: sessionId,
+      details: {
+        attendanceId: attendance.id,
+        gpsWithinGeofence,
+        anomalyFlags,
+      },
+    });
+
     if (server) {
       try {
         const count = await prisma.attendance.count({

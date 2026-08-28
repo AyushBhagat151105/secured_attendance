@@ -12,6 +12,7 @@ export const academicYearKeys = {
 export const useAcademicYears = () =>
   useQuery({
     queryKey: academicYearKeys.all,
+    staleTime: 1000 * 60 * 5,
     queryFn: () => unwrapEden(apiClient.api.admin.academic.years.get()),
   });
 
@@ -50,6 +51,7 @@ export const programKeys = {
 export const usePrograms = () =>
   useQuery({
     queryKey: programKeys.all,
+    staleTime: 1000 * 60 * 5,
     queryFn: () => unwrapEden(apiClient.api.admin.academic.programs.get()),
   });
 
@@ -100,6 +102,7 @@ export const semesterKeys = {
 export const useProgramSemesters = () =>
   useQuery({
     queryKey: semesterKeys.all,
+    staleTime: 1000 * 60 * 5,
     queryFn: () => unwrapEden(apiClient.api.admin.academic.semesters.get()),
   });
 
@@ -124,6 +127,7 @@ export const divisionKeys = {
 export const useDivisions = () =>
   useQuery({
     queryKey: divisionKeys.all,
+    staleTime: 1000 * 60 * 5,
     queryFn: () => unwrapEden(apiClient.api.admin.academic.divisions.get()),
   });
 
@@ -148,6 +152,7 @@ export const subjectKeys = {
 export const useSubjects = () =>
   useQuery({
     queryKey: subjectKeys.all,
+    staleTime: 1000 * 60 * 5,
     queryFn: () => unwrapEden(apiClient.api.admin.academic.subjects.get()),
   });
 

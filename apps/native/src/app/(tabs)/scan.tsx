@@ -1,4 +1,4 @@
-﻿import { CameraView, useCameraPermissions } from "expo-camera";
+import { CameraView, useCameraPermissions } from "expo-camera";
 import { useState, useEffect } from "react";
 import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from "react-native";
 import * as Location from "expo-location";
@@ -15,6 +15,8 @@ import { useScanAttendance } from "@/hooks/api/use-attendance";
 import { getDeviceFingerprint } from "@/lib/device";
 import { Ionicons } from "@expo/vector-icons";
 import { savePendingAttendance } from "@/lib/offline-sync";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAttendanceStats, historyKeys } from "@/hooks/api/use-attendance-history";
 
 type ScanStatus = "idle" | "processing" | "success" | "error";
 
@@ -33,6 +35,8 @@ export default function ScanScreen() {
   const [scanStatus, setScanStatus] = useState<ScanStatus>("idle");
   const [statusMessage, setStatusMessage] = useState("");
   const { mutateAsync: scanAttendance } = useScanAttendance();
+  const queryClient = useQueryClient();
+  const { data: stats } = useAttendanceStats();
 
   // Animation for the scanning line
   const linePosition = useSharedValue(0);
@@ -139,10 +143,15 @@ export default function ScanScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setScanStatus("success");
 
+        // Invalidate attendance queries so stats refresh in background
+        queryClient.invalidateQueries({ queryKey: historyKeys.stats() });
+        queryClient.invalidateQueries({ queryKey: historyKeys.history() });
+
+        const pct = stats?.overallPercentage ? ` Overall: ${Math.round(stats.overallPercentage)}%` : "";
         if (result.gpsWithinGeofence) {
-          setStatusMessage("Attendance marked successfully!");
+          setStatusMessage(`Attendance marked!${pct}`);
         } else {
-          setStatusMessage("Marked, but GPS was outside the classroom area.");
+          setStatusMessage(`Marked, but GPS was outside the classroom area.${pct}`);
         }
       } catch (error: any) {
         const message = error.message?.toLowerCase() || "";

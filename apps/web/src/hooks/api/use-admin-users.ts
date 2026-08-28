@@ -13,12 +13,14 @@ export const userKeys = {
 export const useUsers = (filters: any = {}) =>
   useQuery({
     queryKey: userKeys.list(filters),
+    staleTime: 1000 * 60 * 5,
     queryFn: () => unwrapEden(apiClient.api.admin.users.get({ query: filters })),
   });
 
 export const useUser = (id: string) =>
   useQuery({
     queryKey: userKeys.detail(id),
+    staleTime: 1000 * 60 * 5,
     queryFn: () => unwrapEden(apiClient.api.admin.users({ id }).get()),
     enabled: !!id,
   });

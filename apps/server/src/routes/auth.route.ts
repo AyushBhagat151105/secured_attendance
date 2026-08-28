@@ -2,6 +2,7 @@ import { Elysia, t } from "elysia";
 import { authMacro } from "../middlewares/guards";
 import prisma from "@secured_attendance/db";
 import { logger } from "../lib/logger";
+import { queueAuditLog } from "../lib/audit";
 
 export const authModule = new Elysia({ prefix: "/api/auth-custom" })
   .use(authMacro)
@@ -12,6 +13,12 @@ export const authModule = new Elysia({ prefix: "/api/auth-custom" })
         await prisma.user.update({
           where: { id: user.id },
           data: { requiresPasswordChange: false } as any,
+        });
+        void queueAuditLog({
+          eventType: "user.onboarding_completed",
+          actor: user.id,
+          actorRole: "student",
+          targetId: user.id,
         });
         return { success: true };
       } catch (err) {
@@ -34,6 +41,12 @@ export const authModule = new Elysia({ prefix: "/api/auth-custom" })
         }
 
         if (profile.deviceBound && profile.deviceId !== body.deviceId) {
+          void queueAuditLog({
+            eventType: "device.bind_rejected",
+            actor: user.id,
+            actorRole: "student",
+            details: { reason: "already_bound_to_different_device", newDeviceId: body.deviceId },
+          });
           return status(403, {
             message: "Account already bound to another device. Contact admin.",
           });
@@ -47,6 +60,14 @@ export const authModule = new Elysia({ prefix: "/api/auth-custom" })
             deviceBound: true,
             deviceBoundAt: new Date(),
           },
+        });
+
+        void queueAuditLog({
+          eventType: "device.bound",
+          actor: user.id,
+          actorRole: "student",
+          targetId: profile.id,
+          details: { deviceId: body.deviceId, deviceName: body.deviceName },
         });
 
         return { success: true };
@@ -63,3 +84,4 @@ export const authModule = new Elysia({ prefix: "/api/auth-custom" })
       }),
     },
   );
+

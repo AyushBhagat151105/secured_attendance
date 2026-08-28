@@ -1,4 +1,5 @@
-import { Text, View, StyleSheet, TouchableOpacity, FlatList } from "react-native";
+import { Text, View, StyleSheet, TouchableOpacity, RefreshControl } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Container } from "@/components/container";
 import { useTodaySchedule } from "@/hooks/api/use-schedule";
 import { useAttendanceStats } from "@/hooks/api/use-attendance-history";
@@ -6,7 +7,7 @@ import { authClient } from "@/lib/auth-client";
 import { ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { syncPendingAttendance } from "@/lib/offline-sync";
 
 const COLORS = {
@@ -23,9 +24,20 @@ const COLORS = {
 
 export default function HomeScreen() {
   const { data: session } = authClient.useSession();
-  const { data: schedule, isLoading: scheduleLoading } = useTodaySchedule();
-  const { data: stats, isLoading: statsLoading } = useAttendanceStats();
+  const { data: schedule, isLoading: scheduleLoading, refetch: refetchSchedule } = useTodaySchedule();
+  const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useAttendanceStats();
   const router = useRouter();
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([refetchSchedule(), refetchStats()]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchSchedule, refetchStats]);
 
   useEffect(() => {
     // Attempt to sync pending offline attendance scans on load
@@ -171,33 +183,59 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.listContainer}>
-          {scheduleLoading ? (
+          {scheduleLoading && !refreshing ? (
             <View style={styles.centerAll}>
               <ActivityIndicator size="large" color={COLORS.primary} />
             </View>
-          ) : schedule && schedule.length > 0 ? (
-            <FlatList
-              data={schedule}
-              renderItem={renderScheduleItem}
-              keyExtractor={(item, index) => item.id?.toString() || index.toString()}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 20 }}
-            />
           ) : (
-            <View style={styles.emptyState}>
-              <Ionicons
-                name="calendar-clear-outline"
-                size={48}
-                color={COLORS.muted}
-                style={{ marginBottom: 12 }}
-              />
-              <Text style={styles.emptyStateTitle}>No Classes Today</Text>
-              <Text style={styles.emptyStateSub}>
-                Take a break or check your upcoming schedule.
-              </Text>
-            </View>
+            <FlashList
+              data={schedule || []}
+              renderItem={renderScheduleItem}
+              keyExtractor={(item: any, index: number) => item.id?.toString() || index.toString()}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={[{ paddingBottom: 20 }, (!schedule || schedule.length === 0) && { flex: 1 }]}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />
+              }
+              ListEmptyComponent={
+                <View style={styles.emptyState}>
+                  <Ionicons
+                    name="calendar-clear-outline"
+                    size={48}
+                    color={COLORS.muted}
+                    style={{ marginBottom: 12 }}
+                  />
+                  <Text style={styles.emptyStateTitle}>No Classes Today</Text>
+
+                  <Text style={styles.emptyStateSub}>
+                    Take a break or check your upcoming schedule.
+                  </Text>
+                </View>
+              }
+            />
           )}
         </View>
+
+        {/* Below-75% Attendance Warnings */}
+        {stats && (() => {
+          const warnings = (stats.bySubject || []).filter((s: any) => s.percentage < 75);
+          if (warnings.length === 0) return null;
+          return (
+            <View style={styles.warningCard}>
+              <Text style={styles.warningTitle}>⚠️ Attendance Alerts</Text>
+              {warnings.map((subj: any, idx: number) => {
+                const pct = Math.round(subj.percentage);
+                const needed = Math.ceil(75 - pct);
+                return (
+                  <View key={subj.subjectId || idx} style={styles.warningRow}>
+                    <Text style={styles.warningSubject} numberOfLines={1}>{subj.subjectName}</Text>
+                    <Text style={styles.warningDetail}>{pct}% — need {needed}% more</Text>
+                  </View>
+                );
+              })}
+            </View>
+          );
+        })()}
       </View>
     </Container>
   );
@@ -382,4 +420,36 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
     textAlign: "center",
   },
+  warningCard: {
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: "#fff7ed",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#ffedd5",
+  },
+  warningTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#ea580c",
+    marginBottom: 8,
+  },
+  warningRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 4,
+  },
+  warningSubject: {
+    fontSize: 13,
+    color: "#9a3412",
+    flex: 1,
+    marginRight: 8,
+  },
+  warningDetail: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#c2410c",
+  }
 });
+

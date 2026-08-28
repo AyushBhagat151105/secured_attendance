@@ -7,24 +7,59 @@ export const adminAnomaliesModule = new Elysia({ prefix: "/anomalies" })
   .get(
     "/",
     async ({ query }) => {
-      const statusValue = query.status as string | undefined;
+      const { status: statusFilter, userId, type, dateFrom, dateTo, limit = 50, offset = 0 } = query;
 
-      const anomalies = await prisma.anomalyAlert.findMany({
-        where: statusValue ? { status: statusValue } : undefined,
-        include: {
-          user: {
-            select: { id: true, name: true, email: true },
+      const where: Record<string, unknown> = {};
+      if (statusFilter) where.status = statusFilter;
+      if (userId) where.userId = userId;
+      if (type) where.type = type;
+      if (dateFrom || dateTo) {
+        where.createdAt = {
+          ...(dateFrom ? { gte: new Date(dateFrom) } : {}),
+          ...(dateTo ? { lte: new Date(dateTo) } : {}),
+        };
+      }
+
+      const [anomalies, total] = await Promise.all([
+        prisma.anomalyAlert.findMany({
+          where,
+          include: {
+            user: {
+              select: { id: true, name: true, email: true },
+            },
           },
-        },
-        orderBy: { createdAt: "desc" },
-      });
+          orderBy: { createdAt: "desc" },
+          take: limit,
+          skip: offset,
+        }),
+        prisma.anomalyAlert.count({ where }),
+      ]);
 
-      return anomalies;
+      return { anomalies, total };
     },
     {
       query: t.Object({
         status: t.Optional(t.String()),
+        userId: t.Optional(t.String()),
+        type: t.Optional(t.String()),
+        dateFrom: t.Optional(t.String()),
+        dateTo: t.Optional(t.String()),
+        limit: t.Optional(t.Numeric({ default: 50 })),
+        offset: t.Optional(t.Numeric({ default: 0 })),
       }),
+    },
+  )
+  .get(
+    "/student/:id",
+    async ({ params }) => {
+      const anomalies = await prisma.anomalyAlert.findMany({
+        where: { userId: params.id },
+        orderBy: { createdAt: "desc" },
+      });
+      return anomalies;
+    },
+    {
+      params: t.Object({ id: t.String() }),
     },
   )
   .patch(
@@ -47,3 +82,4 @@ export const adminAnomaliesModule = new Elysia({ prefix: "/anomalies" })
       }),
     },
   );
+

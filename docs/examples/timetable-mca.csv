@@ -1,5 +1,36 @@
 programCode,academicYear,semester,division,subjectCode,subjectName,roomName,dayOfWeek,startTime,endTime,teacherCode,type
-mca,2026-2027,1,A,CAUC506,Enterprise Computing using Java EE,Class-9,0,09:10,10:10,HMP,lecture
-mca,2026-2027,1,A,CAUC506,Enterprise Computing using Java EE,Lab-1,0,10:10,12:10,HMP,lab
-mca,2026-2027,1,A,CAUC507,Data Structures,Class-9,1,09:10,10:10,NV,lecture
-mca,2026-2027,1,A,CAUC508,Database Management,Class-9,2,11:10,12:10,RP,lecture
+mca,2026-2027,1,A,CAUC506,Enterprise Computing using Java EE,Class-9,1,09:10,10:10,HMP,lecture
+mca,2026-2027,1,A,CAUC507,Data Structures,Class-9,1,10:10,11:10,NV,lecture
+mca,2026-2027,1,A,CAUC508,Database Management,Lab-1,1,11:10,13:10,RP,lab
+mca,2026-2027,1,A,CAUC509,Software Engineering,Class-9,1,14:00,15:00,SK,lecture
+mca,2026-2027,1,A,CAUC510,Web Technologies,Class-9,1,15:00,16:00,AM,lecture
+
+mca,2026-2027,1,A,CAUC511,Operating Systems,Class-9,2,09:10,10:10,DK,lecture
+mca,2026-2027,1,A,CAUC508,Database Management,Class-9,2,10:10,11:10,RP,lecture
+mca,2026-2027,1,A,CAUC506,Enterprise Computing using Java EE,Lab-2,2,11:10,13:10,HMP,lab
+mca,2026-2027,1,A,CAUC507,Data Structures,Class-9,2,14:00,15:00,NV,lecture
+mca,2026-2027,1,A,CAUC509,Software Engineering,Class-9,2,15:00,16:00,SK,lecture
+
+mca,2026-2027,1,A,CAUC510,Web Technologies,Class-9,3,09:10,10:10,AM,lecture
+mca,2026-2027,1,A,CAUC511,Operating Systems,Class-9,3,10:10,11:10,DK,lecture
+mca,2026-2027,1,A,CAUC507,Data Structures,Lab-1,3,11:10,13:10,NV,lab
+mca,2026-2027,1,A,CAUC506,Enterprise Computing using Java EE,Class-9,3,14:00,15:00,HMP,lecture
+mca,2026-2027,1,A,CAUC508,Database Management,Class-9,3,15:00,16:00,RP,lecture
+
+mca,2026-2027,1,A,CAUC509,Software Engineering,Class-9,4,09:10,10:10,SK,lecture
+mca,2026-2027,1,A,CAUC510,Web Technologies,Class-9,4,10:10,11:10,AM,lecture
+mca,2026-2027,1,A,CAUC511,Operating Systems,Lab-2,4,11:10,13:10,DK,lab
+mca,2026-2027,1,A,CAUC507,Data Structures,Class-9,4,14:00,15:00,NV,lecture
+mca,2026-2027,1,A,CAUC506,Enterprise Computing using Java EE,Class-9,4,15:00,16:00,HMP,lecture
+
+mca,2026-2027,1,A,CAUC508,Database Management,Class-9,5,09:10,10:10,RP,lecture
+mca,2026-2027,1,A,CAUC509,Software Engineering,Class-9,5,10:10,11:10,SK,lecture
+mca,2026-2027,1,A,CAUC510,Web Technologies,Lab-1,5,11:10,13:10,AM,lab
+mca,2026-2027,1,A,CAUC511,Operating Systems,Class-9,5,14:00,15:00,DK,lecture
+mca,2026-2027,1,A,CAUC512,Soft Skills,Class-9,5,15:00,16:00,SS,lecture
+
+mca,2026-2027,1,A,CAUC512,Soft Skills,Class-9,6,09:10,10:10,SS,lecture
+mca,2026-2027,1,A,CAUC509,Software Engineering,Lab-3,6,10:10,12:10,SK,lab
+mca,2026-2027,1,A,CAUC511,Operating Systems,Class-9,6,12:10,13:10,DK,lecture
+mca,2026-2027,1,A,CAUC508,Database Management,Class-9,6,14:00,15:00,RP,lecture
+mca,2026-2027,1,A,CAUC510,Web Technologies,Class-9,6,15:00,16:00,AM,lecture

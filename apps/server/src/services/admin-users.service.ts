@@ -1,5 +1,6 @@
 import prisma from "@secured_attendance/db";
 import { logger } from "../lib/logger";
+import { queueAuditLog } from "../lib/audit";
 import type {
   UpdateUserType,
   UsersListQueryType,
@@ -21,16 +22,16 @@ export class AdminUsersService {
       ...(query.role ? { role: query.role } : {}),
       ...(query.status
         ? {
-            OR: [{ studentProfile: { status: query.status } }],
-          }
+          OR: [{ studentProfile: { status: query.status } }],
+        }
         : {}),
       ...(query.search
         ? {
-            OR: [
-              { name: { contains: query.search, mode: "insensitive" as const } },
-              { email: { contains: query.search, mode: "insensitive" as const } },
-            ],
-          }
+          OR: [
+            { name: { contains: query.search, mode: "insensitive" as const } },
+            { email: { contains: query.search, mode: "insensitive" as const } },
+          ],
+        }
         : {}),
     };
 
@@ -340,6 +341,12 @@ export class AdminUsersService {
     });
 
     logger.info("Device rebound by admin", { userId: id });
+    void queueAuditLog({
+      eventType: "device.rebound",
+      actorRole: "admin",
+      targetId: id,
+      details: { studentProfileId: profile.id },
+    });
     return { success: true };
   }
 }

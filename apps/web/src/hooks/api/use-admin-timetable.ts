@@ -12,6 +12,7 @@ export const timetableKeys = {
 export const useTimetableEntries = () =>
   useQuery({
     queryKey: timetableKeys.all,
+    staleTime: 1000 * 60 * 5,
     queryFn: () => unwrapEden(apiClient.api.admin.timetable.entries.get()),
   });
 

@@ -1,4 +1,5 @@
 import prisma from "@secured_attendance/db";
+import { logger } from "../lib/logger";
 
 const MAX_PLAUSIBLE_SPEED_KMH = 1000;
 
@@ -36,10 +37,10 @@ export async function reportAnomaly(params: AnomalyParams) {
         details: params.details,
       },
     });
-    console.warn(`[AnomalyAlert] Logged: ${params.type} for user ${params.userId}`);
+    logger.warn("Anomaly logged", { type: params.type, userId: params.userId, id: anomaly.id });
     return anomaly;
   } catch (error) {
-    console.error("[AnomalyAlert] Failed to log anomaly", error);
+    logger.error("Failed to log anomaly", { error, params });
   }
 }
 

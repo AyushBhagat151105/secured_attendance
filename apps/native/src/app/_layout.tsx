@@ -48,14 +48,12 @@ function StackLayout() {
     const path = segments.join("/");
 
     // If session is null (or we timed out trying to reach the server)
-    if (!session || !user) {
-      if (!inAuthGroup) {
-        // Redirect to the sign-in page.
-        router.replace("/(auth)/sign-in" as any);
-      }
-    } else {
+    if (!session && !inAuthGroup) {
+      // Redirect to the sign-in page.
+      router.replace("/(auth)/sign-in");
+    } else if (session && user) {
       if (user.requiresPasswordChange && path !== "(auth)/reset-password") {
-        router.replace("/(auth)/reset-password" as any);
+        router.replace("/(auth)/reset-password");
       } else if (
         !user.requiresPasswordChange &&
         user.role === "student" &&
@@ -63,15 +61,17 @@ function StackLayout() {
         !profile.deviceBound &&
         path !== "(auth)/device-binding"
       ) {
-        router.replace("/(auth)/device-binding" as any);
+        router.replace("/(auth)/device-binding");
       } else if (
         !user.requiresPasswordChange &&
         (user.role !== "student" || (profile && profile.deviceBound))
       ) {
         if (inAuthGroup) {
-          router.replace("/(tabs)" as any);
+          router.replace("/(tabs)");
         }
       }
+    } else if (session && !user && !inAuthGroup) {
+      router.replace("/(auth)/sign-in");
     }
   }, [session, profile, isPending, timeoutReached, segments, router, user]);
 

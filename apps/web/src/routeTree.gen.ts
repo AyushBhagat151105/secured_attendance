@@ -20,6 +20,7 @@ import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AdminAnomaliesRouteImport } from './routes/admin/anomalies'
 import { Route as AdminAuditLogsRouteImport } from './routes/admin/audit-logs'
 import { Route as AdminExportRouteImport } from './routes/admin/export'
+import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as ReportsIndexRouteImport } from './routes/reports/index'
 import { Route as SessionSessionIdRouteImport } from './routes/session/$sessionId'
 import { Route as AdminAcademicProgramsRouteImport } from './routes/admin/academic/programs'
@@ -87,6 +88,11 @@ const AdminAuditLogsRoute = AdminAuditLogsRouteImport.update({
 const AdminExportRoute = AdminExportRouteImport.update({
   id: '/export',
   path: '/export',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AdminRoute,
 } as any)
 const ReportsIndexRoute = ReportsIndexRouteImport.update({
@@ -166,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/admin/anomalies': typeof AdminAnomaliesRoute
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/export': typeof AdminExportRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/session/$sessionId': typeof SessionSessionIdRoute
   '/admin/': typeof AdminIndexRoute
   '/reports/': typeof ReportsIndexRoute
@@ -191,6 +198,7 @@ export interface FileRoutesByTo {
   '/admin/anomalies': typeof AdminAnomaliesRoute
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/export': typeof AdminExportRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/session/$sessionId': typeof SessionSessionIdRoute
   '/admin': typeof AdminIndexRoute
   '/reports': typeof ReportsIndexRoute
@@ -218,6 +226,7 @@ export interface FileRoutesById {
   '/admin/anomalies': typeof AdminAnomaliesRoute
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/export': typeof AdminExportRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/session/$sessionId': typeof SessionSessionIdRoute
   '/admin/': typeof AdminIndexRoute
   '/reports/': typeof ReportsIndexRoute
@@ -246,6 +255,7 @@ export interface FileRouteTypes {
     | '/admin/anomalies'
     | '/admin/audit-logs'
     | '/admin/export'
+    | '/admin/settings'
     | '/session/$sessionId'
     | '/admin/'
     | '/reports/'
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/admin/anomalies'
     | '/admin/audit-logs'
     | '/admin/export'
+    | '/admin/settings'
     | '/session/$sessionId'
     | '/admin'
     | '/reports'
@@ -297,6 +308,7 @@ export interface FileRouteTypes {
     | '/admin/anomalies'
     | '/admin/audit-logs'
     | '/admin/export'
+    | '/admin/settings'
     | '/session/$sessionId'
     | '/admin/'
     | '/reports/'
@@ -405,6 +417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminExportRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/reports/': {
       id: '/reports/'
       path: '/reports'
@@ -504,6 +523,7 @@ interface AdminRouteChildren {
   AdminAnomaliesRoute: typeof AdminAnomaliesRoute
   AdminAuditLogsRoute: typeof AdminAuditLogsRoute
   AdminExportRoute: typeof AdminExportRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminAcademicProgramsRoute: typeof AdminAcademicProgramsRoute
   AdminAcademicSubjectsRoute: typeof AdminAcademicSubjectsRoute
@@ -521,6 +541,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAnomaliesRoute: AdminAnomaliesRoute,
   AdminAuditLogsRoute: AdminAuditLogsRoute,
   AdminExportRoute: AdminExportRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminAcademicProgramsRoute: AdminAcademicProgramsRoute,
   AdminAcademicSubjectsRoute: AdminAcademicSubjectsRoute,

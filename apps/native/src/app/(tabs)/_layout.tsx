@@ -1,4 +1,4 @@
-﻿import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { View, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -74,6 +74,20 @@ export default function TabLayout() {
         options={{
           title: "History",
           tabBarIcon: ({ color, size }) => <Ionicons name="time" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "Settings",
+          tabBarIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />,
         }}
       />
     </Tabs>

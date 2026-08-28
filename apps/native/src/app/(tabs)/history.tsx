@@ -1,9 +1,10 @@
-import { Text, View, StyleSheet, FlatList, TouchableOpacity } from "react-native";
+import { Text, View, StyleSheet, TouchableOpacity, RefreshControl } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Container } from "@/components/container";
 import { useAttendanceHistory, useAttendanceStats } from "@/hooks/api/use-attendance-history";
 import { ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 const COLORS = {
   background: "#ffffff",
@@ -30,9 +31,21 @@ export default function HistoryScreen() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    refetch: refetchHistory,
   } = useAttendanceHistory();
 
-  const { data: stats, isLoading: statsLoading } = useAttendanceStats();
+  const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useAttendanceStats();
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([refetchHistory(), refetchStats()]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchHistory, refetchStats]);
 
   const historyItems = historyData?.pages.flatMap((page) => page.items) || [];
 
@@ -125,21 +138,24 @@ export default function HistoryScreen() {
 
       <View style={styles.content}>
         {viewMode === "recent" ? (
-          historyLoading ? (
+          historyLoading && !refreshing ? (
             <View style={styles.centerAll}>
               <ActivityIndicator size="large" color={COLORS.primary} />
             </View>
-          ) : historyItems.length > 0 ? (
-            <FlatList
+          ) : (
+            <FlashList
               data={historyItems}
               renderItem={renderHistoryItem}
-              keyExtractor={(item, index) => item.id?.toString() || index.toString()}
+              keyExtractor={(item: any, index: number) => item.id?.toString() || index.toString()}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 20 }}
+              contentContainerStyle={[{ paddingBottom: 20 }, historyItems.length === 0 && { flex: 1 }]}
               onEndReached={() => {
                 if (hasNextPage) fetchNextPage();
               }}
               onEndReachedThreshold={0.5}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />
+              }
               ListFooterComponent={() =>
                 isFetchingNextPage ? (
                   <ActivityIndicator
@@ -149,42 +165,47 @@ export default function HistoryScreen() {
                   />
                 ) : null
               }
+              ListEmptyComponent={
+                <View style={styles.centerAll}>
+                  <Ionicons
+                    name="document-text-outline"
+                    size={48}
+                    color={COLORS.muted}
+                    style={{ marginBottom: 12 }}
+                  />
+                  <Text style={styles.emptyTitle}>No Records Yet</Text>
+                  <Text style={styles.emptySub}>Your attendance history will appear here.</Text>
+                </View>
+              }
             />
-          ) : (
-            <View style={styles.centerAll}>
-              <Ionicons
-                name="document-text-outline"
-                size={48}
-                color={COLORS.muted}
-                style={{ marginBottom: 12 }}
-              />
-              <Text style={styles.emptyTitle}>No Records Yet</Text>
-              <Text style={styles.emptySub}>Your attendance history will appear here.</Text>
-            </View>
           )
-        ) : statsLoading ? (
+        ) : statsLoading && !refreshing ? (
           <View style={styles.centerAll}>
             <ActivityIndicator size="large" color={COLORS.primary} />
           </View>
-        ) : stats?.bySubject && stats.bySubject.length > 0 ? (
-          <FlatList
-            data={stats.bySubject}
-            renderItem={renderSubjectStat}
-            keyExtractor={(item, index) => item.subjectId?.toString() || index.toString()}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 20 }}
-          />
         ) : (
-          <View style={styles.centerAll}>
-            <Ionicons
-              name="pie-chart-outline"
-              size={48}
-              color={COLORS.muted}
-              style={{ marginBottom: 12 }}
-            />
-            <Text style={styles.emptyTitle}>No Stats Available</Text>
-            <Text style={styles.emptySub}>Attend classes to see your statistics.</Text>
-          </View>
+          <FlashList
+            data={stats?.bySubject || []}
+            renderItem={renderSubjectStat}
+            keyExtractor={(item: any, index: number) => item.subjectId?.toString() || index.toString()}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[{ paddingBottom: 20 }, (!stats?.bySubject || stats.bySubject.length === 0) && { flex: 1 }]}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />
+            }
+            ListEmptyComponent={
+              <View style={styles.centerAll}>
+                <Ionicons
+                  name="pie-chart-outline"
+                  size={48}
+                  color={COLORS.muted}
+                  style={{ marginBottom: 12 }}
+                />
+                <Text style={styles.emptyTitle}>No Stats Available</Text>
+                <Text style={styles.emptySub}>Attend classes to see your statistics.</Text>
+              </View>
+            }
+          />
         )}
       </View>
     </Container>

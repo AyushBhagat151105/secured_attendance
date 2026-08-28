@@ -6,6 +6,7 @@ import { unwrapEden } from "@/lib/fetch-utils";
 export function useTeacherSessionsReport() {
   return useQuery({
     queryKey: ["teacher", "reports", "sessions"],
+    staleTime: 1000 * 60 * 5,
     queryFn: () => unwrapEden(apiClient.api.teacher.reports.sessions.get()),
   });
 }
@@ -26,6 +27,7 @@ export function useDeleteSession() {
 export function useTeacherSessionDetail(sessionId: string) {
   return useQuery({
     queryKey: ["teacher", "reports", "session", sessionId],
+    staleTime: 1000 * 60 * 5,
     queryFn: () => unwrapEden(apiClient.api.teacher.reports.sessions({ id: sessionId }).get()),
     enabled: !!sessionId,
   });
@@ -34,6 +36,7 @@ export function useTeacherSessionDetail(sessionId: string) {
 export function useTeacherSubjectsReport() {
   return useQuery({
     queryKey: ["teacher", "reports", "subjects"],
+    staleTime: 1000 * 60 * 5,
     queryFn: () => unwrapEden(apiClient.api.teacher.reports.subjects.get()),
   });
 }
@@ -41,6 +44,7 @@ export function useTeacherSubjectsReport() {
 export function useAdminAnalytics() {
   return useQuery({
     queryKey: ["admin", "reports", "analytics"],
+    staleTime: 1000 * 60 * 5,
     queryFn: () => unwrapEden(apiClient.api.admin.reports.analytics.get()),
   });
 }
@@ -48,6 +52,7 @@ export function useAdminAnalytics() {
 export function useAdminMapData(sessionId: string) {
   return useQuery({
     queryKey: ["admin", "reports", "map", sessionId],
+    staleTime: 1000 * 60 * 5,
     queryFn: () => unwrapEden(apiClient.api.admin.reports.sessions({ id: sessionId }).map.get()),
     enabled: !!sessionId,
   });
@@ -56,6 +61,7 @@ export function useAdminMapData(sessionId: string) {
 export function useTeacherMapData(sessionId: string) {
   return useQuery({
     queryKey: ["teacher", "reports", "map", sessionId],
+    staleTime: 1000 * 60 * 5,
     queryFn: () => unwrapEden(apiClient.api.teacher.reports.sessions({ id: sessionId }).map.get()),
     enabled: !!sessionId,
   });
