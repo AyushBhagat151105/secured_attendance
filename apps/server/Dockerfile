@@ -21,6 +21,9 @@ RUN bun install --frozen-lockfile --ignore-scripts
 # Copy source code
 COPY . .
 
+# Provide build-time dummy DATABASE_URL for prisma generate
+ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+
 # Generate Prisma Client and apply wasm memory patch
 RUN bun run db:generate
 RUN bun scripts/patch-prisma-wasm.js
