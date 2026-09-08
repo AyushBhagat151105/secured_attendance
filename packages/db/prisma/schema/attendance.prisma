@@ -1,5 +1,7 @@
 model AttendanceSession {
   id               String   @id @default(uuid())
+  timetableEntryId String?
+  timetableEntry   TimetableEntry? @relation(fields: [timetableEntryId], references: [id])
   academicYearId   String
   academicYear     AcademicYear @relation(fields: [academicYearId], references: [id])
   subjectId        String

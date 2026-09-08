@@ -1,4 +1,3 @@
-import logger from "../lib/logger";
 import { auth } from "@secured_attendance/auth";
 import { Elysia, status } from "elysia";
 
@@ -19,7 +18,6 @@ export const authMacro = new Elysia({ name: "auth-macro" }).macro({
     resolve: async ({ request, status }) => {
       const session = await auth.api.getSession({ headers: request.headers });
 
-      logger.warn("[guards.ts] User from session:", session?.user || "NO USER");
       if (!session) {
         throw status(401, { message: "Unauthorized" });
       }

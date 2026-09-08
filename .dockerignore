@@ -1,8 +1,10 @@
 node_modules
+**/node_modules
 .git
 .env*
 *.log
 dist
+**/dist
 .next
 .turbo
 .venv
@@ -10,5 +12,11 @@ __pycache__
 *.pyc
 target
 build
+**/build
 .gradle
+**/.gradle
+.cxx
+**/.cxx
+.vite
+**/.vite
 out

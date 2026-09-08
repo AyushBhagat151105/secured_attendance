@@ -1,17 +1,27 @@
 # Dockerfile for secured_attendance TanStack Router SPA
 # Static file serving with nginx for Docker deployment
 
-FROM node:20-alpine AS builder
+FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
-RUN npm install -g bun
+# Copy monorepo package files
 COPY package.json bun.lock* ./
-RUN bun install --frozen-lockfile
+COPY apps/web/package.json ./apps/web/
+COPY packages/auth/package.json ./packages/auth/
+COPY packages/db/package.json ./packages/db/
+COPY packages/env/package.json ./packages/env/
+COPY packages/validators/package.json ./packages/validators/
+COPY packages/config/package.json ./packages/config/
+
+RUN bun install --frozen-lockfile --ignore-scripts
 
 COPY . .
 
-RUN bun run build
+ARG VITE_SERVER_URL=http://localhost:3001
+ENV VITE_SERVER_URL=$VITE_SERVER_URL
+
+RUN bun run build --filter=web
 
 # Production stage with nginx
 FROM nginx:alpine AS runner
@@ -31,7 +41,7 @@ RUN echo 'server { \
 }' > /etc/nginx/conf.d/default.conf
 
 # Copy built assets
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
 
 EXPOSE 3000
 

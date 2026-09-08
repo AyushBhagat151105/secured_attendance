@@ -11,6 +11,7 @@ import { env } from "@secured_attendance/env/web";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { subscribeToSession, useCloseSession, useTodaySchedule } from "@/hooks/api/use-teacher";
+import { FinalizeAttendanceModal } from "@/features/teacher/components/finalize-attendance-modal";
 
 export const Route = createFileRoute("/session/$sessionId")({
   beforeLoad: async () => {
@@ -40,6 +41,7 @@ function SessionComponent() {
   const [tokens, setTokens] = useState<QrToken[]>([]);
   const [currentToken, setCurrentToken] = useState<QrToken | null>(null);
   const [attendanceCount, setAttendanceCount] = useState(0);
+  const [showFinalizeModal, setShowFinalizeModal] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -65,7 +67,14 @@ function SessionComponent() {
     });
 
     ws.on("message", (event: any) => {
-      const message = event.data;
+      let message = event.data;
+      if (typeof message === "string") {
+        try {
+          message = JSON.parse(message);
+        } catch {
+          return;
+        }
+      }
       if (typeof message !== "object" || !message) return;
 
       if (message.type === "QR_TOKENS_BATCH") {
@@ -244,24 +253,19 @@ function SessionComponent() {
             size="lg"
             variant="destructive"
             className="w-full h-14 text-lg font-bold"
-            onClick={() => {
-              if (
-                confirm(
-                  "Are you sure you want to end this session? No more students will be able to scan.",
-                )
-              ) {
-                closeSessionMutation.mutate(sessionId, {
-                  onSuccess: () => navigate({ to: "/dashboard" }),
-                });
-              }
-            }}
-            disabled={closeSessionMutation.isPending}
+            onClick={() => setShowFinalizeModal(true)}
           >
             <IconSquareRoundedX className="h-6 w-6 mr-2" />
-            End Session
+            End Session & Review Roster
           </Button>
         </div>
       </div>
+
+      <FinalizeAttendanceModal
+        sessionId={sessionId}
+        open={showFinalizeModal}
+        onOpenChange={setShowFinalizeModal}
+      />
     </div>
   );
 }

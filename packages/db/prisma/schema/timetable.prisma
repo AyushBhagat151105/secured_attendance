@@ -25,7 +25,7 @@ model TimetableEntry {
   subject           Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   roomId            String
   room              Room     @relation(fields: [roomId], references: [id])
-  dayOfWeek         Int      // 0=Monday, 1=Tuesday, ... 5=Saturday
+  dayOfWeek         Int      // 0=Sunday, 1=Monday, ... 6=Saturday (JS getDay() convention)
   startTime         String   // "09:10" (HH:mm)
   endTime           String   // "10:10"
   type              String   @default("lecture") // lecture, lab, tutorial
@@ -33,6 +33,7 @@ model TimetableEntry {
 
   // Divisions attending this entry (for combined/shared classes)
   divisions         TimetableEntryDivision[]
+  sessions          AttendanceSession[]
 
   createdAt         DateTime @default(now())
 

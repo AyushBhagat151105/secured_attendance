@@ -63,6 +63,7 @@ export default function DeviceBindingScreen() {
         await apiClient.post("/api/auth-custom/device-bind", {
           deviceId: deviceInfo.id,
           deviceName: deviceInfo.name,
+          biometricEnabled: hasHardware && isEnrolled,
         });
       } catch (err: any) {
         throw new Error(err.response?.data?.message || err.message || "Failed to bind device");

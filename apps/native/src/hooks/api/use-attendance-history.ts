@@ -1,5 +1,6 @@
 ﻿import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { apiClient } from "../../lib/api-client";
+import { authClient } from "../../lib/auth-client";
 
 export const historyKeys = {
   all: ["attendance"] as const,
@@ -8,6 +9,9 @@ export const historyKeys = {
 };
 
 export function useAttendanceHistory() {
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
+
   return useInfiniteQuery({
     queryKey: historyKeys.history(),
     queryFn: async ({ pageParam = 1 }) => {
@@ -20,6 +24,7 @@ export function useAttendanceHistory() {
         throw new Error(err.response?.data?.message || err.message || "Failed to load history");
       }
     },
+    enabled: !!user,
     initialPageParam: 1,
     getNextPageParam: (lastPage: any) => {
       const next = lastPage.page + 1;
@@ -30,6 +35,9 @@ export function useAttendanceHistory() {
 }
 
 export function useAttendanceStats() {
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
+
   return useQuery({
     queryKey: historyKeys.stats(),
     queryFn: async () => {
@@ -40,6 +48,7 @@ export function useAttendanceStats() {
         throw new Error(err.response?.data?.message || err.message || "Failed to load stats");
       }
     },
+    enabled: !!user,
     staleTime: 1000 * 60 * 5,
   });
 }

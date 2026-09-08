@@ -59,6 +59,7 @@ export const authModule = new Elysia({ prefix: "/api/auth-custom" })
             deviceModel: body.deviceName,
             deviceBound: true,
             deviceBoundAt: new Date(),
+            biometricEnabled: body.biometricEnabled ?? false,
           },
         });
 
@@ -67,7 +68,7 @@ export const authModule = new Elysia({ prefix: "/api/auth-custom" })
           actor: user.id,
           actorRole: "student",
           targetId: profile.id,
-          details: { deviceId: body.deviceId, deviceName: body.deviceName },
+          details: { deviceId: body.deviceId, deviceName: body.deviceName, biometricEnabled: body.biometricEnabled },
         });
 
         return { success: true };
@@ -81,6 +82,7 @@ export const authModule = new Elysia({ prefix: "/api/auth-custom" })
       body: t.Object({
         deviceId: t.String(),
         deviceName: t.String(),
+        biometricEnabled: t.Optional(t.Boolean()),
       }),
     },
   );

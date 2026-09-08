@@ -8,7 +8,8 @@ import { ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState, useCallback } from "react";
-import { syncPendingAttendance } from "@/lib/offline-sync";
+import { syncPendingAttendance, getPendingScansCount } from "@/lib/offline-sync";
+import { NetworkStatusBadge } from "@/components/network-status-badge";
 
 const COLORS = {
   background: "#ffffff",
@@ -22,6 +23,30 @@ const COLORS = {
   destructive: "#ef4444",
 };
 
+function format12Hour(timeStr: string): string {
+  if (!timeStr) return "";
+  const [hStr = "0", mStr = "0"] = timeStr.split(":");
+  const h = parseInt(hStr, 10);
+  const m = parseInt(mStr, 10);
+  if (isNaN(h) || isNaN(m)) return timeStr;
+  const ampm = h >= 12 ? "PM" : "AM";
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  return `${hour12.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")} ${ampm}`;
+}
+
+function getStudentSlotStatus(startTime: string, endTime: string) {
+  const now = new Date();
+  const currentMins = now.getHours() * 60 + now.getMinutes();
+  const [sh = 0, sm = 0] = startTime.split(":").map(Number);
+  const [eh = 0, em = 0] = endTime.split(":").map(Number);
+  const startMins = sh * 60 + sm;
+  const endMins = eh * 60 + em;
+
+  if (currentMins > endMins) return "ENDED";
+  if (currentMins >= startMins && currentMins <= endMins) return "LIVE_SLOT";
+  return "UPCOMING";
+}
+
 export default function HomeScreen() {
   const { data: session } = authClient.useSession();
   const { data: schedule, isLoading: scheduleLoading, refetch: refetchSchedule } = useTodaySchedule();
@@ -29,111 +54,155 @@ export default function HomeScreen() {
   const router = useRouter();
 
   const [refreshing, setRefreshing] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
+  const checkAndSync = useCallback(async () => {
     try {
-      await Promise.all([refetchSchedule(), refetchStats()]);
+      const synced = await syncPendingAttendance();
+      if (synced > 0) {
+        await Promise.all([refetchSchedule(), refetchStats()]);
+      }
+    } catch {
+      // ignore
     } finally {
-      setRefreshing(false);
+      const count = await getPendingScansCount();
+      setPendingCount(count);
     }
   }, [refetchSchedule, refetchStats]);
 
   useEffect(() => {
-    // Attempt to sync pending offline attendance scans on load
-    syncPendingAttendance().then((syncedCount) => {
-      if (syncedCount > 0) {
-        console.log(`Synced ${syncedCount} pending attendance records`);
-      }
-    });
-  }, []);
+    checkAndSync();
+  }, [checkAndSync]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await checkAndSync();
+      await Promise.all([refetchSchedule(), refetchStats()]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [checkAndSync, refetchSchedule, refetchStats]);
 
   const user = session?.user;
   const firstName = user?.name?.split(" ")[0] || "Student";
 
-  const today = new Date().toLocaleDateString("en-US", {
+  const today = new Date().toLocaleDateString("en-IN", {
     weekday: "long",
-    month: "short",
     day: "numeric",
+    month: "short",
+    year: "numeric",
   });
 
-  const renderScheduleItem = ({ item }: { item: any }) => (
-    <View style={styles.card}>
-      <View style={styles.cardContent}>
-        <Text style={styles.subjectName}>{item.subject?.name || "Unknown Subject"}</Text>
-        <View style={styles.rowInfo}>
-          <Ionicons name="time-outline" size={14} color={COLORS.muted} />
-          <Text style={styles.infoText}>
-            {item.startTime} - {item.endTime}
-          </Text>
-        </View>
-        <View style={styles.rowDetails}>
-          <View style={[styles.rowInfo, { marginRight: 12 }]}>
-            <Ionicons name="location-outline" size={14} color={COLORS.muted} />
-            <Text style={styles.infoText}>{item.room?.name || "No Room"}</Text>
-          </View>
-          <View style={styles.rowInfo}>
-            <Ionicons name="person-outline" size={14} color={COLORS.muted} />
-            <Text style={styles.infoText}>{item.teacher?.name || "Unknown Teacher"}</Text>
-          </View>
-        </View>
-      </View>
+  const renderScheduleItem = ({ item }: { item: any }) => {
+    const slotStatus = getStudentSlotStatus(item.startTime, item.endTime);
 
-      {item.attendanceStatus === "PRESENT" ? (
-        <View
-          style={[
-            styles.scanButton,
-            {
-              backgroundColor: COLORS.success + "20",
-              paddingHorizontal: 12,
-              paddingVertical: 6,
-              flexDirection: "row",
-              alignItems: "center",
-            },
-          ]}
-        >
-          <Ionicons
-            name="checkmark-circle"
-            size={16}
-            color={COLORS.success}
-            style={{ marginRight: 4 }}
-          />
-          <Text style={{ color: COLORS.success, fontWeight: "600", fontSize: 12 }}>Present</Text>
+    return (
+      <View style={styles.card}>
+        <View style={styles.cardContent}>
+          <Text style={styles.subjectName}>{item.subject?.name || "Unknown Subject"}</Text>
+          <View style={styles.rowInfo}>
+            <Ionicons name="time-outline" size={14} color={COLORS.muted} />
+            <Text style={styles.infoText}>
+              {format12Hour(item.startTime)} - {format12Hour(item.endTime)}
+            </Text>
+          </View>
+          <View style={styles.rowDetails}>
+            <View style={[styles.rowInfo, { marginRight: 12 }]}>
+              <Ionicons name="location-outline" size={14} color={COLORS.muted} />
+              <Text style={styles.infoText}>{item.room?.name || "No Room"}</Text>
+            </View>
+            <View style={styles.rowInfo}>
+              <Ionicons name="person-outline" size={14} color={COLORS.muted} />
+              <Text style={styles.infoText}>{item.teacher?.name || "Unknown Teacher"}</Text>
+            </View>
+          </View>
         </View>
-      ) : item.attendanceStatus === "ABSENT" ? (
-        <View
-          style={[
-            styles.scanButton,
-            {
-              backgroundColor: COLORS.destructive + "20",
-              paddingHorizontal: 12,
-              paddingVertical: 6,
-              flexDirection: "row",
-              alignItems: "center",
-            },
-          ]}
-        >
-          <Ionicons
-            name="close-circle"
-            size={16}
-            color={COLORS.destructive}
-            style={{ marginRight: 4 }}
-          />
-          <Text style={{ color: COLORS.destructive, fontWeight: "600", fontSize: 12 }}>Missed</Text>
-        </View>
-      ) : item.activeSession ? (
-        <TouchableOpacity
-          onPress={() => router.push("/(tabs)/scan")}
-          style={[
-            styles.scanButton,
-            { backgroundColor: COLORS.primary, paddingHorizontal: 16, paddingVertical: 8 },
-          ]}
-        >
-          <Text style={{ color: "white", fontWeight: "600" }}>Scan</Text>
-        </TouchableOpacity>
-      ) : null}
-    </View>
-  );
+
+        {item.attendanceStatus === "PRESENT" ? (
+          <View
+            style={[
+              styles.scanButton,
+              {
+                backgroundColor: COLORS.success + "20",
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                flexDirection: "row",
+                alignItems: "center",
+              },
+            ]}
+          >
+            <Ionicons
+              name="checkmark-circle"
+              size={16}
+              color={COLORS.success}
+              style={{ marginRight: 4 }}
+            />
+            <Text style={{ color: COLORS.success, fontWeight: "600", fontSize: 12 }}>Present</Text>
+          </View>
+        ) : item.attendanceStatus === "ABSENT" ? (
+          <View
+            style={[
+              styles.scanButton,
+              {
+                backgroundColor: COLORS.destructive + "20",
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                flexDirection: "row",
+                alignItems: "center",
+              },
+            ]}
+          >
+            <Ionicons
+              name="close-circle"
+              size={16}
+              color={COLORS.destructive}
+              style={{ marginRight: 4 }}
+            />
+            <Text style={{ color: COLORS.destructive, fontWeight: "600", fontSize: 12 }}>Missed</Text>
+          </View>
+        ) : item.activeSession ? (
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/scan")}
+            style={[
+              styles.scanButton,
+              { backgroundColor: COLORS.primary, paddingHorizontal: 14, paddingVertical: 8, flexDirection: "row", alignItems: "center" },
+            ]}
+          >
+            <Ionicons name="qr-code-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
+            <Text style={{ color: "white", fontWeight: "600", fontSize: 13 }}>Scan</Text>
+          </TouchableOpacity>
+        ) : slotStatus === "ENDED" ? (
+          <View
+            style={[
+              styles.scanButton,
+              { backgroundColor: "#f3f4f6", paddingHorizontal: 10, paddingVertical: 6 },
+            ]}
+          >
+            <Text style={{ color: COLORS.muted, fontWeight: "600", fontSize: 11 }}>Class Ended</Text>
+          </View>
+        ) : slotStatus === "LIVE_SLOT" ? (
+          <View
+            style={[
+              styles.scanButton,
+              { backgroundColor: "#fef3c7", paddingHorizontal: 10, paddingVertical: 6 },
+            ]}
+          >
+            <Text style={{ color: "#d97706", fontWeight: "600", fontSize: 11 }}>In Session</Text>
+          </View>
+        ) : (
+          <View
+            style={[
+              styles.scanButton,
+              { backgroundColor: "#eff6ff", paddingHorizontal: 10, paddingVertical: 6 },
+            ]}
+          >
+            <Text style={{ color: "#3b82f6", fontWeight: "600", fontSize: 11 }}>Upcoming</Text>
+          </View>
+        )}
+      </View>
+    );
+  };
 
   return (
     <Container style={styles.container} scroll={false}>
@@ -144,8 +213,11 @@ export default function HomeScreen() {
             <Text style={styles.dateText}>{today}</Text>
             <Text style={styles.greetingText}>Hi, {firstName}</Text>
           </View>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{firstName.charAt(0)}</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <NetworkStatusBadge />
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{firstName.charAt(0)}</Text>
+            </View>
           </View>
         </View>
 
@@ -173,6 +245,32 @@ export default function HomeScreen() {
               <Text style={styles.statLabel}>Overall</Text>
             </View>
           </View>
+        )}
+
+        {pendingCount > 0 && (
+          <TouchableOpacity
+            onPress={onRefresh}
+            style={{
+              backgroundColor: "#fef3c7",
+              borderColor: "#f59e0b",
+              borderWidth: 1,
+              borderRadius: 8,
+              padding: 10,
+              marginTop: 12,
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
+            <Ionicons name="cloud-offline-outline" size={20} color="#b45309" style={{ marginRight: 8 }} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: "#b45309", fontWeight: "600", fontSize: 13 }}>
+                {pendingCount} attendance scan{pendingCount > 1 ? "s" : ""} saved offline
+              </Text>
+              <Text style={{ color: "#92400e", fontSize: 11 }}>
+                Pull down or tap to sync when your connection is restored
+              </Text>
+            </View>
+          </TouchableOpacity>
         )}
       </View>
 

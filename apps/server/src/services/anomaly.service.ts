@@ -22,7 +22,7 @@ function deg2rad(deg: number): number {
 
 export interface AnomalyParams {
   userId: string;
-  type: "IMPOSSIBLE_TRAVEL" | "DEVICE_MISMATCH";
+  type: "IMPOSSIBLE_TRAVEL" | "DEVICE_MISMATCH" | "GEOFENCE_VIOLATION";
   severity: "LOW" | "MEDIUM" | "HIGH";
   details: Record<string, any>;
 }

@@ -9,6 +9,8 @@ export const ScanAttendanceBody = t.Object({
   gpsLng: t.Optional(t.Number()),
   mockFlag: t.Optional(t.Boolean()),
   deviceFingerprint: t.Optional(t.String()),
+  isOfflineSync: t.Optional(t.Boolean()),
+  scannedAt: t.Optional(t.Number()),
 });
 
 export type ScanAttendanceDto = typeof ScanAttendanceBody.static;

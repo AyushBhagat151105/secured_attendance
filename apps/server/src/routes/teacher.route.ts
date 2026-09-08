@@ -48,6 +48,72 @@ export const teacherModule = new Elysia({ prefix: "/api/teacher" })
     return TeacherService.deleteSession(session.user.id, params.id);
   })
 
+  // MANUAL ATTENDANCE ENDPOINTS
+  .get(
+    "/timetable/:id/roster",
+    async ({ request, params }: any) => {
+      const session = await auth.api.getSession({ headers: request.headers });
+      if (!session) return status(401, { message: "Unauthorized" });
+
+      return TeacherService.getTimetableRoster(session.user.id, params.id);
+    },
+    {
+      params: t.Object({
+        id: t.String(),
+      }),
+    },
+  )
+
+  .post(
+    "/sessions/manual",
+    async ({ request, body }: any) => {
+      const session = await auth.api.getSession({ headers: request.headers });
+      if (!session) return status(401, { message: "Unauthorized" });
+
+      return TeacherService.submitManualAttendance(session.user.id, body);
+    },
+    {
+      body: t.Object({
+        timetableEntryId: t.String(),
+        presentStudentIds: t.Array(t.String()),
+        notes: t.Optional(t.String()),
+      }),
+    },
+  )
+
+  .get(
+    "/sessions/:id/roster",
+    async ({ request, params }: any) => {
+      const session = await auth.api.getSession({ headers: request.headers });
+      if (!session) return status(401, { message: "Unauthorized" });
+
+      return TeacherService.getSessionRoster(session.user.id, params.id);
+    },
+    {
+      params: t.Object({
+        id: t.String(),
+      }),
+    },
+  )
+
+  .post(
+    "/sessions/:id/finalize",
+    async ({ request, params, body }: any) => {
+      const session = await auth.api.getSession({ headers: request.headers });
+      if (!session) return status(401, { message: "Unauthorized" });
+
+      return TeacherService.finalizeSessionAttendance(session.user.id, params.id, body.presentStudentIds);
+    },
+    {
+      params: t.Object({
+        id: t.String(),
+      }),
+      body: t.Object({
+        presentStudentIds: t.Array(t.String()),
+      }),
+    },
+  )
+
   // WEBSOCKET GATEWAY
   .ws("/ws/sessions/:id", {
     response: t.Union([

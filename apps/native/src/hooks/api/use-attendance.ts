@@ -10,6 +10,8 @@ export type ScanAttendancePayload = {
   gpsLng?: number;
   mockFlag?: boolean;
   deviceFingerprint?: string;
+  isOfflineSync?: boolean;
+  scannedAt?: number;
 };
 
 export function useScanAttendance() {

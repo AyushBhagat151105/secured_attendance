@@ -53,7 +53,18 @@ export default function SignInScreen() {
       },
       {
         onError(error) {
-          setError(error.error?.message || "Failed to sign in");
+          const rawMsg = error.error?.message || "";
+          if (
+            !rawMsg ||
+            rawMsg.toLowerCase().includes("fetch") ||
+            rawMsg.toLowerCase().includes("network")
+          ) {
+            setError(
+              "No internet connection. Please connect to WiFi or mobile data to sign in for the first time.",
+            );
+          } else {
+            setError(rawMsg || "Failed to sign in. Please verify your email and password.");
+          }
         },
         onSuccess() {
           // If successful, the layout should auto-redirect to device binding if needed,

@@ -6,14 +6,15 @@ name: secured_attendance
 services:
   web:
     build:
-      context: ./apps/web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        - VITE_SERVER_URL=http://localhost:3001
     container_name: secured_attendance-web
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - VITE_API_URL=http://server:3001
     restart: unless-stopped
     depends_on:
       - server
@@ -22,18 +23,25 @@ services:
 
   server:
     build:
-      context: ./apps/server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/server/Dockerfile
     container_name: secured_attendance-server
     ports:
       - "3001:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - TZ=Asia/Kolkata
       - DATABASE_URL=postgresql://postgres:password@db:5432/secured_attendance
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-default_super_secure_production_secret_key_32_chars}
+      - BETTER_AUTH_URL=http://localhost:3001
+      - CORS_ORIGIN=http://localhost:3000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     restart: unless-stopped
     depends_on:
       - db
+      - redis
     networks:
       - secured_attendance-network
 
@@ -53,6 +61,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+    networks:
+      - secured_attendance-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: secured_attendance-redis
+    ports:
+      - "6379:6379"
     restart: unless-stopped
     networks:
       - secured_attendance-network

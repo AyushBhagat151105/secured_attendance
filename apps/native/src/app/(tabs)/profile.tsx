@@ -2,6 +2,7 @@ import { Text, View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, A
 import { useCallback, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { authClient } from "@/lib/auth-client";
+import { clearAllCachedAuth } from "@/lib/session-cache";
 import { useStudentProfile } from "@/hooks/api/use-profile";
 import { useAttendanceStats } from "@/hooks/api/use-attendance-history";
 import { useRouter } from "expo-router";
@@ -46,8 +47,12 @@ export default function ProfileScreen() {
         style: "destructive",
         onPress: async () => {
           setSigningOut(true);
-          await authClient.signOut();
-          router.replace("/(auth)/sign-in");
+          try {
+            await clearAllCachedAuth();
+            await authClient.signOut();
+          } finally {
+            router.replace("/(auth)/sign-in");
+          }
         },
       },
     ]);

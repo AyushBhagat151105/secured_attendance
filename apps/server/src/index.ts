@@ -25,11 +25,6 @@ const app = new Elysia()
   .all("/api/auth/*", async (context) => {
     const { request, status } = context;
 
-    if (request.url.includes("change-password")) {
-      const session = await auth.api.getSession({ headers: request.headers });
-      logger.warn("[index.ts] User on change-password:", session?.user || "NO USER");
-    }
-
     if (["POST", "GET"].includes(request.method)) {
       return auth.handler(request);
     }
@@ -51,10 +46,13 @@ const app = new Elysia()
   .use(authModule)
   .use(teacherModule)
   .use(studentModule)
-  .get("/", () => "OK")
-  .listen(3000, () => {
-    console.log("Server is running on http://localhost:3000");
-  });
+  .get("/", () => "OK");
+
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+
+app.listen({ port, hostname: "0.0.0.0" }, () => {
+  console.log(`Server is running on http://0.0.0.0:${port}`);
+});
 
 // Export the App type for Eden Treaty type inference on the frontend
 export type App = typeof app;

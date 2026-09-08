@@ -15,11 +15,21 @@ export class StudentScheduleService {
 
     const divisionId = student.studentProfile.divisionId;
 
-    // Get today's day of week
-    // JS getDay(): 0 = Sunday, 1 = Monday.
-    // The DB stores dayOfWeek using this exact mapping.
-    const today = new Date();
-    const dayOfWeek = today.getDay();
+    // Auto-close any active sessions whose endTime has passed
+    await prisma.attendanceSession.updateMany({
+      where: {
+        status: "active",
+        endTime: { lt: new Date() },
+      },
+      data: {
+        status: "closed",
+        closedAt: new Date(),
+      },
+    });
+
+    // Use Indian Standard Time (Asia/Kolkata) to get today's day of week
+    const istDate = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+    const dayOfWeek = istDate.getDay();
 
     const timetableEntries = await prisma.timetableEntry.findMany({
       where: {
@@ -40,7 +50,7 @@ export class StudentScheduleService {
     });
 
     // We also want to see if any of these subjects have an active session right now
-    const todayStart = new Date();
+    const todayStart = new Date(istDate);
     todayStart.setHours(0, 0, 0, 0);
 
     const activeSessions = await prisma.attendanceSession.findMany({
@@ -82,50 +92,44 @@ export class StudentScheduleService {
     });
 
     return timetableEntries.map((entry) => {
-      // Find active session for this subject, room, and time slot
+      // Find active session for this specific timetable slot
       const activeSession = activeSessions.find((s) => {
+        if (s.timetableEntryId) {
+          return s.timetableEntryId === entry.id;
+        }
         if (s.subjectId !== entry.subjectId) return false;
         if (entry.room && s.roomId !== entry.room.id) return false;
 
-        // Check if session was created roughly around the timetable entry start time
         const [startHour = 0, startMin = 0] = entry.startTime.split(":").map(Number);
         const slotTimeMins = startHour * 60 + startMin;
         const sessionTimeMins = s.createdAt.getHours() * 60 + s.createdAt.getMinutes();
-        return Math.abs(sessionTimeMins - slotTimeMins) <= 60;
+        return Math.abs(sessionTimeMins - slotTimeMins) <= 45;
       });
 
-      // Find if there's an attendance record for this subject/time slot today
-      const todaysSessionIdsForSubject = todaysSessions
-        .filter((s) => {
-          if (s.subjectId !== entry.subjectId) return false;
-          if (entry.room && s.roomId !== entry.room.id) return false;
+      // Find sessions for this specific slot
+      const slotSessions = todaysSessions.filter((s) => {
+        if (s.timetableEntryId) {
+          return s.timetableEntryId === entry.id;
+        }
+        if (s.subjectId !== entry.subjectId) return false;
+        if (entry.room && s.roomId !== entry.room.id) return false;
 
-          const [startHour = 0, startMin = 0] = entry.startTime.split(":").map(Number);
-          const slotTimeMins = startHour * 60 + startMin;
-          const sessionTimeMins = s.createdAt.getHours() * 60 + s.createdAt.getMinutes();
-          return Math.abs(sessionTimeMins - slotTimeMins) <= 60;
-        })
-        .map((s) => s.id);
+        const [startHour = 0, startMin = 0] = entry.startTime.split(":").map(Number);
+        const slotTimeMins = startHour * 60 + startMin;
+        const sessionTimeMins = s.createdAt.getHours() * 60 + s.createdAt.getMinutes();
+        return Math.abs(sessionTimeMins - slotTimeMins) <= 45;
+      });
 
+      const slotSessionIds = slotSessions.map((s) => s.id);
       const attendance = todaysAttendances.find((a) =>
-        todaysSessionIdsForSubject.includes(a.sessionId),
+        slotSessionIds.includes(a.sessionId),
       );
 
       let attendanceStatus = undefined;
       if (attendance) {
-        attendanceStatus = "PRESENT"; // Right now we only store present scans. If they don't have one and the session is closed, they are absent.
+        attendanceStatus = "PRESENT";
       } else {
-        // If they don't have an attendance record, check if there's a CLOSED session for this subject/time slot today.
-        // If yes, they missed it.
-        const hasClosedSession = todaysSessions.some((s) => {
-          if (s.subjectId !== entry.subjectId || s.status !== "closed") return false;
-          if (entry.room && s.roomId !== entry.room.id) return false;
-
-          const [startHour = 0, startMin = 0] = entry.startTime.split(":").map(Number);
-          const slotTimeMins = startHour * 60 + startMin;
-          const sessionTimeMins = s.createdAt.getHours() * 60 + s.createdAt.getMinutes();
-          return Math.abs(sessionTimeMins - slotTimeMins) <= 60;
-        });
+        const hasClosedSession = slotSessions.some((s) => s.status === "closed");
         if (hasClosedSession) {
           attendanceStatus = "ABSENT";
         }

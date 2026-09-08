@@ -9,11 +9,31 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppThemeProvider } from "@/contexts/app-theme-context";
 import { useUpdateCheck } from "@/lib/updates";
 
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error: any) => {
+        const status = error?.response?.status || error?.status;
+        if (status === 401 || status === 403) return false;
+        return failureCount < 2;
+      },
+    },
+  },
+});
 
 import { useRouter, useSegments } from "expo-router";
 import { authClient } from "@/lib/auth-client";
 import { useStudentProfile } from "@/hooks/api/use-profile";
+import {
+  getCachedSession,
+  getCachedProfile,
+  saveCachedSession,
+  saveCachedProfile,
+  subscribeAuthCache,
+  clearAllCachedAuth,
+  type CachedSessionData,
+  type CachedProfileData,
+} from "@/lib/session-cache";
 
 export const unstable_settings = {
   initialRouteName: "(tabs)",
@@ -23,57 +43,121 @@ function StackLayout() {
   const segments = useSegments();
   const router = useRouter();
   const [timeoutReached, setTimeoutReached] = useState(false);
+  const [cachedSession, setCachedSession] = useState<CachedSessionData | null>(null);
+  const [cachedProfile, setCachedProfile] = useState<CachedProfileData | null>(null);
+  const [cacheLoaded, setCacheLoaded] = useState(false);
 
   const { data: session, isPending: sessionPending } = authClient.useSession();
   const { data: profile, isLoading: profilePending } = useStudentProfile();
 
-  const user = session?.user as any;
-  const isPending = sessionPending || (user?.role === "student" && profilePending);
+  // Load offline cached session on app start
+  useEffect(() => {
+    async function loadCache() {
+      const [s, p] = await Promise.all([getCachedSession(), getCachedProfile()]);
+      setCachedSession(s);
+      setCachedProfile(p);
+      setCacheLoaded(true);
+    }
+    loadCache();
+  }, []);
+
+  // Listen for explicit sign out events across the app
+  useEffect(() => {
+    const unsubscribe = subscribeAuthCache(() => {
+      setCachedSession(null);
+      setCachedProfile(null);
+      queryClient.clear();
+      queryClient.cancelQueries();
+      router.replace("/(auth)/sign-in");
+    });
+    return unsubscribe;
+  }, [router]);
+
+  // Update offline cache when fresh online data arrives, or clear on sign-out
+  useEffect(() => {
+    if (session) {
+      saveCachedSession(session as any);
+      setCachedSession(session as any);
+    } else if (session === null && !sessionPending) {
+      setCachedSession(null);
+      setCachedProfile(null);
+      saveCachedSession(null);
+      saveCachedProfile(null);
+      queryClient.clear();
+    }
+  }, [session, sessionPending]);
+
+  useEffect(() => {
+    if (profile) {
+      saveCachedProfile(profile as any);
+      setCachedProfile(profile as any);
+    }
+  }, [profile]);
+
+  const effectiveSession = session || cachedSession;
+  const effectiveUser = (session?.user || cachedSession?.user) as any;
+  const effectiveProfile = profile || cachedProfile;
+
+  const isPending = sessionPending || (effectiveUser?.role === "student" && profilePending);
 
   // If the server is unreachable, useSession might hang forever in isPending state.
-  // We'll force a timeout after 5 seconds to prevent the app from hanging.
+  // We'll force a timeout after 3 seconds to fall back to offline cached session.
   useEffect(() => {
     if (sessionPending) {
       const timer = setTimeout(() => {
         setTimeoutReached(true);
-      }, 5000);
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [sessionPending]);
 
   useEffect(() => {
-    if (isPending && !timeoutReached) return;
+    if (!cacheLoaded) return;
+    if (isPending && !timeoutReached && !effectiveSession) return;
 
     const inAuthGroup = segments[0] === "(auth)";
     const path = segments.join("/");
 
-    // If session is null (or we timed out trying to reach the server)
-    if (!session && !inAuthGroup) {
-      // Redirect to the sign-in page.
-      router.replace("/(auth)/sign-in");
-    } else if (session && user) {
-      if (user.requiresPasswordChange && path !== "(auth)/reset-password") {
+    // If no session exists (neither online nor cached from a previous login)
+    if (!effectiveSession) {
+      if (!inAuthGroup) {
+        router.replace("/(auth)/sign-in");
+      }
+      return;
+    }
+
+    if (effectiveUser) {
+      if (effectiveUser.requiresPasswordChange && path !== "(auth)/reset-password") {
         router.replace("/(auth)/reset-password");
       } else if (
-        !user.requiresPasswordChange &&
-        user.role === "student" &&
-        profile &&
-        !profile.deviceBound &&
+        !effectiveUser.requiresPasswordChange &&
+        effectiveUser.role === "student" &&
+        effectiveProfile &&
+        !effectiveProfile.deviceBound &&
         path !== "(auth)/device-binding"
       ) {
         router.replace("/(auth)/device-binding");
       } else if (
-        !user.requiresPasswordChange &&
-        (user.role !== "student" || (profile && profile.deviceBound))
+        !effectiveUser.requiresPasswordChange &&
+        (effectiveUser.role !== "student" || (effectiveProfile && effectiveProfile.deviceBound))
       ) {
         if (inAuthGroup) {
           router.replace("/(tabs)");
         }
       }
-    } else if (session && !user && !inAuthGroup) {
+    } else if (!inAuthGroup) {
       router.replace("/(auth)/sign-in");
     }
-  }, [session, profile, isPending, timeoutReached, segments, router, user]);
+  }, [
+    cacheLoaded,
+    effectiveSession,
+    effectiveUser,
+    effectiveProfile,
+    isPending,
+    timeoutReached,
+    segments,
+    router,
+  ]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

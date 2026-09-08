@@ -1,5 +1,6 @@
 ﻿import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "../../lib/api-client";
+import { authClient } from "../../lib/auth-client";
 
 export const scheduleKeys = {
   all: ["schedule"] as const,
@@ -7,6 +8,9 @@ export const scheduleKeys = {
 };
 
 export function useTodaySchedule() {
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
+
   return useQuery({
     queryKey: scheduleKeys.today(),
     queryFn: async () => {
@@ -17,6 +21,7 @@ export function useTodaySchedule() {
         throw new Error(err.response?.data?.message || err.message || "Failed to load schedule");
       }
     },
+    enabled: !!user,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }

@@ -15,6 +15,7 @@ import { useScanAttendance } from "@/hooks/api/use-attendance";
 import { getDeviceFingerprint } from "@/lib/device";
 import { Ionicons } from "@expo/vector-icons";
 import { savePendingAttendance } from "@/lib/offline-sync";
+import { NetworkStatusBadge } from "@/components/network-status-badge";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAttendanceStats, historyKeys } from "@/hooks/api/use-attendance-history";
 
@@ -155,11 +156,14 @@ export default function ScanScreen() {
         }
       } catch (error: any) {
         const message = error.message?.toLowerCase() || "";
-        if (
+        const isNetworkOrTimeout =
+          !error.response ||
+          error.code === "ECONNABORTED" ||
           message.includes("network") ||
           message.includes("failed to fetch") ||
-          message.includes("timeout")
-        ) {
+          message.includes("timeout");
+
+        if (isNetworkOrTimeout) {
           await savePendingAttendance(payloadData);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           setScanStatus("success");
@@ -199,7 +203,10 @@ export default function ScanScreen() {
       >
         <View style={styles.overlayContainer}>
           <View style={styles.topTextContainer}>
-            <Text style={styles.topTitle}>Scan to Attend</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+              <Text style={styles.topTitle}>Scan to Attend</Text>
+              <NetworkStatusBadge />
+            </View>
             <Text style={styles.topSubtitle}>
               Point your camera at the QR code displayed by your teacher
             </Text>

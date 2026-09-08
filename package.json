@@ -48,7 +48,8 @@
     "test": "bun run --filter web test && bun run --filter server test",
     "lint:eslint": "eslint .",
     "format:prettier": "prettier --write .",
-    "format:prettier:check": "prettier --check ."
+    "format:prettier:check": "prettier --check .",
+    "postinstall": "node scripts/patch-prisma-wasm.js"
   },
   "dependencies": {
     "@secured_attendance/env": "workspace:*",

@@ -1,0 +1,44 @@
+name: secured_attendance_prod
+
+services:
+  server:
+    image: ghcr.io/ayushbhagat151105/secured_attendance-server:latest
+    container_name: secured_attendance-server
+    restart: unless-stopped
+    ports:
+      - "3006:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - TZ=Asia/Kolkata
+      - DATABASE_URL=${DATABASE_URL}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-https://attendance-api.ayushbhagat.com}
+      - CORS_ORIGIN=${CORS_ORIGIN:-https://attendance.ayushbhagat.com}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - SUPER_ADMIN_EMAIL=${SUPER_ADMIN_EMAIL:-admin@charusat.ac.in}
+      - SUPER_ADMIN_NAME=${SUPER_ADMIN_NAME:-System Administrator}
+      - DEFAULT_TEACHER_PASSWORD=${DEFAULT_TEACHER_PASSWORD:-Charusat@123}
+      - DEFAULT_STUDENT_PASSWORD=${DEFAULT_STUDENT_PASSWORD:-Charusat@123}
+    depends_on:
+      - redis
+    networks:
+      - secured_attendance-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: secured_attendance-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - secured_attendance-network
+
+networks:
+  secured_attendance-network:
+    driver: bridge
+
+volumes:
+  redis_data:

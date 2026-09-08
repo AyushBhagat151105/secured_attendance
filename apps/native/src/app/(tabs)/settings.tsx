@@ -2,6 +2,7 @@ import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIn
 import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { authClient } from "@/lib/auth-client";
+import { clearAllCachedAuth } from "@/lib/session-cache";
 import { useRouter } from "expo-router";
 import Constants from "expo-constants";
 import { env } from "@secured_attendance/env/native";
@@ -30,8 +31,12 @@ export default function SettingsScreen() {
         style: "destructive",
         onPress: async () => {
           setSigningOut(true);
-          await authClient.signOut();
-          router.replace("/(auth)/sign-in");
+          try {
+            await clearAllCachedAuth();
+            await authClient.signOut();
+          } finally {
+            router.replace("/(auth)/sign-in");
+          }
         },
       },
     ]);
