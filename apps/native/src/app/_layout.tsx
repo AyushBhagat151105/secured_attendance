@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
+import * as SplashScreen from "expo-splash-screen";
+
+// Prevent auto-hiding until ready
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppThemeProvider } from "@/contexts/app-theme-context";
@@ -57,8 +61,15 @@ function StackLayout() {
       setCachedSession(s);
       setCachedProfile(p);
       setCacheLoaded(true);
+      SplashScreen.hideAsync().catch(() => {});
     }
     loadCache();
+
+    // Fallback timer: ensure splash screen always hides within 1.5s
+    const fallbackTimer = setTimeout(() => {
+      SplashScreen.hideAsync().catch(() => {});
+    }, 1500);
+    return () => clearTimeout(fallbackTimer);
   }, []);
 
   // Listen for explicit sign out events across the app
