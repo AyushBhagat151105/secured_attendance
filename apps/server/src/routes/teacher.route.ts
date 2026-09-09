@@ -7,6 +7,7 @@ import { auth } from "@secured_attendance/auth";
 import prisma from "@secured_attendance/db";
 import crypto from "crypto";
 import { logger } from "../lib/logger";
+import { attendanceRedis } from "../lib/redis";
 
 // A map to store active WebSocket intervals
 const activeTimers = new Map<string, ReturnType<typeof setInterval>>();
@@ -199,7 +200,12 @@ export const teacherModule = new Elysia({ prefix: "/api/teacher" })
               activeAfter: Date.now() + i * 10000, // Client knows when to show this
             });
 
-            // Store in DB for future verification by student
+            // Store in Redis with TTL (sub-millisecond student scan verification)
+            void attendanceRedis
+              .setex(`qr:${sessionId}:${nonce}`, 60 + i * 10, "1")
+              .catch(() => {});
+
+            // Store in DB for persistence and offline sync verification
             await prisma.qrToken.create({
               data: {
                 sessionId,

@@ -48,7 +48,35 @@ export const authModule = new Elysia({ prefix: "/api/auth-custom" })
             details: { reason: "already_bound_to_different_device", newDeviceId: body.deviceId },
           });
           return status(403, {
-            message: "Account already bound to another device. Contact admin.",
+            message: "Your account is already bound to another device. Contact admin to rebind.",
+          });
+        }
+
+        // Enforce 1-Device-per-Student: Check if this physical device is already bound to another student
+        const deviceAlreadyBound = await prisma.studentProfile.findFirst({
+          where: {
+            deviceId: body.deviceId,
+            deviceBound: true,
+            userId: { not: user.id },
+          },
+          include: {
+            user: { select: { name: true } },
+          },
+        });
+
+        if (deviceAlreadyBound) {
+          void queueAuditLog({
+            eventType: "device.bind_conflict",
+            actor: user.id,
+            actorRole: "student",
+            details: {
+              reason: "device_already_bound_to_another_student",
+              conflictUserId: deviceAlreadyBound.userId,
+              deviceId: body.deviceId,
+            },
+          });
+          return status(403, {
+            message: "This device is already registered to another student. One device per student is strictly enforced.",
           });
         }
 

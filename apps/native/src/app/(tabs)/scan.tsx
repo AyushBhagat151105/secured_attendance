@@ -115,13 +115,17 @@ export default function ScanScreen() {
       // 3. Get GPS Location
       let gpsLat: number | undefined;
       let gpsLng: number | undefined;
+      let gpsAccuracy: number | undefined;
       let mockFlag = false;
 
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === "granted") {
-        const location = await Location.getCurrentPositionAsync({});
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
         gpsLat = location.coords.latitude;
         gpsLng = location.coords.longitude;
+        gpsAccuracy = location.coords.accuracy ?? undefined;
         mockFlag = location.mocked ?? false;
       }
 
@@ -130,6 +134,7 @@ export default function ScanScreen() {
         ...payload,
         gpsLat,
         gpsLng,
+        gpsAccuracy,
         mockFlag,
         deviceFingerprint: deviceInfo.id,
       };

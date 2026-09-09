@@ -59,14 +59,18 @@ export default function ProfileScreen() {
   };
 
   const user = session?.user as any;
-  const name = user?.name || "Student";
-  const email = user?.email || "";
-  const initials = name
-    .split(" ")
-    .map((w: string) => w.charAt(0))
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  const name = typeof user?.name === "string" ? user.name : "Student";
+  const email = typeof user?.email === "string" ? user.email : "";
+  const initials =
+    typeof name === "string" && name.trim().length > 0
+      ? name
+          .trim()
+          .split(" ")
+          .map((w: string) => w.charAt(0))
+          .join("")
+          .toUpperCase()
+          .slice(0, 2)
+      : "ST";
 
   const overallPct = stats?.overallPercentage ? Math.round(stats.overallPercentage) : null;
   const deviceBound = profile?.deviceBound ?? false;

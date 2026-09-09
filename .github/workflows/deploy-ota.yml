@@ -1,0 +1,66 @@
+name: Deploy OTA JS Bundle (1-Minute Fast Deploy)
+
+on:
+  push:
+    branches: [ master, main ]
+    paths:
+      - 'apps/native/src/**'
+      - 'apps/native/assets/**'
+      - 'apps/native/package.json'
+      - 'packages/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ota-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy-ota:
+    name: Export JS Bundle & Deploy to VPS OTA Directory
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder"
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun Environment
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Monorepo Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Configure Native Environment
+        run: |
+          mkdir -p apps/native
+          echo "EXPO_PUBLIC_SERVER_URL=${{ vars.EXPO_PUBLIC_SERVER_URL || 'https://attendance-api.ayushbhagat.com' }}" > apps/native/.env
+          echo "EXPO_PUBLIC_AUTH_REDIRECT_PATH=auth/callback" >> apps/native/.env
+
+      - name: Export Android JS Bundle & Manifest
+        run: |
+          cd apps/native
+          npx expo export -p android --output-dir ./dist
+
+      - name: SCP OTA Bundle & Manifest to VPS
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "apps/native/dist/*"
+          target: "/root/secured_attendance/uploads/updates"
+          strip_components: 3
+          rm: true
+
+      - name: Verify Updates on VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            mkdir -p /root/secured_attendance/uploads/updates
+            echo "Successfully deployed OTA bundle to server updates directory!"

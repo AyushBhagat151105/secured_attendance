@@ -6,7 +6,7 @@ import { unwrapEden } from "@/lib/fetch-utils";
 export function useTeacherSessionsReport() {
   return useQuery({
     queryKey: ["teacher", "reports", "sessions"],
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 10,
     queryFn: () => unwrapEden(apiClient.api.teacher.reports.sessions.get()),
   });
 }
@@ -27,7 +27,7 @@ export function useDeleteSession() {
 export function useTeacherSessionDetail(sessionId: string) {
   return useQuery({
     queryKey: ["teacher", "reports", "session", sessionId],
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 10,
     queryFn: () => unwrapEden(apiClient.api.teacher.reports.sessions({ id: sessionId }).get()),
     enabled: !!sessionId,
   });
@@ -36,7 +36,7 @@ export function useTeacherSessionDetail(sessionId: string) {
 export function useTeacherSubjectsReport() {
   return useQuery({
     queryKey: ["teacher", "reports", "subjects"],
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 10,
     queryFn: () => unwrapEden(apiClient.api.teacher.reports.subjects.get()),
   });
 }

@@ -8,6 +8,8 @@ dist
 build
 *.tsbuildinfo
 *.apk
+uploads/
+apps/native/dist/
 
 # Environment variables
 .env

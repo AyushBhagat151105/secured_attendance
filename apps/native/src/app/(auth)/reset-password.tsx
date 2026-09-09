@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Text, View, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
+import { Text, View, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,40 +50,31 @@ export default function ResetPasswordScreen() {
       },
       {
         onError(error) {
-          Alert.alert(
-            "Frontend Error!",
-            `changePassword failed: ${error.error?.message || "Unknown error"}. Because this failed, complete-onboarding will NEVER be called!`,
-          );
-          setError(error.error?.message || "Failed to change password");
+          const rawMsg = (error.error?.message || "").toLowerCase();
+          if (rawMsg.includes("invalid password") || rawMsg.includes("incorrect")) {
+            setError("Your current password is incorrect. Please check and try again.");
+          } else if (rawMsg.includes("too short") || rawMsg.includes("characters")) {
+            setError("New password must be at least 8 characters long.");
+          } else {
+            setError(error.error?.message || "Failed to change password. Please try again.");
+          }
         },
         async onSuccess() {
           try {
-            // Give expoClient time to finish writing the new session cookie to SecureStore
-            // because plugin hooks in Better Auth are sometimes not fully awaited before resolving.
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 500));
 
-            // Hit our custom endpoint to clear the requiresPasswordChange flag
-            Alert.alert(
-              "Success!",
-              "changePassword succeeded! Now calling complete-onboarding API with Axios...",
-            );
-
+            // Clear the onboarding flag
             try {
               await apiClient.patch("/api/auth-custom/complete-onboarding");
             } catch (err: any) {
-              Alert.alert(
-                "API Error!",
-                `complete-onboarding failed: ${err.response?.status || err.message}`,
-              );
-              setError(`Failed to complete onboarding: ${err.response?.status || err.message}`);
+              setError(err.response?.data?.message || err.message || "Failed to update account status");
               return;
             }
 
-            // Refresh the session to update the requiresPasswordChange flag in the client
+            // Refresh the session
             await authClient.getSession();
-          } catch (err) {
-            Alert.alert("Crash!", "Something crashed while calling complete-onboarding.");
-            setError("Failed to complete onboarding");
+          } catch (err: any) {
+            setError("An unexpected error occurred. Please try again.");
           }
         },
       },

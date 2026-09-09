@@ -1,12 +1,12 @@
 import { useState, useMemo, useEffect } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,6 +17,7 @@ import {
   IconX,
   IconChalkboard,
   IconUsers,
+  IconRefresh,
 } from "@tabler/icons-react";
 import { useTimetableRoster, useSubmitManualAttendance } from "@/hooks/api/use-manual-attendance";
 
@@ -33,7 +34,7 @@ export function ManualAttendanceModal({
   onOpenChange,
   format12Hour,
 }: ManualAttendanceModalProps) {
-  const { data: rosterData, isLoading } = useTimetableRoster(open ? entry?.id : null);
+  const { data: rosterData, isLoading, error, refetch } = useTimetableRoster(open ? entry?.id : null);
   const submitMutation = useSubmitManualAttendance();
 
   const [presentIds, setPresentIds] = useState<Set<string>>(new Set());
@@ -105,64 +106,69 @@ export function ManualAttendanceModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
-        <DialogHeader className="p-6 pb-4 border-b border-border">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-2xl p-0 flex flex-col h-full bg-background border-l border-border shadow-2xl"
+      >
+        <SheetHeader className="p-6 pb-4 border-b border-border space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-                Manual Attendance
+              <div className="flex items-center gap-2">
+                <SheetTitle className="text-2xl font-bold tracking-tight text-foreground">
+                  Manual Attendance
+                </SheetTitle>
                 {entry && (
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-semibold capitalize">
                     {entry.type}
                   </span>
                 )}
-              </DialogTitle>
+              </div>
               {entry && (
-                <DialogDescription className="mt-1 flex flex-wrap items-center gap-3 text-sm">
+                <SheetDescription className="text-sm text-muted-foreground mt-1 flex flex-wrap items-center gap-2">
                   <span className="font-semibold text-foreground">{entry.subject?.name}</span>
                   <span>•</span>
                   <span className="flex items-center gap-1">
-                    <IconChalkboard className="h-4 w-4 text-muted-foreground" />
+                    <IconChalkboard className="h-3.5 w-3.5" />
                     Room {entry.room?.name}
                   </span>
                   <span>•</span>
                   <span>
                     {format12Hour(entry.startTime)} - {format12Hour(entry.endTime)}
                   </span>
-                </DialogDescription>
+                </SheetDescription>
               )}
             </div>
 
-            {/* Quick Stats Counter */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/60 border border-border self-start sm:self-auto">
-              <IconUsers className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-bold text-foreground">
+            {/* Quick Ratio Counter Badge */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 self-start sm:self-auto">
+              <IconUsers className="h-4 w-4" />
+              <span className="text-sm font-extrabold">
                 {presentCount} / {totalCount}
               </span>
-              <span className="text-xs text-muted-foreground">({percentage}%)</span>
+              <span className="text-xs font-semibold">({percentage}%)</span>
             </div>
           </div>
 
-          {/* Controls toolbar */}
-          <div className="mt-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
-            <div className="relative w-full sm:w-72">
-              <IconSearch className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          {/* Search & Filter Toolbar */}
+          <div className="space-y-3 pt-1">
+            <div className="relative w-full">
+              <IconSearch className="h-4 w-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search roll no or name..."
+                placeholder="Search roll number, name, or enrollment..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 text-sm"
+                className="pl-10 h-10 text-sm bg-muted/30"
               />
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-              <div className="flex rounded-md border border-border p-0.5 bg-muted/40 text-xs">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex rounded-lg border border-border p-1 bg-muted/40 text-xs">
                 <button
                   type="button"
                   onClick={() => setFilterMode("all")}
-                  className={`px-2.5 py-1 rounded-sm font-medium transition-colors ${
-                    filterMode === "all" ? "bg-background shadow-xs text-foreground" : "text-muted-foreground"
+                  className={`px-3 py-1.5 rounded-md font-medium transition-all ${
+                    filterMode === "all" ? "bg-background shadow-xs text-foreground font-semibold" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   All ({totalCount})
@@ -170,10 +176,10 @@ export function ManualAttendanceModal({
                 <button
                   type="button"
                   onClick={() => setFilterMode("present")}
-                  className={`px-2.5 py-1 rounded-sm font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-md font-medium transition-all ${
                     filterMode === "present"
-                      ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold"
-                      : "text-muted-foreground"
+                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-bold"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   Present ({presentCount})
@@ -181,50 +187,67 @@ export function ManualAttendanceModal({
                 <button
                   type="button"
                   onClick={() => setFilterMode("absent")}
-                  className={`px-2.5 py-1 rounded-sm font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-md font-medium transition-all ${
                     filterMode === "absent"
-                      ? "bg-red-500/15 text-red-600 dark:text-red-400 font-semibold"
-                      : "text-muted-foreground"
+                      ? "bg-rose-500/15 text-rose-700 dark:text-rose-400 font-bold"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   Absent ({totalCount - presentCount})
                 </button>
               </div>
 
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1 text-xs"
-                onClick={markAllPresent}
-              >
-                <IconUserCheck className="h-3.5 w-3.5 text-emerald-600" />
-                All Present
-              </Button>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs font-medium border-border hover:bg-muted"
+                  onClick={markAllPresent}
+                >
+                  <IconUserCheck className="h-3.5 w-3.5 text-emerald-600" />
+                  All Present
+                </Button>
 
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1 text-xs"
-                onClick={markAllAbsent}
-              >
-                <IconUserX className="h-3.5 w-3.5 text-red-600" />
-                All Absent
-              </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs font-medium border-border hover:bg-muted"
+                  onClick={markAllAbsent}
+                >
+                  <IconUserX className="h-3.5 w-3.5 text-rose-600" />
+                  All Absent
+                </Button>
+              </div>
             </div>
           </div>
-        </DialogHeader>
+        </SheetHeader>
 
-        {/* Student Roster Table Area */}
-        <div className="flex-1 overflow-y-auto min-h-[300px] max-h-[50vh] divide-y divide-border">
+        {/* Scrollable Student Roster */}
+        <div className="flex-1 overflow-y-auto divide-y divide-border">
           {isLoading ? (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex flex-col items-center justify-center py-24 gap-3 text-muted-foreground">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <p className="text-sm font-medium">Loading classroom roster...</p>
+            </div>
+          ) : error ? (
+            <div className="p-12 text-center text-destructive">
+              <IconX className="h-10 w-10 mx-auto mb-2 text-destructive opacity-80" />
+              <p className="font-semibold text-base">Failed to load class roster</p>
+              <p className="text-xs text-muted-foreground mt-1 mb-4">
+                {(error as any)?.message || "Server returned an error"}
+              </p>
+              <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
+                <IconRefresh className="h-4 w-4" />
+                Retry
+              </Button>
             </div>
           ) : filteredStudents.length === 0 ? (
             <div className="p-12 text-center text-muted-foreground">
-              <IconUsers className="h-10 w-10 mx-auto mb-2 opacity-30" />
-              <p className="font-medium">No students found</p>
-              {searchQuery && <p className="text-xs mt-1">Try adjusting your search query</p>}
+              <IconUsers className="h-12 w-12 mx-auto mb-3 opacity-20" />
+              <p className="font-semibold text-foreground text-base">No students found</p>
+              <p className="text-xs mt-1">
+                {searchQuery ? "Try searching with a different roll number or name." : "No students are enrolled in this division."}
+              </p>
             </div>
           ) : (
             filteredStudents.map((student: any) => {
@@ -234,20 +257,22 @@ export function ManualAttendanceModal({
                 <div
                   key={student.id}
                   onClick={() => toggleStudent(student.id)}
-                  className={`p-3.5 px-6 flex items-center justify-between gap-4 cursor-pointer select-none transition-colors ${
+                  className={`p-4 px-6 flex items-center justify-between gap-4 cursor-pointer select-none transition-all ${
                     isPresent
-                      ? "hover:bg-emerald-500/5 bg-background"
-                      : "bg-red-500/[0.02] hover:bg-red-500/5 opacity-80"
+                      ? "bg-emerald-500/[0.04] hover:bg-emerald-500/10"
+                      : "bg-rose-500/[0.02] hover:bg-rose-500/5 opacity-80"
                   }`}
                 >
                   <div className="flex items-center gap-4 min-w-0">
-                    <span className="font-mono text-sm font-bold min-w-16 text-foreground bg-muted px-2 py-1 rounded-md text-center border border-border">
+                    <span className="font-mono text-sm font-bold min-w-16 text-foreground bg-muted/80 px-2.5 py-1.5 rounded-lg text-center border border-border">
                       {student.rollNumber || "—"}
                     </span>
                     <div className="min-w-0">
-                      <p className="font-medium text-sm text-foreground truncate">{student.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {student.enrollmentNo || student.email} • {student.divisionName}
+                      <p className="font-semibold text-sm text-foreground truncate">{student.name}</p>
+                      <p className="text-xs text-muted-foreground truncate flex items-center gap-1.5 mt-0.5">
+                        <span>{student.enrollmentNo || student.email}</span>
+                        <span>•</span>
+                        <span>Div {student.divisionName}</span>
                       </p>
                     </div>
                   </div>
@@ -259,10 +284,10 @@ export function ManualAttendanceModal({
                         e.stopPropagation();
                         toggleStudent(student.id);
                       }}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all shadow-xs ${
+                      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-xs ${
                         isPresent
                           ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25"
-                          : "bg-red-500/15 text-red-700 dark:text-red-400 border border-red-500/30 hover:bg-red-500/25"
+                          : "bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30 hover:bg-rose-500/25"
                       }`}
                     >
                       {isPresent ? (
@@ -272,7 +297,7 @@ export function ManualAttendanceModal({
                         </>
                       ) : (
                         <>
-                          <IconX className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+                          <IconX className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
                           Absent
                         </>
                       )}
@@ -284,28 +309,30 @@ export function ManualAttendanceModal({
           )}
         </div>
 
-        <DialogFooter className="p-4 px-6 border-t border-border flex flex-row items-center justify-between sm:justify-between bg-muted/20">
-          <div className="text-xs text-muted-foreground hidden sm:block">
-            Clicking any student row toggles their attendance status.
-          </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <Button
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-              disabled={submitMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={submitMutation.isPending || totalCount === 0}
-              className="font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              {submitMutation.isPending ? "Saving..." : `Submit Attendance (${presentCount} Present)`}
-            </Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        {/* Sticky Footer Action Bar */}
+        <SheetFooter className="p-4 px-6 border-t border-border bg-muted/30 flex flex-row items-center justify-between sm:justify-between gap-3">
+          <Button
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+            disabled={submitMutation.isPending}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            Cancel
+          </Button>
+
+          <Button
+            onClick={handleSubmit}
+            disabled={submitMutation.isPending || totalCount === 0}
+            size="lg"
+            className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md gap-2"
+          >
+            <IconCheck className="h-4 w-4" />
+            {submitMutation.isPending
+              ? "Saving Attendance..."
+              : `Submit Attendance (${presentCount} Present)`}
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

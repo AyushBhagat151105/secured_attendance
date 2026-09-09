@@ -45,6 +45,7 @@ function ImportPage() {
 
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
+  const [processedCount, setProcessedCount] = useState(0);
   const [finalResult, setFinalResult] = useState<{
     created: number;
     skipped: number;
@@ -70,11 +71,12 @@ function ImportPage() {
 
     setIsImporting(true);
     setImportProgress(0);
+    setProcessedCount(0);
 
     let totalCreated = 0;
     let totalSkipped = 0;
     const totalErrors: string[] = [];
-    const CHUNK_SIZE = 50;
+    const CHUNK_SIZE = 10;
 
     try {
       for (let i = 0; i < validRows.length; i += CHUNK_SIZE) {
@@ -90,7 +92,9 @@ function ImportPage() {
           totalErrors.push(...result.errors);
         }
 
-        setImportProgress(Math.min(100, Math.round(((i + chunk.length) / validRows.length) * 100)));
+        const currentDone = Math.min(validRows.length, i + chunk.length);
+        setProcessedCount(currentDone);
+        setImportProgress(Math.min(100, Math.round((currentDone / validRows.length) * 100)));
       }
     } catch (e) {
       // Error is handled by the mutation's onError (toast), we just stop importing further chunks.
@@ -108,6 +112,7 @@ function ImportPage() {
     setFinalResult(null);
     setIsImporting(false);
     setImportProgress(0);
+    setProcessedCount(0);
     previewMutation.reset();
     confirmMutation.reset();
   }
@@ -219,9 +224,9 @@ function ImportPage() {
               <div className="flex-1 px-8">
                 {isImporting && (
                   <div className="space-y-1.5">
-                    <Progress value={importProgress} className="h-2" />
-                    <p className="text-xs text-center text-muted-foreground">
-                      {importProgress}% completed
+                    <Progress value={importProgress} className="h-2.5 transition-all duration-300" />
+                    <p className="text-xs text-center text-muted-foreground font-medium">
+                      Importing row {processedCount} of {previewData.validCount} ({importProgress}%)
                     </p>
                   </div>
                 )}

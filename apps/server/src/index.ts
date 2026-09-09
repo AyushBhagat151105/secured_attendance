@@ -3,6 +3,8 @@ import { openapi } from "@elysiajs/openapi";
 import { auth } from "@secured_attendance/auth";
 import { env } from "@secured_attendance/env/server";
 import { Elysia } from "elysia";
+import path from "node:path";
+import fs from "node:fs";
 
 import { logger } from "./lib/logger";
 import { adminModule } from "./routes/admin.route";
@@ -46,7 +48,29 @@ const app = new Elysia()
   .use(authModule)
   .use(teacherModule)
   .use(studentModule)
-  .get("/", () => "OK");
+  .get("/", () => "OK")
+
+  // Self-Hosted OTA Updates endpoints for mobile app
+  .get("/updates", async ({ set }) => {
+    const manifestPath = path.resolve(process.cwd(), "uploads/updates/metadata.json");
+    if (!fs.existsSync(manifestPath)) {
+      set.status = 404;
+      return { error: "No OTA update available" };
+    }
+    set.headers["content-type"] = "application/json";
+    set.headers["expo-protocol-version"] = "0";
+    set.headers["expo-sfv-version"] = "0";
+    return Bun.file(manifestPath);
+  })
+  .get("/updates/*", async ({ params, set }) => {
+    const wildcard = params["*"];
+    const filePath = path.resolve(process.cwd(), "uploads/updates", wildcard);
+    if (!fs.existsSync(filePath)) {
+      set.status = 404;
+      return "Not found";
+    }
+    return Bun.file(filePath);
+  });
 
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 

@@ -50,6 +50,7 @@ export class StudentService {
       expiresAt,
       gpsLat,
       gpsLng,
+      gpsAccuracy,
       mockFlag,
       deviceFingerprint,
       isOfflineSync,
@@ -215,26 +216,33 @@ export class StudentService {
     }
 
     // 7. Validation: Nonce exists and belongs to this session
-    const token = await prisma.qrToken.findUnique({
-      where: {
-        sessionId_nonce: {
-          sessionId,
-          nonce,
+    // Fast path: Check Redis cache first (sub-millisecond latency for live scans)
+    const inRedis = !isOfflineSync
+      ? await attendanceRedis.get(`qr:${sessionId}:${nonce}`).catch(() => null)
+      : null;
+
+    if (!inRedis) {
+      const token = await prisma.qrToken.findUnique({
+        where: {
+          sessionId_nonce: {
+            sessionId,
+            nonce,
+          },
         },
-      },
-    });
+      });
 
-    if (!token) {
-      return { success: false, error: "BAD_REQUEST", message: "Invalid token" };
-    }
+      if (!token) {
+        return { success: false, error: "BAD_REQUEST", message: "Invalid token" };
+      }
 
-    // For live scans, ensure token has not expired
-    if (!isOfflineSync && new Date() > token.expiresAt) {
-      return {
-        success: false,
-        error: "BAD_REQUEST",
-        message: "QR code has expired. Please scan the current code.",
-      };
+      // For live scans, ensure token has not expired
+      if (!isOfflineSync && new Date() > token.expiresAt) {
+        return {
+          success: false,
+          error: "BAD_REQUEST",
+          message: "QR code has expired. Please scan the current code.",
+        };
+      }
     }
 
     // 8. Validation: Geofence
@@ -262,7 +270,10 @@ export class StudentService {
     );
 
     const allowedRadius = session.room.building.radiusMeters;
-    const gpsWithinGeofence = distance <= allowedRadius;
+    // Accommodate indoor GPS attenuation/drift based on device reported horizontal accuracy, capped at 45m
+    const gpsTolerance = Math.min(Math.max(gpsAccuracy || 20, 15), 45);
+    const effectiveRadius = allowedRadius + gpsTolerance;
+    const gpsWithinGeofence = distance <= effectiveRadius;
 
     if (!gpsWithinGeofence) {
       void reportAnomaly({
@@ -273,6 +284,7 @@ export class StudentService {
           reason: "gps_outside_geofence",
           distanceMeters: Math.round(distance),
           allowedRadius,
+          gpsAccuracy,
           studentGps: { lat: gpsLat, lng: gpsLng },
           buildingGps: { lat: session.room.building.gpsLat, lng: session.room.building.gpsLng },
           buildingName: session.room.building.name,
@@ -283,12 +295,12 @@ export class StudentService {
         actor: userId,
         actorRole: "student",
         targetId: sessionId,
-        details: { distanceMeters: Math.round(distance), allowedRadius },
+        details: { distanceMeters: Math.round(distance), allowedRadius, gpsAccuracy },
       });
       return {
         success: false,
         error: "BAD_REQUEST",
-        message: "Location error",
+        message: `Location outside classroom (Detected ~${Math.round(distance)}m from ${session.room.building.name}, allowed radius is ${allowedRadius}m). Move closer to windows or retry GPS.`,
       };
     }
 

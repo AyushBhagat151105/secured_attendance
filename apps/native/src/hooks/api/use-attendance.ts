@@ -8,6 +8,7 @@ export type ScanAttendancePayload = {
   expiresAt: number;
   gpsLat?: number;
   gpsLng?: number;
+  gpsAccuracy?: number;
   mockFlag?: boolean;
   deviceFingerprint?: string;
   isOfflineSync?: boolean;
@@ -27,8 +28,9 @@ export function useScanAttendance() {
       }
     },
     onSuccess: () => {
-      // Invalidate relevant queries (e.g. today's attendance, streak)
+      // Invalidate both attendance stats and today's schedule so card flips to Present immediately
       qc.invalidateQueries({ queryKey: ["attendance"] });
+      qc.invalidateQueries({ queryKey: ["schedule"] });
     },
   });
 }

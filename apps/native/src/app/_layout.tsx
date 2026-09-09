@@ -28,6 +28,7 @@ export const queryClient = new QueryClient({
 import { useRouter, useSegments } from "expo-router";
 import { authClient } from "@/lib/auth-client";
 import { useStudentProfile } from "@/hooks/api/use-profile";
+import { getDeviceFingerprint } from "@/lib/device";
 import {
   getCachedSession,
   getCachedProfile,
@@ -50,16 +51,22 @@ function StackLayout() {
   const [cachedSession, setCachedSession] = useState<CachedSessionData | null>(null);
   const [cachedProfile, setCachedProfile] = useState<CachedProfileData | null>(null);
   const [cacheLoaded, setCacheLoaded] = useState(false);
+  const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(null);
 
   const { data: session, isPending: sessionPending } = authClient.useSession();
   const { data: profile, isLoading: profilePending } = useStudentProfile();
 
-  // Load offline cached session on app start
+  // Load offline cached session and current hardware ID on app start
   useEffect(() => {
     async function loadCache() {
-      const [s, p] = await Promise.all([getCachedSession(), getCachedProfile()]);
+      const [s, p, device] = await Promise.all([
+        getCachedSession(),
+        getCachedProfile(),
+        getDeviceFingerprint(),
+      ]);
       setCachedSession(s);
       setCachedProfile(p);
+      setCurrentDeviceId(device.id);
       setCacheLoaded(true);
       SplashScreen.hideAsync().catch(() => {});
     }
@@ -140,21 +147,25 @@ function StackLayout() {
     if (effectiveUser) {
       if (effectiveUser.requiresPasswordChange && path !== "(auth)/reset-password") {
         router.replace("/(auth)/reset-password");
-      } else if (
-        !effectiveUser.requiresPasswordChange &&
-        effectiveUser.role === "student" &&
-        effectiveProfile &&
-        !effectiveProfile.deviceBound &&
-        path !== "(auth)/device-binding"
-      ) {
-        router.replace("/(auth)/device-binding");
-      } else if (
-        !effectiveUser.requiresPasswordChange &&
-        (effectiveUser.role !== "student" || (effectiveProfile && effectiveProfile.deviceBound))
-      ) {
-        if (inAuthGroup) {
-          router.replace("/(tabs)");
+      } else if (effectiveUser.role === "student" && effectiveProfile) {
+        if (!effectiveProfile.deviceBound && path !== "(auth)/device-binding") {
+          router.replace("/(auth)/device-binding");
+        } else if (effectiveProfile.deviceBound) {
+          // Hardware ID check: verify this device matches the bound phone
+          if (
+            currentDeviceId &&
+            effectiveProfile.deviceId &&
+            effectiveProfile.deviceId !== currentDeviceId
+          ) {
+            if (path !== "(auth)/device-mismatch") {
+              router.replace("/(auth)/device-mismatch" as any);
+            }
+          } else if (inAuthGroup) {
+            router.replace("/(tabs)");
+          }
         }
+      } else if (inAuthGroup) {
+        router.replace("/(tabs)");
       }
     } else if (!inAuthGroup) {
       router.replace("/(auth)/sign-in");

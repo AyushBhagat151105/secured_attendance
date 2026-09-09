@@ -23,22 +23,31 @@ const COLORS = {
   destructive: "#ef4444",
 };
 
-function format12Hour(timeStr: string): string {
-  if (!timeStr) return "";
-  const [hStr = "0", mStr = "0"] = timeStr.split(":");
-  const h = parseInt(hStr, 10);
-  const m = parseInt(mStr, 10);
+function format12Hour(timeStr?: string | null): string {
+  if (!timeStr || typeof timeStr !== "string") return "";
+  const parts = timeStr.split(":");
+  if (parts.length < 2) return timeStr;
+  const h = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
   if (isNaN(h) || isNaN(m)) return timeStr;
   const ampm = h >= 12 ? "PM" : "AM";
   const hour12 = h % 12 === 0 ? 12 : h % 12;
   return `${hour12.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")} ${ampm}`;
 }
 
-function getStudentSlotStatus(startTime: string, endTime: string) {
+function getStudentSlotStatus(startTime?: string | null, endTime?: string | null) {
+  if (!startTime || !endTime || typeof startTime !== "string" || typeof endTime !== "string") {
+    return "UPCOMING";
+  }
   const now = new Date();
   const currentMins = now.getHours() * 60 + now.getMinutes();
-  const [sh = 0, sm = 0] = startTime.split(":").map(Number);
-  const [eh = 0, em = 0] = endTime.split(":").map(Number);
+  const startParts = startTime.split(":");
+  const endParts = endTime.split(":");
+  if (startParts.length < 2 || endParts.length < 2) return "UPCOMING";
+  const sh = parseInt(startParts[0], 10) || 0;
+  const sm = parseInt(startParts[1], 10) || 0;
+  const eh = parseInt(endParts[0], 10) || 0;
+  const em = parseInt(endParts[1], 10) || 0;
   const startMins = sh * 60 + sm;
   const endMins = eh * 60 + em;
 
@@ -85,7 +94,10 @@ export default function HomeScreen() {
   }, [checkAndSync, refetchSchedule, refetchStats]);
 
   const user = session?.user;
-  const firstName = user?.name?.split(" ")[0] || "Student";
+  const firstName =
+    typeof user?.name === "string" && user.name.trim().length > 0
+      ? user.name.trim().split(" ")[0]
+      : "Student";
 
   const today = new Date().toLocaleDateString("en-IN", {
     weekday: "long",
@@ -95,6 +107,7 @@ export default function HomeScreen() {
   });
 
   const renderScheduleItem = ({ item }: { item: any }) => {
+    if (!item || typeof item !== "object") return null;
     const slotStatus = getStudentSlotStatus(item.startTime, item.endTime);
 
     return (
@@ -287,11 +300,11 @@ export default function HomeScreen() {
             </View>
           ) : (
             <FlashList
-              data={schedule || []}
+              data={Array.isArray(schedule) ? schedule : []}
               renderItem={renderScheduleItem}
-              keyExtractor={(item: any, index: number) => item.id?.toString() || index.toString()}
+              keyExtractor={(item: any, index: number) => item?.id?.toString() || index.toString()}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={[{ paddingBottom: 20 }, (!schedule || schedule.length === 0) && { flex: 1 }]}
+              contentContainerStyle={[{ paddingBottom: 20 }, (!Array.isArray(schedule) || schedule.length === 0) && { flex: 1 }]}
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />
               }

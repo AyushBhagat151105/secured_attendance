@@ -26,6 +26,7 @@ export function useSubmitManualAttendance() {
     onSuccess: (res: any) => {
       toast.success(`Manual attendance recorded (${res.presentCount} present)`);
       qc.invalidateQueries({ queryKey: teacherKeys.schedule });
+      qc.invalidateQueries({ queryKey: ["teacher", "reports"] });
     },
     onError: (error: any) => toast.error(error.message || "Failed to record manual attendance"),
   });
@@ -45,9 +46,11 @@ export function useFinalizeSession() {
   return useMutation({
     mutationFn: ({ sessionId, presentStudentIds }: { sessionId: string; presentStudentIds: string[] }) =>
       unwrapEden(apiClient.api.teacher.sessions({ id: sessionId }).finalize.post({ presentStudentIds })),
-    onSuccess: (res: any) => {
+    onSuccess: (res: any, vars) => {
       toast.success(`Attendance finalized (${res.totalPresent} present)`);
       qc.invalidateQueries({ queryKey: teacherKeys.schedule });
+      qc.invalidateQueries({ queryKey: ["teacher", "reports"] });
+      qc.invalidateQueries({ queryKey: ["teacher", "reports", "session", vars.sessionId] });
     },
     onError: (error: any) => toast.error(error.message || "Failed to finalize attendance"),
   });

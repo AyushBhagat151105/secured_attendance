@@ -36,6 +36,7 @@ export function useCloseSession() {
     onSuccess: () => {
       toast.success("Session closed successfully");
       qc.invalidateQueries({ queryKey: teacherKeys.schedule });
+      qc.invalidateQueries({ queryKey: ["teacher", "reports"] });
     },
     onError: (error) => toast.error(error.message),
   });

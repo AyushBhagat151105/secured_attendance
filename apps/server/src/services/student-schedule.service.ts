@@ -1,4 +1,5 @@
 import prisma from "@secured_attendance/db";
+import { attendanceRedis } from "../lib/redis";
 
 export class StudentScheduleService {
   static async getTodaySchedule(studentId: string) {
@@ -31,23 +32,41 @@ export class StudentScheduleService {
     const istDate = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
     const dayOfWeek = istDate.getDay();
 
-    const timetableEntries = await prisma.timetableEntry.findMany({
-      where: {
-        dayOfWeek: dayOfWeek,
-        divisions: {
-          some: {
-            divisionId: divisionId,
+    // Redis cache for division timetable slots to optimize slow network response
+    const cacheKey = `tt:${divisionId}:${dayOfWeek}`;
+    let timetableEntries: any[] | null = null;
+    try {
+      const cached = await attendanceRedis.get(cacheKey);
+      if (cached) {
+        timetableEntries = JSON.parse(cached);
+      }
+    } catch {
+      // fallback to db
+    }
+
+    if (!timetableEntries) {
+      timetableEntries = await prisma.timetableEntry.findMany({
+        where: {
+          dayOfWeek: dayOfWeek,
+          divisions: {
+            some: {
+              divisionId: divisionId,
+            },
           },
         },
-      },
-      include: {
-        subject: true,
-        room: true,
-      },
-      orderBy: {
-        startTime: "asc",
-      },
-    });
+        include: {
+          subject: true,
+          room: true,
+        },
+        orderBy: {
+          startTime: "asc",
+        },
+      });
+
+      void attendanceRedis
+        .setex(cacheKey, 120, JSON.stringify(timetableEntries))
+        .catch(() => {});
+    }
 
     // We also want to see if any of these subjects have an active session right now
     const todayStart = new Date(istDate);

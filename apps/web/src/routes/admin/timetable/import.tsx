@@ -46,6 +46,8 @@ function TimetableImportPage() {
   } | null>(null);
 
   const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  const [processedCount, setProcessedCount] = useState(0);
   const [finalResult, setFinalResult] = useState<{
     created: number;
     skipped: number;
@@ -68,14 +70,34 @@ function TimetableImportPage() {
     const validRows = previewData.parsed.filter((r: any) => r.errors.length === 0);
 
     setIsImporting(true);
+    setImportProgress(0);
+    setProcessedCount(0);
+
+    let totalCreated = 0;
+    let totalSkipped = 0;
+    const totalErrors: string[] = [];
+    const CHUNK_SIZE = 15;
 
     try {
-      const result = await confirm.mutateAsync(validRows);
-      setFinalResult(result as any);
+      for (let i = 0; i < validRows.length; i += CHUNK_SIZE) {
+        const chunk = validRows.slice(i, i + CHUNK_SIZE);
+        const result = (await confirm.mutateAsync(chunk)) as any;
+
+        totalCreated += result?.created ?? 0;
+        totalSkipped += result?.skipped ?? 0;
+        if (result?.errors) {
+          totalErrors.push(...result.errors);
+        }
+
+        const currentDone = Math.min(validRows.length, i + chunk.length);
+        setProcessedCount(currentDone);
+        setImportProgress(Math.min(100, Math.round((currentDone / validRows.length) * 100)));
+      }
     } catch (e) {
       console.error("Import interrupted:", e);
     }
 
+    setFinalResult({ created: totalCreated, skipped: totalSkipped, errors: totalErrors });
     setIsImporting(false);
     setStep("done");
   }
@@ -85,6 +107,8 @@ function TimetableImportPage() {
     setPreviewData(null);
     setFinalResult(null);
     setIsImporting(false);
+    setImportProgress(0);
+    setProcessedCount(0);
     preview.reset();
     confirm.reset();
   }
@@ -250,6 +274,16 @@ function TimetableImportPage() {
               <Button variant="outline" onClick={handleReset} disabled={isImporting}>
                 Back
               </Button>
+              <div className="flex-1 px-8">
+                {isImporting && (
+                  <div className="space-y-1.5">
+                    <Progress value={importProgress} className="h-2.5 transition-all duration-300" />
+                    <p className="text-xs text-center text-muted-foreground font-medium">
+                      Importing schedule {processedCount} of {previewData.validCount} ({importProgress}%)
+                    </p>
+                  </div>
+                )}
+              </div>
               <Button
                 onClick={handleConfirm}
                 disabled={isImporting || previewData.validCount === 0}

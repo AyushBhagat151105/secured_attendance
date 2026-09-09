@@ -13,6 +13,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { signInSchema, type SignInSchema } from "@secured_attendance/validators";
 
 import { authClient } from "@/lib/auth-client";
+import { apiClient } from "@/lib/api-client";
+import { getDeviceFingerprint } from "@/lib/device";
+import { clearAllCachedAuth } from "@/lib/session-cache";
 import { Container } from "@/components/container";
 import { PasswordInput } from "@/components/ui/password-input";
 
@@ -53,23 +56,49 @@ export default function SignInScreen() {
       },
       {
         onError(error) {
-          const rawMsg = error.error?.message || "";
+          const rawMsg = (error.error?.message || "").toLowerCase();
+          const code = (error.error?.code || "").toLowerCase();
+
           if (
             !rawMsg ||
-            rawMsg.toLowerCase().includes("fetch") ||
-            rawMsg.toLowerCase().includes("network")
+            rawMsg.includes("fetch") ||
+            rawMsg.includes("network") ||
+            rawMsg.includes("failed to fetch")
           ) {
             setError(
               "No internet connection. Please connect to WiFi or mobile data to sign in for the first time.",
             );
+          } else if (
+            rawMsg.includes("invalid password") ||
+            rawMsg.includes("invalid email or password") ||
+            rawMsg.includes("credential") ||
+            code.includes("invalid_password")
+          ) {
+            setError("Incorrect email or password. Please verify your credentials and try again.");
+          } else if (rawMsg.includes("user not found") || code.includes("user_not_found")) {
+            setError("No student account found with this email. Please check with your college admin.");
           } else {
-            setError(rawMsg || "Failed to sign in. Please verify your email and password.");
+            setError(error.error?.message || "Failed to sign in. Please check your credentials.");
           }
         },
-        onSuccess() {
-          // If successful, the layout should auto-redirect to device binding if needed,
-          // or we can redirect directly here.
-          // For now, _layout handles the initial session change redirect.
+        async onSuccess() {
+          try {
+            const [profileRes, device] = await Promise.all([
+              apiClient.get("/api/student/profile").catch(() => null),
+              getDeviceFingerprint(),
+            ]);
+
+            const p = profileRes?.data;
+            if (p?.deviceBound && p?.deviceId && p.deviceId !== device.id) {
+              await clearAllCachedAuth();
+              await authClient.signOut();
+              setError(
+                `Account locked to another device: Your account is registered to ${p.deviceModel || "another phone"}. You cannot log in from this device. Contact your admin to rebind.`,
+              );
+            }
+          } catch {
+            // Layout guard handles any fallback
+          }
         },
       },
     );
