@@ -74,16 +74,13 @@ export interface VerificationVerdict {
   auditRejectionDetails?: Record<string, any>;
 }
 
-/**
- * Calculates spherical distance in meters between two coordinates using the Haversine formula.
- */
 export function getDistanceInMeters(
   lat1: number,
   lon1: number,
   lat2: number,
   lon2: number,
 ): number {
-  const R = 6371e3; // Earth radius in meters
+  const R = 6371e3;
   const p1 = (lat1 * Math.PI) / 180;
   const p2 = (lat2 * Math.PI) / 180;
   const deltaP = p2 - p1;
@@ -96,13 +93,9 @@ export function getDistanceInMeters(
   return R * c;
 }
 
-const MAX_OFFLINE_SYNC_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
+const MAX_OFFLINE_SYNC_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export class AttendanceValidator {
-  /**
-   * Pure evaluation of an attendance scan against institutional anti-proxy and security rules.
-   * Performs zero database, Redis, or network I/O.
-   */
   static evaluate(context: ScanContext, currentTime: number = Date.now()): VerificationVerdict {
     const {
       divisionId,
@@ -124,7 +117,6 @@ export class AttendanceValidator {
       anomalyFlags.push("offline_sync");
     }
 
-    // 1. Mock Location Check
     if (mockFlag) {
       return {
         outcome: "REJECTED",
@@ -137,7 +129,6 @@ export class AttendanceValidator {
       };
     }
 
-    // 2. Division Assignment
     if (!divisionId) {
       return {
         outcome: "REJECTED",
@@ -149,7 +140,6 @@ export class AttendanceValidator {
       };
     }
 
-    // 3. Device Binding Enforcement
     if (deviceBound && boundDeviceId) {
       if (!detectedFingerprint) {
         return {
@@ -183,7 +173,6 @@ export class AttendanceValidator {
       }
     }
 
-    // 4. Session Status & Offline Sync Window
     if (!isOfflineSync && session.status !== "active") {
       return {
         outcome: "REJECTED",
@@ -209,7 +198,6 @@ export class AttendanceValidator {
       }
     }
 
-    // 5. Division Enrollment Check
     const isEnrolled = session.sessionDivisions.some((sd) => sd.divisionId === divisionId);
     if (!isEnrolled) {
       return {
@@ -222,7 +210,6 @@ export class AttendanceValidator {
       };
     }
 
-    // 6. QR Code Expiration Check (Live scans only)
     if (!isOfflineSync && currentTime > token.expiresAt) {
       return {
         outcome: "REJECTED",
@@ -234,7 +221,6 @@ export class AttendanceValidator {
       };
     }
 
-    // 7. Cryptographic HMAC Signature Verification
     const isSignatureValid = QrTokenManager.verifySignature(
       session.id,
       token.nonce,
@@ -254,7 +240,6 @@ export class AttendanceValidator {
       };
     }
 
-    // 8. Duplicate Attendance Check
     if (attendanceAlreadyMarked) {
       return {
         outcome: "REJECTED",
@@ -266,7 +251,6 @@ export class AttendanceValidator {
       };
     }
 
-    // 9. Nonce Existence & Database Expiration
     if (!token.tokenFoundInCacheOrDb) {
       return {
         outcome: "REJECTED",
@@ -289,7 +273,6 @@ export class AttendanceValidator {
       };
     }
 
-    // 10. Spatial Geofencing & Indoor Tolerance
     if (gps.lat === undefined || gps.lng === undefined) {
       return {
         outcome: "REJECTED",
@@ -319,8 +302,6 @@ export class AttendanceValidator {
     }
 
     const distance = getDistanceInMeters(gps.lat, gps.lng, buildingLat, buildingLng);
-
-    // Dynamic indoor tolerance based on reported GPS accuracy: clamped between 15m and 45m
     const gpsTolerance = Math.min(Math.max(gps.accuracy || 20, 15), 45);
     const effectiveRadius = allowedRadius + gpsTolerance;
     const isWithinGeofence = distance <= effectiveRadius;

@@ -176,10 +176,8 @@ export const teacherModule = new Elysia({ prefix: "/api/teacher" })
 
       logger.info("Teacher connected to WS", { sessionId });
 
-      // Subscribe to live feed updates for this session
       ws.subscribe(`session-${sessionId}`);
 
-      // Generate a batch of rotating tokens and send via WebSocket
       const generateAndSendTokens = async () => {
         try {
           const tokens = await defaultQrTokenManager.issueBatch(sessionId, dbSession.sessionSecret);
@@ -189,7 +187,6 @@ export const teacherModule = new Elysia({ prefix: "/api/teacher" })
         }
       };
 
-      // Send initial attendance count
       try {
         const count = await prisma.attendance.count({
           where: { sessionId },
@@ -199,11 +196,9 @@ export const teacherModule = new Elysia({ prefix: "/api/teacher" })
         logger.error("Failed to send initial attendance count", { error: e });
       }
 
-      // Send initial batch
       await generateAndSendTokens();
 
-      // Refresh batch every 50 seconds (since we send 5 tokens x 10s)
-      const timer = setInterval(generateAndSendTokens, 45000); // 45s to overlap safely
+      const timer = setInterval(generateAndSendTokens, 45000);
       activeTimers.set(ws.id, timer);
     },
 

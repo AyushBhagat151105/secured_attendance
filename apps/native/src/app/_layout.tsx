@@ -1,7 +1,6 @@
 import "@/global.css";
 import { Stack } from "expo-router";
-import { useEffect, useState } from "react";
-import { Platform } from "react-native";
+import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import * as SplashScreen from "expo-splash-screen";
@@ -44,19 +43,7 @@ export const queryClient = new QueryClient({
 });
 
 import { useRouter, useSegments } from "expo-router";
-import { authClient } from "@/lib/auth-client";
-import { useStudentProfile } from "@/hooks/api/use-profile";
-import { getDeviceFingerprint } from "@/lib/device";
-import {
-  getCachedSession,
-  getCachedProfile,
-  saveCachedSession,
-  saveCachedProfile,
-  subscribeAuthCache,
-  clearAllCachedAuth,
-  type CachedSessionData,
-  type CachedProfileData,
-} from "@/lib/session-cache";
+import { useSessionGate } from "@/hooks/use-session-gate";
 
 export const unstable_settings = {
   initialRouteName: "(tabs)",
@@ -65,139 +52,42 @@ export const unstable_settings = {
 function StackLayout() {
   const segments = useSegments();
   const router = useRouter();
-  const [timeoutReached, setTimeoutReached] = useState(false);
-  const [cachedSession, setCachedSession] = useState<CachedSessionData | null>(null);
-  const [cachedProfile, setCachedProfile] = useState<CachedProfileData | null>(null);
-  const [cacheLoaded, setCacheLoaded] = useState(false);
-  const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(null);
+  const { status } = useSessionGate();
 
-  const { data: session, isPending: sessionPending } = authClient.useSession();
-  const { data: profile, isLoading: profilePending } = useStudentProfile();
-
-  // Load offline cached session and current hardware ID on app start
-  useEffect(() => {
-    async function loadCache() {
-      const [s, p, device] = await Promise.all([
-        getCachedSession(),
-        getCachedProfile(),
-        getDeviceFingerprint(),
-      ]);
-      setCachedSession(s);
-      setCachedProfile(p);
-      setCurrentDeviceId(device.id);
-      setCacheLoaded(true);
-      SplashScreen.hideAsync().catch(() => {});
-    }
-    loadCache();
-
-    // Fallback timer: ensure splash screen always hides within 1.5s
-    const fallbackTimer = setTimeout(() => {
-      SplashScreen.hideAsync().catch(() => {});
-    }, 1500);
-    return () => clearTimeout(fallbackTimer);
-  }, []);
-
-  // Listen for explicit sign out events across the app
-  useEffect(() => {
-    const unsubscribe = subscribeAuthCache(() => {
-      setCachedSession(null);
-      setCachedProfile(null);
-      queryClient.clear();
-      queryClient.cancelQueries();
-      router.replace("/(auth)/sign-in");
-    });
-    return unsubscribe;
-  }, [router]);
-
-  // Update offline cache when fresh online data arrives, or clear on sign-out
-  useEffect(() => {
-    if (session) {
-      saveCachedSession(session as any);
-      setCachedSession(session as any);
-    } else if (session === null && !sessionPending) {
-      setCachedSession(null);
-      setCachedProfile(null);
-      saveCachedSession(null);
-      saveCachedProfile(null);
-      queryClient.clear();
-    }
-  }, [session, sessionPending]);
+  const inAuthGroup = segments[0] === "(auth)";
+  const path = segments.join("/");
 
   useEffect(() => {
-    if (profile) {
-      saveCachedProfile(profile as any);
-      setCachedProfile(profile as any);
-    }
-  }, [profile]);
-
-  const effectiveSession = session || cachedSession;
-  const effectiveUser = (session?.user || cachedSession?.user) as any;
-  const effectiveProfile = profile || cachedProfile;
-
-  const isPending = sessionPending || (effectiveUser?.role === "student" && profilePending);
-
-  // If the server is unreachable, useSession might hang forever in isPending state.
-  // We'll force a timeout after 3 seconds to fall back to offline cached session.
-  useEffect(() => {
-    if (sessionPending) {
-      const timer = setTimeout(() => {
-        setTimeoutReached(true);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [sessionPending]);
-
-  useEffect(() => {
-    if (!cacheLoaded) return;
-    if (isPending && !timeoutReached && !effectiveSession) return;
-
-    const inAuthGroup = segments[0] === "(auth)";
-    const path = segments.join("/");
-
-    // If no session exists (neither online nor cached from a previous login)
-    if (!effectiveSession) {
-      if (!inAuthGroup) {
-        router.replace("/(auth)/sign-in");
-      }
-      return;
-    }
-
-    if (effectiveUser) {
-      if (effectiveUser.requiresPasswordChange && path !== "(auth)/reset-password") {
-        router.replace("/(auth)/reset-password");
-      } else if (effectiveUser.role === "student" && effectiveProfile) {
-        if (!effectiveProfile.deviceBound && path !== "(auth)/device-binding") {
-          router.replace("/(auth)/device-binding");
-        } else if (effectiveProfile.deviceBound) {
-          // Hardware ID check: verify this device matches the bound phone
-          if (
-            currentDeviceId &&
-            effectiveProfile.deviceId &&
-            effectiveProfile.deviceId !== currentDeviceId
-          ) {
-            if (path !== "(auth)/device-mismatch") {
-              router.replace("/(auth)/device-mismatch" as any);
-            }
-          } else if (path === "(auth)/sign-in") {
-            router.replace("/(tabs)");
-          }
+    switch (status) {
+      case "LOADING":
+        break;
+      case "UNAUTHENTICATED":
+        if (!inAuthGroup) {
+          router.replace("/(auth)/sign-in");
         }
-      } else if (path === "(auth)/sign-in") {
-        router.replace("/(tabs)");
-      }
-    } else if (!inAuthGroup) {
-      router.replace("/(auth)/sign-in");
+        break;
+      case "PASSWORD_CHANGE_REQUIRED":
+        if (path !== "(auth)/reset-password") {
+          router.replace("/(auth)/reset-password");
+        }
+        break;
+      case "DEVICE_BINDING_REQUIRED":
+        if (path !== "(auth)/device-binding") {
+          router.replace("/(auth)/device-binding");
+        }
+        break;
+      case "DEVICE_MISMATCH":
+        if (path !== "(auth)/device-mismatch") {
+          router.replace("/(auth)/device-mismatch" as any);
+        }
+        break;
+      case "AUTHORIZED":
+        if (path === "(auth)/sign-in") {
+          router.replace("/(tabs)");
+        }
+        break;
     }
-  }, [
-    cacheLoaded,
-    effectiveSession,
-    effectiveUser,
-    effectiveProfile,
-    isPending,
-    timeoutReached,
-    segments,
-    router,
-  ]);
+  }, [status, path, inAuthGroup, router]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

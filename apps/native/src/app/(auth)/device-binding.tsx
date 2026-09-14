@@ -46,7 +46,6 @@ export default function DeviceBindingScreen() {
     setIsLoading(true);
 
     try {
-      // 1. Biometric Check
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
 
@@ -62,7 +61,6 @@ export default function DeviceBindingScreen() {
         }
       }
 
-      // 2. Hit the real device binding endpoint
       try {
         await apiClient.post("/api/auth-custom/device-bind", {
           deviceId: deviceInfo.id,
@@ -77,10 +75,7 @@ export default function DeviceBindingScreen() {
         );
       }
 
-      // Refetch profile cache so it gets the new deviceBound status
       await queryClient.refetchQueries({ queryKey: profileKeys.student() });
-
-      // Continue to app
       router.replace("/(tabs)");
     } catch (err: unknown) {
       const errorObj = err as { message?: string };

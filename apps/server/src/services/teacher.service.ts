@@ -2,14 +2,10 @@ import prisma from "@secured_attendance/db";
 import { status } from "elysia";
 import { logger } from "../lib/logger";
 import { queueAuditLog } from "../lib/audit";
+import { ScheduleResolver } from "../domain/schedule-resolver";
 import crypto from "crypto";
 
 export class TeacherService {
-  /**
-   * Fetches the dashboard data for a teacher:
-   * 1. Their schedule for today.
-   * 2. Their currently active session (if any).
-   */
   static async getDashboardData(userId: string) {
     const profile = await prisma.teacherProfile.findUnique({
       where: { userId },
@@ -19,26 +15,12 @@ export class TeacherService {
       return status(404, { message: "Teacher profile not found" });
     }
 
-    // Auto-close any active sessions whose endTime has passed (Phase 4 session auto-close)
-    await prisma.attendanceSession.updateMany({
-      where: {
-        status: "active",
-        endTime: { lt: new Date() },
-      },
-      data: {
-        status: "closed",
-        closedAt: new Date(),
-      },
-    });
+    await ScheduleResolver.autoCloseExpiredSessions();
+    const { dayOfWeek, todayStart } = ScheduleResolver.getAcademicDate();
 
-    // Use Indian Standard Time (Asia/Kolkata) to get day of week and start of day
-    const istDate = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-    const jsDay = istDate.getDay();
-
-    // Get today's schedule
     const schedule = await prisma.timetableEntry.findMany({
       where: {
-        dayOfWeek: jsDay,
+        dayOfWeek,
         teacherCodes: {
           has: profile.code,
         },
@@ -57,10 +39,6 @@ export class TeacherService {
       },
     });
 
-    const todayStart = new Date(istDate);
-    todayStart.setHours(0, 0, 0, 0);
-
-    // Fetch today's sessions to see which schedule slots are already completed
     const todaysSessions = await prisma.attendanceSession.findMany({
       where: {
         teacherProfileId: profile.id,
@@ -76,37 +54,14 @@ export class TeacherService {
       },
     });
 
-    // Attach completedSessionId to schedule entries
     const scheduleWithCompletion = schedule.map((entry) => {
-      // 1. Direct match by timetableEntryId
-      let completedSession = todaysSessions.find(
-        (s) => s.timetableEntryId === entry.id && s.status === "closed",
-      );
-
-      // 2. Fallback for legacy sessions created before timetableEntryId was introduced:
-      // Match by subject, room, and time proximity to avoid matching all slots of the same subject!
-      if (!completedSession) {
-        const [sh = 0, sm = 0] = entry.startTime.split(":").map(Number);
-        const slotMins = sh * 60 + sm;
-
-        completedSession = todaysSessions.find((s) => {
-          if (s.subjectId !== entry.subjectId || s.roomId !== entry.roomId || s.status !== "closed")
-            return false;
-          // If the session was explicitly assigned to another timetable entry, don't hijack it
-          if (s.timetableEntryId && s.timetableEntryId !== entry.id) return false;
-
-          const sessionMins = s.createdAt.getHours() * 60 + s.createdAt.getMinutes();
-          return Math.abs(sessionMins - slotMins) <= 45;
-        });
-      }
-
+      const completedSession = ScheduleResolver.matchSlotToSession(entry, todaysSessions, "closed");
       return {
         ...entry,
         completedSessionId: completedSession?.id,
       };
     });
 
-    // Get active session
     const activeSession = await prisma.attendanceSession.findFirst({
       where: {
         teacherProfileId: profile.id,

@@ -67,7 +67,6 @@ export default function ResetPasswordScreen() {
           try {
             await new Promise((resolve) => setTimeout(resolve, 300));
 
-            // Clear the onboarding flag if present
             if (requiresPasswordChange) {
               try {
                 await apiClient.patch("/api/auth-custom/complete-onboarding");
@@ -85,7 +84,6 @@ export default function ResetPasswordScreen() {
               }
             }
 
-            // Refresh session and update offline cache
             const freshSession = await authClient.getSession();
             if (freshSession?.data) {
               await saveCachedSession(freshSession.data as unknown as CachedSessionData);
@@ -236,7 +234,6 @@ export default function ResetPasswordScreen() {
             />
           </View>
 
-          {/* Real-time password requirement */}
           <View style={styles.requirementRow}>
             <Ionicons
               name={hasMinLength ? "checkmark-circle-sharp" : "ellipse-outline"}

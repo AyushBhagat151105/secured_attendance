@@ -1,7 +1,3 @@
-/**
- * Cryptographic operations and QR Token management.
- * Exports the authoritative QrTokenManager and default production instance.
- */
 export {
   QrTokenManager,
   defaultQrTokenManager,

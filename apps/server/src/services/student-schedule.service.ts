@@ -1,5 +1,6 @@
 import prisma from "@secured_attendance/db";
 import { attendanceRedis } from "../lib/redis";
+import { ScheduleResolver } from "../domain/schedule-resolver";
 
 export class StudentScheduleService {
   static async getTodaySchedule(studentId: string) {
@@ -16,23 +17,9 @@ export class StudentScheduleService {
 
     const divisionId = student.studentProfile.divisionId;
 
-    // Auto-close any active sessions whose endTime has passed
-    await prisma.attendanceSession.updateMany({
-      where: {
-        status: "active",
-        endTime: { lt: new Date() },
-      },
-      data: {
-        status: "closed",
-        closedAt: new Date(),
-      },
-    });
+    await ScheduleResolver.autoCloseExpiredSessions();
+    const { dayOfWeek, todayStart } = ScheduleResolver.getAcademicDate();
 
-    // Use Indian Standard Time (Asia/Kolkata) to get today's day of week
-    const istDate = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-    const dayOfWeek = istDate.getDay();
-
-    // Redis cache for division timetable slots to optimize slow network response
     const cacheKey = `tt:${divisionId}:${dayOfWeek}`;
     let timetableEntries: any[] | null = null;
     try {
@@ -40,9 +27,7 @@ export class StudentScheduleService {
       if (cached) {
         timetableEntries = JSON.parse(cached);
       }
-    } catch {
-      // fallback to db
-    }
+    } catch {}
 
     if (!timetableEntries) {
       timetableEntries = await prisma.timetableEntry.findMany({
@@ -66,10 +51,6 @@ export class StudentScheduleService {
       void attendanceRedis.setex(cacheKey, 120, JSON.stringify(timetableEntries)).catch(() => {});
     }
 
-    // We also want to see if any of these subjects have an active session right now
-    const todayStart = new Date(istDate);
-    todayStart.setHours(0, 0, 0, 0);
-
     const activeSessions = await prisma.attendanceSession.findMany({
       where: {
         status: "active",
@@ -84,7 +65,6 @@ export class StudentScheduleService {
       },
     });
 
-    // Also fetch today's sessions regardless of status so we can check if they attended
     const todaysSessions = await prisma.attendanceSession.findMany({
       where: {
         sessionDivisions: {
@@ -98,7 +78,6 @@ export class StudentScheduleService {
       },
     });
 
-    // Check if the student has marked attendance in any of today's sessions
     const todaysAttendances = await prisma.attendance.findMany({
       where: {
         studentProfileId: student.studentProfile.id,
@@ -109,45 +88,18 @@ export class StudentScheduleService {
     });
 
     return timetableEntries.map((entry) => {
-      // Find active session for this specific timetable slot
-      const activeSession = activeSessions.find((s) => {
-        if (s.timetableEntryId) {
-          return s.timetableEntryId === entry.id;
-        }
-        if (s.subjectId !== entry.subjectId) return false;
-        if (entry.room && s.roomId !== entry.room.id) return false;
+      const activeSession = ScheduleResolver.matchSlotToSession(entry, activeSessions, "active");
+      const matchedSession = ScheduleResolver.matchSlotToSession(entry, todaysSessions);
 
-        const [startHour = 0, startMin = 0] = entry.startTime.split(":").map(Number);
-        const slotTimeMins = startHour * 60 + startMin;
-        const sessionTimeMins = s.createdAt.getHours() * 60 + s.createdAt.getMinutes();
-        return Math.abs(sessionTimeMins - slotTimeMins) <= 45;
-      });
+      const attendance = matchedSession
+        ? todaysAttendances.find((a) => a.sessionId === matchedSession.id)
+        : undefined;
 
-      // Find sessions for this specific slot
-      const slotSessions = todaysSessions.filter((s) => {
-        if (s.timetableEntryId) {
-          return s.timetableEntryId === entry.id;
-        }
-        if (s.subjectId !== entry.subjectId) return false;
-        if (entry.room && s.roomId !== entry.room.id) return false;
-
-        const [startHour = 0, startMin = 0] = entry.startTime.split(":").map(Number);
-        const slotTimeMins = startHour * 60 + startMin;
-        const sessionTimeMins = s.createdAt.getHours() * 60 + s.createdAt.getMinutes();
-        return Math.abs(sessionTimeMins - slotTimeMins) <= 45;
-      });
-
-      const slotSessionIds = slotSessions.map((s) => s.id);
-      const attendance = todaysAttendances.find((a) => slotSessionIds.includes(a.sessionId));
-
-      let attendanceStatus = undefined;
+      let attendanceStatus: "PRESENT" | "ABSENT" | undefined = undefined;
       if (attendance) {
         attendanceStatus = "PRESENT";
-      } else {
-        const hasClosedSession = slotSessions.some((s) => s.status === "closed");
-        if (hasClosedSession) {
-          attendanceStatus = "ABSENT";
-        }
+      } else if (matchedSession && matchedSession.status === "closed") {
+        attendanceStatus = "ABSENT";
       }
 
       return {

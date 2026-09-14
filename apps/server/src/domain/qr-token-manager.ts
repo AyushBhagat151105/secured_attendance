@@ -8,9 +8,9 @@ export interface QrTokenBatchItem {
 }
 
 export interface IssueBatchOptions {
-  count?: number; // default: 5
-  intervalMs?: number; // default: 10000 (10s active rotation)
-  validityMs?: number; // default: 45000 (45s validity window)
+  count?: number;
+  intervalMs?: number;
+  validityMs?: number;
 }
 
 export interface QrTokenLookupResult {
@@ -29,9 +29,6 @@ export interface QrStorageAdapter {
   lookupToken(sessionId: string, nonce: string): Promise<QrTokenLookupResult>;
 }
 
-/**
- * In-Memory Storage Adapter for ultra-fast unit testing with zero external dependencies.
- */
 export class InMemoryQrStorageAdapter implements QrStorageAdapter {
   private tokens = new Map<string, { expiresAt: Date; issuedAt: Date }>();
 
@@ -70,17 +67,12 @@ export class InMemoryQrStorageAdapter implements QrStorageAdapter {
   }
 }
 
-/**
- * Production Storage Adapter backed by Redis fast-path cache and PostgreSQL persistence.
- */
 export class RedisPrismaQrStorageAdapter implements QrStorageAdapter {
   async storeToken(sessionId: string, nonce: string, _expiresAt: Date, ttlSeconds: number): Promise<void> {
     try {
       const { attendanceRedis } = await import("../lib/redis");
       await attendanceRedis.setex(`qr:${sessionId}:${nonce}`, ttlSeconds, "1");
-    } catch {
-      // ignore cache failure
-    }
+    } catch {}
   }
 
   async persistBatch(
@@ -99,7 +91,6 @@ export class RedisPrismaQrStorageAdapter implements QrStorageAdapter {
         skipDuplicates: true,
       });
     } catch {
-      // Fallback: insert individually if createMany is constrained by adapter
       try {
         const { default: prisma } = await import("@secured_attendance/db");
         for (const item of batch) {
@@ -112,18 +103,13 @@ export class RedisPrismaQrStorageAdapter implements QrStorageAdapter {
                 expiresAt: item.expiresAt,
               },
             });
-          } catch {
-            // ignore duplicate
-          }
+          } catch {}
         }
-      } catch {
-        // ignore fallback failure
-      }
+      } catch {}
     }
   }
 
   async lookupToken(sessionId: string, nonce: string): Promise<QrTokenLookupResult> {
-    // 1. Fast path: Redis check
     try {
       const { attendanceRedis } = await import("../lib/redis");
       const inRedis = await attendanceRedis.get(`qr:${sessionId}:${nonce}`);
@@ -134,11 +120,8 @@ export class RedisPrismaQrStorageAdapter implements QrStorageAdapter {
           isExpired: false,
         };
       }
-    } catch {
-      // ignore Redis error and fallback
-    }
+    } catch {}
 
-    // 2. Fallback: PostgreSQL query (for offline sync or cold cache)
     try {
       const { default: prisma } = await import("@secured_attendance/db");
       const dbToken = await prisma.qrToken.findUnique({
@@ -159,30 +142,19 @@ export class RedisPrismaQrStorageAdapter implements QrStorageAdapter {
           expiresAt: dbToken.expiresAt,
         };
       }
-    } catch {
-      // ignore db error
-    }
+    } catch {}
 
     return { found: false };
   }
 }
 
-/**
- * Deep Domain Module: Single authority on QR token issuance, signing, rotation, and verification.
- */
 export class QrTokenManager {
   constructor(private storage: QrStorageAdapter) {}
 
-  /**
-   * Formats the canonical message string to be signed.
-   */
   static formatPayloadString(sessionId: string, nonce: string, expiresAt: number): string {
     return `${sessionId}:${nonce}:${expiresAt}`;
   }
 
-  /**
-   * Computes HMAC-SHA256 signature for a QR token.
-   */
   static computeSignature(
     sessionId: string,
     nonce: string,
@@ -193,9 +165,6 @@ export class QrTokenManager {
     return crypto.createHmac("sha256", secret).update(payload).digest("hex");
   }
 
-  /**
-   * Validates a QR token's cryptographic signature using constant-time comparison.
-   */
   static verifySignature(
     sessionId: string,
     nonce: string,
@@ -210,17 +179,14 @@ export class QrTokenManager {
     return crypto.timingSafeEqual(Buffer.from(signature, "hex"), Buffer.from(expected, "hex"));
   }
 
-  /**
-   * Issues a batch of sequential rotating tokens for WebSocket emission to classroom displays.
-   */
   async issueBatch(
     sessionId: string,
     secret: string | Uint8Array,
     options: IssueBatchOptions = {},
   ): Promise<QrTokenBatchItem[]> {
     const count = options.count ?? 5;
-    const intervalMs = options.intervalMs ?? 10000; // 10s
-    const validityMs = options.validityMs ?? 45000; // 45s
+    const intervalMs = options.intervalMs ?? 10000;
+    const validityMs = options.validityMs ?? 45000;
     const now = Date.now();
 
     const tokens: QrTokenBatchItem[] = [];
@@ -246,20 +212,14 @@ export class QrTokenManager {
         issuedAt: new Date(now),
       });
 
-      // Cache each token in Redis with appropriate TTL
       const ttlSeconds = Math.ceil((validityMs + i * intervalMs) / 1000) + 15;
       void this.storage.storeToken(sessionId, nonce, expiresAtDate, ttlSeconds);
     }
 
-    // Persist the entire batch to the database for offline sync
     await this.storage.persistBatch(sessionId, dbRecords);
-
     return tokens;
   }
 
-  /**
-   * Verifies if a given nonce is valid and unexpired in the storage layer.
-   */
   async lookupNonce(
     sessionId: string,
     nonce: string,
@@ -270,7 +230,6 @@ export class QrTokenManager {
       return result;
     }
 
-    // For live scans, if the token was found in DB but its expiration timestamp has passed
     if (!isOfflineSync && result.isExpired) {
       return {
         ...result,
@@ -282,7 +241,4 @@ export class QrTokenManager {
   }
 }
 
-/**
- * Singleton production instance using Redis + Prisma storage.
- */
 export const defaultQrTokenManager = new QrTokenManager(new RedisPrismaQrStorageAdapter());

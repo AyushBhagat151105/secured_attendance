@@ -57,3 +57,19 @@ An interface separating token storage semantics from domain logic:
 - `RedisPrismaQrStorageAdapter`: Production adapter combining Redis fast-path TTL caching with PostgreSQL batch persistence.
 - `InMemoryQrStorageAdapter`: Test adapter enabling full batch generation and lookup testing with zero external infrastructure.
 
+### SessionGate (Deep Module — Client)
+
+The single authority on client session reconciliation, offline cache synchronization, and navigation gate status computation in the native application.
+- Decouples UI layout rendering (`_layout.tsx`) from multi-source authentication resolution.
+- Resolves state into a typed `SessionGateStatus`: `LOADING`, `UNAUTHENTICATED`, `PASSWORD_CHANGE_REQUIRED`, `DEVICE_BINDING_REQUIRED`, `DEVICE_MISMATCH`, `AUTHORIZED`.
+- Pure decision engine `resolveSessionGateStatus` enables 100% in-memory unit testing of mobile route guards without mounting React Native trees.
+
+### ScheduleResolver (Deep Module)
+
+The single authority on academic scheduling, timetable resolution, and session alignment:
+- Encapsulates Indian Standard Time (`Asia/Kolkata`) day-of-week and start-of-day boundary conversions.
+- Resolves timetable slots to concrete attendance sessions using strict ID matching and anti-hijacking time-proximity heuristics ($\le 45\text{ mins}$).
+- Manages the lifecycle auto-close policy for expired active attendance sessions.
+
+
+

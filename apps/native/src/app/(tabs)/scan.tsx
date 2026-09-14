@@ -36,6 +36,8 @@ export default function ScanScreen() {
     gpsOk: boolean;
     isOffline?: boolean;
   } | null>(null);
+  const [zoom, setZoom] = useState(0);
+  const [torch, setTorch] = useState(false);
 
   const { mutateAsync: scanAttendance } = useScanAttendance();
   const queryClient = useQueryClient();
@@ -44,8 +46,21 @@ export default function ScanScreen() {
   const { width, topInset } = useResponsive();
   const { colors, isDark } = useAppTheme();
 
-  // Dynamic box size based on screen width
   const scanBoxSize = Math.min(width - 80, 280);
+
+  const handleSetZoom = (level: number) => {
+    try {
+      Haptics.selectionAsync();
+    } catch {}
+    setZoom(level);
+  };
+
+  const handleToggleTorch = () => {
+    try {
+      Haptics.selectionAsync();
+    } catch {}
+    setTorch((prev) => !prev);
+  };
 
   // Animation for the scanning line
   const linePosition = useSharedValue(0);
@@ -98,18 +113,28 @@ export default function ScanScreen() {
     );
   }
 
-  const handleBarcodeScanned = async ({ data }: { type: string; data: string }) => {
+  const handleBarcodeScanned = async (scanningResult: {
+    data: string;
+    bounds?: { origin: { x: number; y: number }; size: { width: number; height: number } };
+  }) => {
     if (scanStatus !== "idle") return;
+
+    const data = scanningResult.data;
+    const bounds = scanningResult.bounds;
+
+    if (bounds?.size?.width && bounds.size.width < scanBoxSize * 0.4 && zoom < 0.2) {
+      setZoom(0.25);
+      try {
+        Haptics.selectionAsync();
+      } catch {}
+    }
 
     setScanStatus("processing");
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    } catch {
-      // ignore
-    }
+    } catch {}
 
     try {
-      // 1. Parse QR Data
       let payload;
       try {
         const rawPayload = JSON.parse(data);
@@ -226,6 +251,8 @@ export default function ScanScreen() {
     setScanStatus("idle");
     setStatusMessage("");
     setLastScanSuccess(null);
+    setZoom(0);
+    setTorch(false);
     router.replace("/(tabs)");
   };
 
@@ -234,6 +261,8 @@ export default function ScanScreen() {
       <CameraView
         style={StyleSheet.absoluteFill}
         facing="back"
+        zoom={zoom}
+        enableTorch={torch}
         barcodeScannerSettings={{
           barcodeTypes: ["qr"],
         }}
@@ -261,6 +290,21 @@ export default function ScanScreen() {
         </TouchableOpacity>
 
         <View style={styles.topHudTags}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={handleToggleTorch}
+            style={[
+              styles.torchButton,
+              torch && { backgroundColor: PALETTE.hiVisYellow },
+              { borderColor: isDark ? colors.border : PALETTE.inkBlack },
+            ]}
+          >
+            <Ionicons
+              name={torch ? "flashlight-sharp" : "flashlight-outline"}
+              size={15}
+              color={torch ? PALETTE.pureBlack : isDark ? PALETTE.boneWhite : PALETTE.pureBlack}
+            />
+          </TouchableOpacity>
           <NetworkStatusBadge compact />
           <View style={styles.gpsPill}>
             <Ionicons name="location-sharp" size={12} color={PALETTE.pureBlack} />
@@ -270,8 +314,8 @@ export default function ScanScreen() {
       </View>
 
       {/* Viewfinder Center Box */}
-      <View style={styles.viewfinderWrapper} pointerEvents="none">
-        <View style={[styles.scanBox, { width: scanBoxSize, height: scanBoxSize }]}>
+      <View style={styles.viewfinderWrapper} pointerEvents="box-none">
+        <View style={[styles.scanBox, { width: scanBoxSize, height: scanBoxSize }]} pointerEvents="none">
           {/* Corner Brackets */}
           <View style={[styles.cornerBracket, styles.topLeft]} />
           <View style={[styles.cornerBracket, styles.topRight]} />
@@ -289,6 +333,49 @@ export default function ScanScreen() {
           )}
         </View>
 
+        {/* Zoom Selector Row (1x, 2x, 3x) */}
+        {scanStatus === "idle" && (
+          <View style={styles.zoomControlRow} pointerEvents="auto">
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => handleSetZoom(0)}
+              style={[
+                styles.zoomPill,
+                zoom === 0 && styles.zoomPillActive,
+                { borderColor: isDark ? colors.border : PALETTE.inkBlack },
+              ]}
+            >
+              <Text style={[styles.zoomText, zoom === 0 && styles.zoomTextActive]}>1x</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => handleSetZoom(0.25)}
+              style={[
+                styles.zoomPill,
+                Math.abs(zoom - 0.25) < 0.05 && styles.zoomPillActive,
+                { borderColor: isDark ? colors.border : PALETTE.inkBlack },
+              ]}
+            >
+              <Text style={[styles.zoomText, Math.abs(zoom - 0.25) < 0.05 && styles.zoomTextActive]}>
+                2x
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => handleSetZoom(0.5)}
+              style={[
+                styles.zoomPill,
+                zoom >= 0.4 && styles.zoomPillActive,
+                { borderColor: isDark ? colors.border : PALETTE.inkBlack },
+              ]}
+            >
+              <Text style={[styles.zoomText, zoom >= 0.4 && styles.zoomTextActive]}>3x</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <View
           style={[
             styles.instructionPill,
@@ -297,6 +384,7 @@ export default function ScanScreen() {
               borderColor: isDark ? colors.border : PALETTE.inkBlack,
             },
           ]}
+          pointerEvents="none"
         >
           <Ionicons
             name="scan-sharp"
@@ -309,7 +397,9 @@ export default function ScanScreen() {
               { color: isDark ? PALETTE.boneWhite : PALETTE.pureBlack },
             ]}
           >
-            ALIGN CLASSROOM QR CODE INSIDE FRAME
+            {zoom > 0
+              ? `ZOOM ${zoom >= 0.4 ? "3x" : "2x"} ACTIVE &bull; ALIGN QR INSIDE FRAME`
+              : "ALIGN CLASSROOM QR CODE INSIDE FRAME"}
           </Text>
         </View>
       </View>
@@ -482,6 +572,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
+  torchButton: {
+    width: 32,
+    height: 32,
+    borderRadius: RADIUS.full,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderWidth: BORDERS.hairline,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   gpsPill: {
     flexDirection: "row",
     alignItems: "center",
@@ -566,6 +666,36 @@ const styles = StyleSheet.create({
     color: PALETTE.hiVisYellow,
     letterSpacing: 0.5,
   },
+  zoomControlRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    marginTop: 18,
+  },
+  zoomPill: {
+    width: 44,
+    height: 32,
+    borderRadius: RADIUS.full,
+    backgroundColor: "rgba(0, 0, 0, 0.65)",
+    borderWidth: BORDERS.hairline,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  zoomPillActive: {
+    backgroundColor: PALETTE.hiVisYellow,
+    borderColor: PALETTE.pureBlack,
+  },
+  zoomText: {
+    fontSize: 12,
+    fontWeight: "800",
+    fontFamily: FONTS.mono,
+    color: PALETTE.boneWhite,
+  },
+  zoomTextActive: {
+    color: PALETTE.pureBlack,
+  },
   instructionPill: {
     flexDirection: "row",
     alignItems: "center",
@@ -576,7 +706,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.full,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    marginTop: 24,
+    marginTop: 14,
   },
   instructionText: {
     fontSize: 10,

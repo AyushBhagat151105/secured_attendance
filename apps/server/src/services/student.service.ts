@@ -9,9 +9,6 @@ import { defaultQrTokenManager } from "../domain/qr-token-manager";
 import type { ScanAttendanceDto } from "../models/student.model";
 
 export class StudentService {
-  /**
-   * Fetch the student profile for a given user ID
-   */
   static async getProfile(userId: string) {
     const profile = await prisma.studentProfile.findUnique({
       where: { userId },
@@ -24,11 +21,6 @@ export class StudentService {
     return profile;
   }
 
-  /**
-   * Processes a QR code scan by a student to mark attendance.
-   * Coordinates rate-limiting, data gathering, domain validation via AttendanceValidator,
-   * persistence, and async events/audit.
-   */
   static async submitAttendance(userId: string, body: ScanAttendanceDto, server?: any) {
     const {
       sessionId,
@@ -46,7 +38,6 @@ export class StudentService {
 
     logger.info("Received QR attendance scan", { userId, sessionId, mockFlag, gpsLat, gpsLng });
 
-    // 0. Rate Limiting Check (Fast-path in Redis)
     const rateLimitKey = `ratelimit:${userId}`;
     const attempts = await attendanceRedis.incr(rateLimitKey);
     if (attempts === 1) {
@@ -67,7 +58,6 @@ export class StudentService {
       };
     }
 
-    // 1. Gather Entities for Validation
     const profile = await prisma.studentProfile.findUnique({
       where: { userId },
     });
@@ -97,10 +87,8 @@ export class StudentService {
       },
     });
 
-    // Fast-path token check across Redis cache & PostgreSQL via QrTokenManager
     const tokenLookup = await defaultQrTokenManager.lookupNonce(sessionId, nonce, isOfflineSync);
 
-    // 2. Assemble ScanContext & Evaluate Domain Invariants
     const context: ScanContext = {
       userId,
       studentProfileId: profile.id,
@@ -129,7 +117,6 @@ export class StudentService {
 
     const verdict = AttendanceValidator.evaluate(context);
 
-    // 3. Handle Rejection
     if (verdict.outcome === "REJECTED") {
       for (const anomaly of verdict.anomaliesToReport) {
         void reportAnomaly({
@@ -160,12 +147,10 @@ export class StudentService {
       };
     }
 
-    // 4. Handle Acceptance: Impossible Travel Check (async, non-blocking)
     if (gpsLat && gpsLng) {
       void checkImpossibleTravel(profile.id, userId, gpsLat, gpsLng, new Date());
     }
 
-    // 5. Persist Attendance Record
     const attendance = await prisma.attendance.create({
       data: {
         studentProfileId: profile.id,
@@ -184,7 +169,6 @@ export class StudentService {
       isOfflineSync: !!isOfflineSync,
     });
 
-    // 6. Async Audit Log + Live WebSocket Feed Update
     void queueAuditLog({
       eventType: isOfflineSync ? "attendance.offline_synced" : "attendance.submitted",
       actor: userId,

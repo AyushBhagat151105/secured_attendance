@@ -1,4 +1,5 @@
-import { Elysia } from "elysia";
+import { Elysia, status } from "elysia";
+import prisma from "@secured_attendance/db";
 import { requireRole } from "../middlewares/guards";
 import {
   CreateBuildingBody,
@@ -7,55 +8,89 @@ import {
   UpdateBuildingBody,
   UpdateRoomBody,
 } from "../models/admin-campus.model";
-import { CampusService } from "../services/admin-campus.service";
 
 export const adminCampusModule = new Elysia({ prefix: "/campus" })
   .use(requireRole(["admin", "super_admin"]))
 
-  // ─── Buildings ────────────────────────────────────────────────────────────────
-  .get("/buildings", async () => CampusService.listBuildings(), {
+  .get("/buildings", async () => {
+    return prisma.building.findMany({ orderBy: { name: "asc" } });
+  }, {
     detail: { tags: ["Admin - Campus"], summary: "List buildings" },
   })
-  .post("/buildings", async ({ body }) => CampusService.createBuilding(body), {
+  .post("/buildings", async ({ body }) => {
+    return prisma.building.create({ data: body });
+  }, {
     body: CreateBuildingBody,
     detail: { tags: ["Admin - Campus"], summary: "Create building" },
   })
-  .get("/buildings/:id", async ({ params: { id } }) => CampusService.getBuilding(id), {
+  .get("/buildings/:id", async ({ params: { id } }) => {
+    const building = await prisma.building.findUnique({ where: { id } });
+    if (!building) return status(404, { message: "Building not found" });
+    return building;
+  }, {
     params: IdParam,
     detail: { tags: ["Admin - Campus"], summary: "Get building" },
   })
   .patch(
     "/buildings/:id",
-    async ({ params: { id }, body }) => CampusService.updateBuilding(id, body),
+    async ({ params: { id }, body }) => {
+      return prisma.building.update({ where: { id }, data: body });
+    },
     {
       params: IdParam,
       body: UpdateBuildingBody,
       detail: { tags: ["Admin - Campus"], summary: "Update building" },
     },
   )
-  .delete("/buildings/:id", async ({ params: { id } }) => CampusService.deleteBuilding(id), {
+  .delete("/buildings/:id", async ({ params: { id } }) => {
+    await prisma.building.delete({ where: { id } });
+    return { success: true };
+  }, {
     params: IdParam,
     detail: { tags: ["Admin - Campus"], summary: "Delete building" },
   })
 
-  // ─── Rooms ────────────────────────────────────────────────────────────────────
-  .get("/rooms", async () => CampusService.listRooms(), {
+  .get("/rooms", async () => {
+    return prisma.room.findMany({
+      include: { building: true },
+      orderBy: { name: "asc" },
+    });
+  }, {
     detail: { tags: ["Admin - Campus"], summary: "List rooms" },
   })
-  .post("/rooms", async ({ body }) => CampusService.createRoom(body), {
+  .post("/rooms", async ({ body }) => {
+    return prisma.room.create({
+      data: {
+        ...body,
+        bssidWhitelist: body.bssidWhitelist ?? [],
+      },
+    });
+  }, {
     body: CreateRoomBody,
     detail: { tags: ["Admin - Campus"], summary: "Create room" },
   })
-  .get("/rooms/:id", async ({ params: { id } }) => CampusService.getRoom(id), {
+  .get("/rooms/:id", async ({ params: { id } }) => {
+    const room = await prisma.room.findUnique({
+      where: { id },
+      include: { building: true },
+    });
+    if (!room) return status(404, { message: "Room not found" });
+    return room;
+  }, {
     params: IdParam,
     detail: { tags: ["Admin - Campus"], summary: "Get room" },
   })
-  .patch("/rooms/:id", async ({ params: { id }, body }) => CampusService.updateRoom(id, body), {
+  .patch("/rooms/:id", async ({ params: { id }, body }) => {
+    return prisma.room.update({ where: { id }, data: body });
+  }, {
     params: IdParam,
     body: UpdateRoomBody,
     detail: { tags: ["Admin - Campus"], summary: "Update room" },
   })
-  .delete("/rooms/:id", async ({ params: { id } }) => CampusService.deleteRoom(id), {
+  .delete("/rooms/:id", async ({ params: { id } }) => {
+    await prisma.room.delete({ where: { id } });
+    return { success: true };
+  }, {
     params: IdParam,
     detail: { tags: ["Admin - Campus"], summary: "Delete room" },
   });
