@@ -1,56 +1,32 @@
-﻿import React, { createContext, useCallback, useContext, useMemo, useState, useEffect } from "react";
-import { Appearance } from "react-native";
+import React, { createContext, useContext, useMemo } from "react";
+import { darkThemeColors, type ThemeColors } from "@/lib/theme";
 
-type ThemeName = "light" | "dark";
+type ThemeName = "dark";
 
 type AppThemeContextType = {
   theme: ThemeName;
   currentTheme: ThemeName;
   isLight: boolean;
   isDark: boolean;
-  setTheme: (theme: ThemeName) => void;
+  colors: ThemeColors;
+  setTheme: (theme: string) => void;
   toggleTheme: () => void;
 };
 
 const AppThemeContext = createContext<AppThemeContextType | undefined>(undefined);
 
 export const AppThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const colorScheme = Appearance.getColorScheme();
-  const [theme, setThemeState] = useState<ThemeName>(colorScheme === "dark" ? "dark" : "light");
-
-  useEffect(() => {
-    const subscription = Appearance.addChangeListener(({ colorScheme }) => {
-      setThemeState(colorScheme === "dark" ? "dark" : "light");
-    });
-    return () => subscription.remove();
-  }, []);
-
-  const isLight = useMemo(() => {
-    return theme === "light";
-  }, [theme]);
-
-  const isDark = useMemo(() => {
-    return theme === "dark";
-  }, [theme]);
-
-  const setTheme = useCallback((newTheme: ThemeName) => {
-    setThemeState(newTheme);
-  }, []);
-
-  const toggleTheme = useCallback(() => {
-    setThemeState(theme === "light" ? "dark" : "light");
-  }, [theme]);
-
-  const value = useMemo(
+  const value = useMemo<AppThemeContextType>(
     () => ({
-      theme,
-      currentTheme: theme,
-      isLight,
-      isDark,
-      setTheme,
-      toggleTheme,
+      theme: "dark",
+      currentTheme: "dark",
+      isLight: false,
+      isDark: true,
+      colors: darkThemeColors,
+      setTheme: () => {},
+      toggleTheme: () => {},
     }),
-    [theme, isLight, isDark, setTheme, toggleTheme],
+    [],
   );
 
   return <AppThemeContext.Provider value={value}>{children}</AppThemeContext.Provider>;

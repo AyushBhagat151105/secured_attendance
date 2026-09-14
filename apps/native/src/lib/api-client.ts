@@ -1,10 +1,11 @@
 ﻿import axios from "axios";
-import { env } from "@secured_attendance/env/native";
-import { authClient } from "./auth-client";
+import { authClient, SERVER_URL } from "./auth-client";
 import Constants from "expo-constants";
 
+console.log("🚀 [API Client Initialized with Server URL]:", SERVER_URL);
+
 export const apiClient = axios.create({
-  baseURL: env.EXPO_PUBLIC_SERVER_URL,
+  baseURL: SERVER_URL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -18,31 +19,36 @@ apiClient.interceptors.request.use(
       config.headers["Content-Type"] = "application/json";
     }
 
-    const cookieString = await (authClient as any).getCookie();
+    const cookieClient = authClient as unknown as { getCookie?: () => Promise<string | undefined> };
+    const cookieString = await cookieClient.getCookie?.();
     if (cookieString) {
       config.headers["cookie"] = cookieString;
     }
     config.headers["expo-origin"] = Constants.expoConfig?.scheme || "native";
     config.headers["x-skip-oauth-proxy"] = "true";
 
+    console.log(`🌐 [Axios Request] ${config.method?.toUpperCase()} ${config.baseURL || ""}${config.url}`);
+
     return config;
   },
   (error) => {
-    console.error("Request Error:", error);
+    console.error("❌ [Axios Request Error]:", error);
     return Promise.reject(error);
   },
 );
 
 apiClient.interceptors.response.use(
   (response) => {
+    console.log(`✅ [Axios Response] ${response.status} ${response.config.url}`);
     return response;
   },
   (error) => {
-    console.error("API Error:", error.message);
     if (error.response) {
-      console.error("Error Response:", error.response.status, error.response.data);
+      console.log(`❌ [Axios Response Error] ${error.response.status} ${error.config?.url}:`, JSON.stringify(error.response.data));
     } else if (error.request) {
-      console.error("Network Error - No response received");
+      console.log(`❌ [Axios Network Error - No Response] ${error.config?.url}: ${error.message}`);
+    } else {
+      console.log(`❌ [Axios Error]:`, error.message);
     }
     return Promise.reject(error);
   },

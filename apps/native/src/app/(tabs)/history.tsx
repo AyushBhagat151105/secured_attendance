@@ -1,29 +1,45 @@
-import { Text, View, StyleSheet, TouchableOpacity, RefreshControl } from "react-native";
+import {
+  Text,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  RefreshControl,
+  ActivityIndicator,
+} from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { Container } from "@/components/container";
 import { useAttendanceHistory, useAttendanceStats } from "@/hooks/api/use-attendance-history";
-import { ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useState, useCallback } from "react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PALETTE, FONTS, RADIUS, BORDERS } from "@/lib/theme";
+import { useResponsive } from "@/hooks/use-responsive";
+import { useAppTheme } from "@/contexts/app-theme-context";
 
-const COLORS = {
-  background: "#ffffff",
-  card: "#ffffff",
-  border: "#e5e7eb",
-  primary: "#4f46e5",
-  foreground: "#111827",
-  muted: "#6b7280",
-  success: "#10b981",
-  successBg: "rgba(16, 185, 129, 0.2)",
-  warning: "#f59e0b",
-  warningBg: "rgba(245, 158, 11, 0.2)",
-  destructive: "#ef4444",
-  destructiveBg: "rgba(239, 68, 68, 0.2)",
-  secondary: "#f3f4f6",
-};
+interface HistorySessionItem {
+  id: string | number;
+  status: string;
+  date: string;
+  session?: {
+    subject?: { name?: string };
+    room?: { name?: string };
+  };
+}
+
+interface SubjectStatItem {
+  subjectId?: string | number;
+  subjectName?: string;
+  percentage: number;
+  attended: number;
+  total: number;
+}
 
 export default function HistoryScreen() {
   const [viewMode, setViewMode] = useState<"recent" | "subjects">("recent");
+  const { bottomInset } = useResponsive();
+  const { colors, isDark } = useAppTheme();
 
   const {
     data: historyData,
@@ -48,162 +64,283 @@ export default function HistoryScreen() {
   }, [refetchHistory, refetchStats]);
 
   const historyItems = historyData?.pages.flatMap((page) => page.items) || [];
+  const subjectStats = stats?.bySubject || [];
 
-  const renderHistoryItem = ({ item }: { item: any }) => {
+  const overallPercentage = stats?.overallPercentage ? Math.round(stats.overallPercentage) : 0;
+
+  const renderHistoryItem = ({ item }: { item: HistorySessionItem }) => {
     const isPresent = item.status === "PRESENT";
     const date = new Date(item.date).toLocaleDateString("en-US", {
+      weekday: "short",
       month: "short",
       day: "numeric",
+    });
+    const time = new Date(item.date).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
     });
 
     return (
-      <View style={styles.historyCard}>
-        <View style={styles.cardContent}>
-          <Text style={styles.subjectTitle}>{item.session?.subject?.name || "Unknown Subject"}</Text>
-          <View style={styles.rowInfo}>
-            <Text style={styles.mutedText}>{date}</Text>
-            <Text style={styles.mutedText}> • {item.session?.room?.name || "Unknown Room"}</Text>
+      <Card variant="bone" style={styles.historyCard}>
+        <View style={styles.historyCardRow}>
+          <View style={{ flex: 1, paddingRight: 10 }}>
+            <Text
+              maxFontSizeMultiplier={1.2}
+              numberOfLines={1}
+              style={[styles.subjectName, { color: colors.textPrimary }]}
+            >
+              {item.session?.subject?.name || "Subject"}
+            </Text>
+            <View style={styles.historyMetaRow}>
+              <Text style={[styles.historyMetaText, { color: colors.textSecondary }]}>
+                {date.toUpperCase()}
+              </Text>
+              <Text style={[styles.historyDot, { color: colors.textMuted }]}>•</Text>
+              <Text style={[styles.historyMetaText, { color: colors.textSecondary }]}>{time}</Text>
+              {item.session?.room?.name && (
+                <>
+                  <Text style={[styles.historyDot, { color: colors.textMuted }]}>•</Text>
+                  <Text style={[styles.historyMetaText, { color: colors.textSecondary }]}>
+                    {item.session.room.name}
+                  </Text>
+                </>
+              )}
+            </View>
           </View>
+
+          <Badge
+            label={isPresent ? "PRESENT" : "MISSED"}
+            variant={isPresent ? "present" : "missed"}
+            icon={
+              <Ionicons
+                name={isPresent ? "checkmark-sharp" : "close-sharp"}
+                size={12}
+                color={isPresent ? PALETTE.pureBlack : PALETTE.boneWhite}
+              />
+            }
+          />
         </View>
-        <View style={[styles.badge, isPresent ? styles.badgeSuccess : styles.badgeDestructive]}>
-          <Text style={[styles.badgeText, isPresent ? styles.textSuccess : styles.textDestructive]}>
-            {isPresent ? "PRESENT" : "ABSENT"}
-          </Text>
-        </View>
-      </View>
+      </Card>
     );
   };
 
-  const renderSubjectStat = ({ item }: { item: any }) => {
+  const renderSubjectStat = ({ item }: { item: SubjectStatItem }) => {
     const percentage = Math.round(item.percentage);
-    let colorStyle = styles.textSuccess;
-    let bgStyle = styles.bgSuccess;
-    if (percentage < 75) {
-      colorStyle = styles.textWarning;
-      bgStyle = styles.bgWarning;
-    }
-    if (percentage < 60) {
-      colorStyle = styles.textDestructive;
-      bgStyle = styles.bgDestructive;
-    }
+    const isSafe = percentage >= 75;
+    const isWarning = percentage >= 60 && percentage < 75;
+
+    let progressColor: string = PALETTE.matchaCream;
+    if (isWarning) progressColor = PALETTE.butteryYellow;
+    if (!isSafe && !isWarning) progressColor = PALETTE.firecrackerRed;
 
     return (
-      <View style={styles.historyCard}>
-        <View style={styles.statHeader}>
-          <Text style={styles.subjectTitle} numberOfLines={1}>
-            {item.subjectName}
+      <Card variant="bone" style={styles.subjectCard}>
+        <View style={styles.subjectCardHeader}>
+          <Text
+            maxFontSizeMultiplier={1.2}
+            numberOfLines={1}
+            style={[styles.subjectCardTitle, { color: colors.textPrimary }]}
+          >
+            {item.subjectName || "Subject"}
           </Text>
-          <Text style={[styles.percentageText, colorStyle]}>{percentage}%</Text>
+          <Badge
+            label={isSafe ? "SAFE" : "AT RISK"}
+            variant={isSafe ? "present" : "missed"}
+            size="sm"
+          />
         </View>
 
-        <View style={styles.progressBarBg}>
-          <View style={[styles.progressBarFill, bgStyle, { width: `${percentage}%` }]} />
+        {/* Monospace progress bar */}
+        <View
+          style={[
+            styles.progressBarWrapper,
+            {
+              backgroundColor: colors.divider,
+              borderColor: isDark ? colors.border : PALETTE.inkBlack,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.progressBarFill,
+              {
+                width: `${Math.min(Math.max(percentage, 5), 100)}%`,
+                backgroundColor: progressColor,
+              },
+            ]}
+          />
         </View>
 
-        <View style={styles.statFooter}>
-          <Text style={styles.mutedText}>{item.attended} Attended</Text>
-          <Text style={styles.mutedText}>{item.total} Total Sessions</Text>
+        <View style={styles.subjectCardFooter}>
+          <Text style={[styles.ratioText, { color: colors.textSecondary }]}>
+            {item.attended} OF {item.total} CLASSES ATTENDED
+          </Text>
+          <Text
+            style={[
+              styles.percentNumber,
+              { color: isSafe ? colors.textPrimary : PALETTE.firecrackerRed },
+            ]}
+          >
+            {percentage}%
+          </Text>
         </View>
-      </View>
+      </Card>
     );
   };
 
   return (
-    <Container style={styles.container} scroll={false}>
-      <View style={styles.header}>
-        <Text style={styles.pageTitle}>Attendance</Text>
+    <Container scroll={false} padded={false}>
+      <View
+        style={{
+          flex: 1,
+          paddingHorizontal: 16,
+          paddingTop: 8,
+          paddingBottom: Math.max(bottomInset, 16) + 20,
+        }}
+      >
+        {/* Header Title */}
+        <View style={styles.headerArea}>
+          <Text maxFontSizeMultiplier={1.2} style={styles.screenHeading}>
+            ATTENDANCE LOG
+          </Text>
 
-        {/* Segmented Control */}
-        <View style={styles.segmentedControl}>
-          <TouchableOpacity
-            style={[styles.segmentButton, viewMode === "recent" && styles.segmentButtonActive]}
-            onPress={() => setViewMode("recent")}
+          {/* Segmented Control Pills */}
+          <View
+            style={[
+              styles.segmentContainer,
+              {
+                backgroundColor: isDark ? PALETTE.darkCard : PALETTE.boneWhite,
+                borderColor: isDark ? colors.border : PALETTE.inkBlack,
+              },
+            ]}
           >
-            <Text style={[styles.segmentText, viewMode === "recent" && styles.segmentTextActive]}>
-              Recent
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.segmentButton, viewMode === "subjects" && styles.segmentButtonActive]}
-            onPress={() => setViewMode("subjects")}
-          >
-            <Text style={[styles.segmentText, viewMode === "subjects" && styles.segmentTextActive]}>
-              By Subject
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setViewMode("recent")}
+              style={[
+                styles.segmentTab,
+                viewMode === "recent" && styles.segmentTabActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.segmentTabText,
+                  { color: isDark ? colors.textPrimary : PALETTE.inkBlack },
+                  viewMode === "recent" && styles.segmentTabTextActive,
+                ]}
+              >
+                RECENT
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setViewMode("subjects")}
+              style={[
+                styles.segmentTab,
+                viewMode === "subjects" && styles.segmentTabActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.segmentTabText,
+                  { color: isDark ? colors.textPrimary : PALETTE.inkBlack },
+                  viewMode === "subjects" && styles.segmentTabTextActive,
+                ]}
+              >
+                BY SUBJECT
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
-      <View style={styles.content}>
+        {/* Overall Status Banner */}
+        <Card variant="lilac" style={styles.overallBanner}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <View>
+              <Text style={styles.overallBannerLabel}>OVERALL RECORD</Text>
+              <Text style={styles.overallBannerValue}>{overallPercentage}%</Text>
+            </View>
+            <View style={{ alignItems: "flex-end", gap: 4 }}>
+              <Badge
+                label={overallPercentage >= 75 ? "MEETS REQUIREMENT" : "BELOW 75% TARGET"}
+                variant={overallPercentage >= 75 ? "present" : "warning"}
+              />
+              <Text style={styles.overallBannerSub}>
+                STREAK: {stats?.streak || 0} DAYS 🔥
+              </Text>
+            </View>
+          </View>
+        </Card>
+
+        {/* Content Area */}
         {viewMode === "recent" ? (
           historyLoading && !refreshing ? (
-            <View style={styles.centerAll}>
-              <ActivityIndicator size="large" color={COLORS.primary} />
+            <View style={styles.loadingWrapper}>
+              <ActivityIndicator size="large" color={PALETTE.boneWhite} />
             </View>
+          ) : historyItems.length === 0 ? (
+            <EmptyState
+              icon={<Ionicons name="time-outline" size={28} color={PALETTE.hiVisYellow} />}
+              title="NO RECORDINGS YET"
+              description="You have not marked attendance for any sessions yet."
+            />
           ) : (
             <FlashList
               data={historyItems}
               renderItem={renderHistoryItem}
-              keyExtractor={(item: any, index: number) => item.id?.toString() || index.toString()}
+              keyExtractor={(item: HistorySessionItem, index: number) => item.id?.toString() || index.toString()}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={[{ paddingBottom: 20 }, historyItems.length === 0 && { flex: 1 }]}
+              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+              contentContainerStyle={{ paddingBottom: 24 }}
               onEndReached={() => {
                 if (hasNextPage) fetchNextPage();
               }}
               onEndReachedThreshold={0.5}
               refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  tintColor={PALETTE.boneWhite}
+                  colors={[PALETTE.duskViolet]}
+                />
               }
               ListFooterComponent={() =>
                 isFetchingNextPage ? (
                   <ActivityIndicator
                     size="small"
-                    color={COLORS.primary}
-                    style={{ marginVertical: 16, alignSelf: "center" }}
+                    color={PALETTE.boneWhite}
+                    style={{ marginVertical: 16 }}
                   />
                 ) : null
-              }
-              ListEmptyComponent={
-                <View style={styles.centerAll}>
-                  <Ionicons
-                    name="document-text-outline"
-                    size={48}
-                    color={COLORS.muted}
-                    style={{ marginBottom: 12 }}
-                  />
-                  <Text style={styles.emptyTitle}>No Records Yet</Text>
-                  <Text style={styles.emptySub}>Your attendance history will appear here.</Text>
-                </View>
               }
             />
           )
         ) : statsLoading && !refreshing ? (
-          <View style={styles.centerAll}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
+          <View style={styles.loadingWrapper}>
+            <ActivityIndicator size="large" color={PALETTE.boneWhite} />
           </View>
+        ) : subjectStats.length === 0 ? (
+          <EmptyState
+            icon={<Ionicons name="book-outline" size={28} color={PALETTE.hiVisYellow} />}
+            title="NO SUBJECT DATA"
+            description="Subject performance records will appear here once attendance is registered."
+          />
         ) : (
           <FlashList
-            data={stats?.bySubject || []}
+            data={subjectStats}
             renderItem={renderSubjectStat}
-            keyExtractor={(item: any, index: number) => item.subjectId?.toString() || index.toString()}
+            keyExtractor={(item: SubjectStatItem, index: number) => item.subjectId?.toString() || index.toString()}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={[{ paddingBottom: 20 }, (!stats?.bySubject || stats.bySubject.length === 0) && { flex: 1 }]}
+            ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+            contentContainerStyle={{ paddingBottom: 24 }}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />
-            }
-            ListEmptyComponent={
-              <View style={styles.centerAll}>
-                <Ionicons
-                  name="pie-chart-outline"
-                  size={48}
-                  color={COLORS.muted}
-                  style={{ marginBottom: 12 }}
-                />
-                <Text style={styles.emptyTitle}>No Stats Available</Text>
-                <Text style={styles.emptySub}>Attend classes to see your statistics.</Text>
-              </View>
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={PALETTE.boneWhite}
+                colors={[PALETTE.duskViolet]}
+              />
             }
           />
         )}
@@ -213,158 +350,155 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
+  headerArea: {
+    marginBottom: 14,
   },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 8,
+  screenHeading: {
+    fontSize: 22,
+    fontWeight: "900",
+    fontFamily: FONTS.display,
+    color: PALETTE.boneWhite,
+    letterSpacing: 0.5,
+    marginBottom: 12,
   },
-  pageTitle: {
-    fontSize: 30,
-    fontWeight: "bold",
-    color: COLORS.foreground,
-    marginBottom: 24,
-  },
-  segmentedControl: {
+  segmentContainer: {
     flexDirection: "row",
-    backgroundColor: COLORS.secondary,
-    padding: 4,
-    borderRadius: 8,
-    marginBottom: 16,
+    backgroundColor: PALETTE.boneWhite,
+    borderRadius: RADIUS.full,
+    borderWidth: BORDERS.default,
+    borderColor: PALETTE.inkBlack,
+    padding: 3,
   },
-  segmentButton: {
+  segmentTab: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 7,
     alignItems: "center",
-    borderRadius: 6,
+    justifyContent: "center",
+    borderRadius: RADIUS.full,
   },
-  segmentButtonActive: {
-    backgroundColor: COLORS.card,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-    elevation: 2,
+  segmentTabActive: {
+    backgroundColor: PALETTE.hiVisYellow,
+    borderWidth: BORDERS.hairline,
+    borderColor: PALETTE.pureBlack,
   },
-  segmentText: {
-    fontWeight: "500",
-    color: COLORS.muted,
+  segmentTabText: {
+    fontSize: 11,
+    fontWeight: "700",
+    fontFamily: FONTS.mono,
+    color: PALETTE.inkBlack,
+    letterSpacing: 0.5,
   },
-  segmentTextActive: {
-    color: COLORS.foreground,
+  segmentTabTextActive: {
+    color: PALETTE.pureBlack,
+    fontWeight: "800",
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 8,
+  overallBanner: {
+    marginBottom: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  overallBannerLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    fontFamily: FONTS.mono,
+    color: "rgba(249, 245, 242, 0.75)",
+    letterSpacing: 0.5,
+  },
+  overallBannerValue: {
+    fontSize: 26,
+    fontWeight: "900",
+    fontFamily: FONTS.mono,
+    color: PALETTE.boneWhite,
+    marginTop: 2,
+  },
+  overallBannerSub: {
+    fontSize: 11,
+    fontWeight: "700",
+    fontFamily: FONTS.mono,
+    color: PALETTE.hiVisYellow,
+    marginTop: 4,
   },
   historyCard: {
-    backgroundColor: COLORS.card,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  historyCardRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
   },
-  cardContent: {
-    flex: 1,
-  },
-  subjectTitle: {
-    color: COLORS.foreground,
-    fontWeight: "600",
-    fontSize: 16,
+  subjectName: {
+    fontSize: 15,
+    fontWeight: "800",
+    fontFamily: FONTS.display,
+    color: PALETTE.inkBlack,
     marginBottom: 4,
   },
-  rowInfo: {
+  historyMetaRow: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 4,
   },
-  mutedText: {
-    color: COLORS.muted,
-    fontSize: 12,
+  historyMetaText: {
+    fontSize: 11,
+    fontFamily: FONTS.mono,
+    fontWeight: "600",
+    color: "rgba(26,26,26,0.65)",
   },
-  badge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 9999,
-  },
-  badgeSuccess: {
-    backgroundColor: COLORS.successBg,
-  },
-  badgeDestructive: {
-    backgroundColor: COLORS.destructiveBg,
-  },
-  badgeText: {
+  historyDot: {
     fontSize: 10,
-    fontWeight: "bold",
+    color: "rgba(26,26,26,0.4)",
   },
-  textSuccess: {
-    color: COLORS.success,
+  subjectCard: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
   },
-  textWarning: {
-    color: COLORS.warning,
-  },
-  textDestructive: {
-    color: COLORS.destructive,
-  },
-  bgSuccess: {
-    backgroundColor: COLORS.success,
-  },
-  bgWarning: {
-    backgroundColor: COLORS.warning,
-  },
-  bgDestructive: {
-    backgroundColor: COLORS.destructive,
-  },
-  statHeader: {
+  subjectCardHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    justifyContent: "space-between",
+    marginBottom: 10,
   },
-  percentageText: {
-    fontWeight: "bold",
-    marginLeft: 8,
+  subjectCardTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    fontFamily: FONTS.display,
+    color: PALETTE.inkBlack,
+    flex: 1,
+    paddingRight: 10,
   },
-  progressBarBg: {
-    height: 8,
-    width: "100%",
-    backgroundColor: COLORS.secondary,
-    borderRadius: 9999,
+  progressBarWrapper: {
+    height: 10,
+    backgroundColor: "rgba(26,26,26,0.1)",
+    borderRadius: RADIUS.full,
+    borderWidth: BORDERS.hairline,
+    borderColor: PALETTE.inkBlack,
     overflow: "hidden",
-    marginBottom: 8,
+    marginBottom: 10,
   },
   progressBarFill: {
     height: "100%",
+    borderRadius: RADIUS.full,
   },
-  statFooter: {
+  subjectCardFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
-  },
-  centerAll: {
-    flex: 1,
-    justifyContent: "center",
     alignItems: "center",
   },
-  emptyTitle: {
-    color: COLORS.foreground,
-    fontWeight: "500",
-    fontSize: 18,
-    marginBottom: 4,
+  ratioText: {
+    fontSize: 11,
+    fontWeight: "700",
+    fontFamily: FONTS.mono,
+    color: "rgba(26,26,26,0.65)",
   },
-  emptySub: {
-    color: COLORS.muted,
-    textAlign: "center",
+  percentNumber: {
+    fontSize: 14,
+    fontWeight: "900",
+    fontFamily: FONTS.mono,
+  },
+  loadingWrapper: {
+    paddingVertical: 50,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

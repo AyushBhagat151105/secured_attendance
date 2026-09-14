@@ -2,7 +2,7 @@
 import { View, TextInput, TouchableOpacity, StyleSheet, TextInputProps } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
-interface PasswordInputProps extends Omit<TextInputProps, "secureTextEntry"> {}
+type PasswordInputProps = Omit<TextInputProps, "secureTextEntry">;
 
 export function PasswordInput(props: PasswordInputProps) {
   const [showPassword, setShowPassword] = useState(false);

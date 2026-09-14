@@ -1,6 +1,12 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useState, useEffect } from "react";
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import * as Location from "expo-location";
 import * as Haptics from "expo-haptics";
 import Animated, {
@@ -18,26 +24,34 @@ import { savePendingAttendance } from "@/lib/offline-sync";
 import { NetworkStatusBadge } from "@/components/network-status-badge";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAttendanceStats, historyKeys } from "@/hooks/api/use-attendance-history";
+import { useRouter } from "expo-router";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { PALETTE, FONTS, RADIUS, BORDERS } from "@/lib/theme";
+import { useResponsive } from "@/hooks/use-responsive";
+import { useAppTheme } from "@/contexts/app-theme-context";
 
 type ScanStatus = "idle" | "processing" | "success" | "error";
-
-const COLORS = {
-  background: "#ffffff",
-  primary: "#4f46e5",
-  foreground: "#111827",
-  muted: "#6b7280",
-  secondary: "#f3f4f6",
-  success: "#10b981",
-  destructive: "#ef4444",
-};
 
 export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanStatus, setScanStatus] = useState<ScanStatus>("idle");
   const [statusMessage, setStatusMessage] = useState("");
+  const [lastScanSuccess, setLastScanSuccess] = useState<{
+    gpsOk: boolean;
+    isOffline?: boolean;
+  } | null>(null);
+
   const { mutateAsync: scanAttendance } = useScanAttendance();
   const queryClient = useQueryClient();
   const { data: stats } = useAttendanceStats();
+  const router = useRouter();
+  const { width, topInset } = useResponsive();
+  const { colors, isDark } = useAppTheme();
+
+  // Dynamic box size based on screen width
+  const scanBoxSize = Math.min(width - 80, 280);
 
   // Animation for the scanning line
   const linePosition = useSharedValue(0);
@@ -51,50 +65,58 @@ export default function ScanScreen() {
     if (scanStatus === "idle") {
       linePosition.value = withRepeat(
         withSequence(
-          withTiming(250, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+          withTiming(scanBoxSize - 10, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
         ),
-        -1, // infinite
-        true, // reverse
+        -1,
+        true,
       );
     }
-  }, [scanStatus]);
+  }, [scanStatus, scanBoxSize]);
 
   if (!permission) {
-    return <View style={styles.container} />;
+    return <View style={{ flex: 1, backgroundColor: PALETTE.duskViolet }} />;
   }
 
   if (!permission.granted) {
     return (
-      <View style={styles.permissionContainer}>
-        <View style={styles.iconWrapper}>
-          <Ionicons name="camera" size={40} color={COLORS.foreground} />
-        </View>
-        <Text style={styles.permissionTitle}>Camera Access Required</Text>
-        <Text style={styles.permissionSubtitle}>
-          We need access to your camera to scan attendance QR codes in your classroom.
-        </Text>
-        <TouchableOpacity style={styles.button} onPress={requestPermission}>
-          <Text style={styles.buttonText}>Grant Permission</Text>
-        </TouchableOpacity>
+      <View style={[styles.permissionContainer, { backgroundColor: colors.stage }]}>
+        <Card variant="bone" style={styles.permissionCard}>
+          <View style={styles.permissionIconWrapper}>
+            <Ionicons name="camera-sharp" size={36} color={PALETTE.pureBlack} />
+          </View>
+          <Text style={[styles.permissionTitle, { color: colors.textPrimary }]}>CAMERA PERMISSION REQUIRED</Text>
+          <Text style={[styles.permissionSubtitle, { color: colors.textSecondary }]}>
+            To mark attendance securely, we need access to your camera to scan classroom QR codes.
+          </Text>
+          <Button
+            label="GRANT ACCESS"
+            variant="accent"
+            size="lg"
+            onPress={requestPermission}
+            icon={<Ionicons name="shield-checkmark-sharp" size={18} color={PALETTE.pureBlack} />}
+            style={{ width: "100%", marginTop: 8 }}
+          />
+        </Card>
       </View>
     );
   }
 
-  const handleBarcodeScanned = async ({ type, data }: { type: string; data: string }) => {
+  const handleBarcodeScanned = async ({ data }: { type: string; data: string }) => {
     if (scanStatus !== "idle") return;
 
     setScanStatus("processing");
-    console.log("QR Code scanned by device, payload string:", data);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    } catch {
+      // ignore
+    }
 
     try {
       // 1. Parse QR Data
       let payload;
       try {
         const rawPayload = JSON.parse(data);
-
-        // Map short keys to expected long keys if needed
         payload = {
           sessionId: rawPayload.sessionId || rawPayload.s,
           nonce: rawPayload.nonce || rawPayload.n,
@@ -106,7 +128,7 @@ export default function ScanScreen() {
           throw new Error("Invalid format");
         }
       } catch (e) {
-        throw new Error(`Invalid or unrecognised QR code. ${e}`);
+        throw new Error("Unrecognized attendance QR code format", { cause: e });
       }
 
       // 2. Get Device Fingerprint
@@ -146,122 +168,245 @@ export default function ScanScreen() {
           attendanceId: string;
         };
 
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        setScanStatus("success");
+        try {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } catch {
+          // ignore
+        }
 
-        // Invalidate attendance queries so stats refresh in background
+        setScanStatus("success");
+        setLastScanSuccess({ gpsOk: !!result.gpsWithinGeofence });
+
         queryClient.invalidateQueries({ queryKey: historyKeys.stats() });
         queryClient.invalidateQueries({ queryKey: historyKeys.history() });
 
-        const pct = stats?.overallPercentage ? ` Overall: ${Math.round(stats.overallPercentage)}%` : "";
+        const pct = stats?.overallPercentage ? `Overall: ${Math.round(stats.overallPercentage)}%` : "";
         if (result.gpsWithinGeofence) {
-          setStatusMessage(`Attendance marked!${pct}`);
+          setStatusMessage(`Attendance confirmed inside classroom area! ${pct}`);
         } else {
-          setStatusMessage(`Marked, but GPS was outside the classroom area.${pct}`);
+          setStatusMessage(`Attendance recorded, but GPS verified outside geofence. ${pct}`);
         }
-      } catch (error: any) {
-        const message = error.message?.toLowerCase() || "";
+      } catch (error: unknown) {
+        const err = error as { message?: string; response?: unknown; code?: string };
+        const message = err.message?.toLowerCase() || "";
         const isNetworkOrTimeout =
-          !error.response ||
-          error.code === "ECONNABORTED" ||
+          !err.response ||
+          err.code === "ECONNABORTED" ||
           message.includes("network") ||
           message.includes("failed to fetch") ||
           message.includes("timeout");
 
         if (isNetworkOrTimeout) {
           await savePendingAttendance(payloadData);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          try {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          } catch {
+            // ignore
+          }
           setScanStatus("success");
-          setStatusMessage("Saved offline. Will sync when online.");
+          setLastScanSuccess({ gpsOk: true, isOffline: true });
+          setStatusMessage("Saved to offline queue. Will synchronize automatically once connection restores.");
         } else {
           throw error;
         }
       }
-    } catch (error: any) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } catch (error: unknown) {
+      try {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      } catch {
+        // ignore
+      }
       setScanStatus("error");
-      setStatusMessage(error.message || "Failed to process QR code");
-    } finally {
-      // Auto-reset after a few seconds
-      setTimeout(() => {
-        setScanStatus("idle");
-        setStatusMessage("");
-      }, 3500);
+      const err = error as { message?: string };
+      setStatusMessage(err.message || "Failed to verify attendance QR");
     }
   };
 
-  const isScanning = scanStatus === "idle";
+  const handleDismissSuccess = () => {
+    setScanStatus("idle");
+    setStatusMessage("");
+    setLastScanSuccess(null);
+    router.replace("/(tabs)");
+  };
 
   return (
     <View style={styles.container}>
-      {/* 
-        Only keep the camera active when idle to save battery/perf, 
-        but leaving it rendered prevents flicker. We just stop processing events.
-      */}
       <CameraView
         style={StyleSheet.absoluteFill}
         facing="back"
         barcodeScannerSettings={{
           barcodeTypes: ["qr"],
         }}
-        onBarcodeScanned={isScanning ? handleBarcodeScanned : undefined}
-      >
-        <View style={styles.overlayContainer}>
-          <View style={styles.topTextContainer}>
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-              <Text style={styles.topTitle}>Scan to Attend</Text>
-              <NetworkStatusBadge />
-            </View>
-            <Text style={styles.topSubtitle}>
-              Point your camera at the QR code displayed by your teacher
-            </Text>
+        onBarcodeScanned={scanStatus === "idle" ? handleBarcodeScanned : undefined}
+      />
+
+      {/* Floating Top HUD Bar */}
+      <View style={[styles.topHud, { paddingTop: Math.max(topInset, 16) }]}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => router.replace("/(tabs)")}
+          style={[
+            styles.backButton,
+            {
+              backgroundColor: isDark ? PALETTE.darkCard : PALETTE.boneWhite,
+              borderColor: isDark ? colors.border : PALETTE.inkBlack,
+            },
+          ]}
+        >
+          <Ionicons
+            name="arrow-back-sharp"
+            size={20}
+            color={isDark ? PALETTE.boneWhite : PALETTE.pureBlack}
+          />
+        </TouchableOpacity>
+
+        <View style={styles.topHudTags}>
+          <NetworkStatusBadge compact />
+          <View style={styles.gpsPill}>
+            <Ionicons name="location-sharp" size={12} color={PALETTE.pureBlack} />
+            <Text style={styles.gpsPillText}>GPS ACTIVE</Text>
           </View>
+        </View>
+      </View>
 
-          {/* Scanner Reticle */}
+      {/* Viewfinder Center Box */}
+      <View style={styles.viewfinderWrapper} pointerEvents="none">
+        <View style={[styles.scanBox, { width: scanBoxSize, height: scanBoxSize }]}>
+          {/* Corner Brackets */}
+          <View style={[styles.cornerBracket, styles.topLeft]} />
+          <View style={[styles.cornerBracket, styles.topRight]} />
+          <View style={[styles.cornerBracket, styles.bottomLeft]} />
+          <View style={[styles.cornerBracket, styles.bottomRight]} />
+
+          {/* Animated Laser Line */}
           {scanStatus === "idle" && (
-            <View style={styles.reticleContainer}>
-              {/* Corners */}
-              <View style={[styles.corner, styles.cornerTL]} />
-              <View style={[styles.corner, styles.cornerTR]} />
-              <View style={[styles.corner, styles.cornerBL]} />
-              <View style={[styles.corner, styles.cornerBR]} />
-
-              {/* Scanning Line */}
-              <View style={styles.scanningLineContainer}>
-                <Animated.View style={[lineStyle, styles.scanningLine]} />
-              </View>
-            </View>
+            <Animated.View style={[styles.laserLine, lineStyle]} />
           )}
 
-          {/* Overlays */}
           {scanStatus === "processing" && (
-            <View style={styles.statusBoxDark}>
-              <ActivityIndicator size="large" color={COLORS.primary} />
-              <Text style={styles.statusTextProcessing}>Verifying...</Text>
-            </View>
-          )}
-
-          {scanStatus === "success" && (
-            <View style={styles.statusBoxSuccess}>
-              <View style={styles.statusIconWrapper}>
-                <Ionicons name="checkmark" size={48} color="white" />
-              </View>
-              <Text style={styles.statusTitle}>Success!</Text>
-              <Text style={styles.statusSubtitle}>{statusMessage}</Text>
-            </View>
-          )}
-
-          {scanStatus === "error" && (
-            <View style={styles.statusBoxError}>
-              <View style={styles.statusIconWrapper}>
-                <Ionicons name="close" size={48} color="white" />
-              </View>
-              <Text style={styles.statusTitle}>Failed</Text>
-              <Text style={styles.statusSubtitle}>{statusMessage}</Text>
+            <View style={styles.processingOverlay}>
+              <ActivityIndicator size="large" color={PALETTE.hiVisYellow} />
+              <Text style={styles.processingText}>VERIFYING ATTENDANCE...</Text>
             </View>
           )}
         </View>
-      </CameraView>
+
+        <View
+          style={[
+            styles.instructionPill,
+            {
+              backgroundColor: isDark ? PALETTE.darkCard : PALETTE.boneWhite,
+              borderColor: isDark ? colors.border : PALETTE.inkBlack,
+            },
+          ]}
+        >
+          <Ionicons
+            name="scan-sharp"
+            size={14}
+            color={isDark ? PALETTE.boneWhite : PALETTE.pureBlack}
+          />
+          <Text
+            style={[
+              styles.instructionText,
+              { color: isDark ? PALETTE.boneWhite : PALETTE.pureBlack },
+            ]}
+          >
+            ALIGN CLASSROOM QR CODE INSIDE FRAME
+          </Text>
+        </View>
+      </View>
+
+      {/* CELEBRATORY "PEAK" SUCCESS OVERLAY */}
+      {scanStatus === "success" && (
+        <View style={styles.peakModalBackdrop}>
+          <Card variant="bone" style={styles.peakReceiptCard}>
+            {/* Stamp Icon */}
+            <View
+              style={[
+                styles.peakIconCircle,
+                {
+                  backgroundColor: lastScanSuccess?.isOffline
+                    ? PALETTE.butteryYellow
+                    : PALETTE.matchaCream,
+                },
+              ]}
+            >
+              <Ionicons
+                name={lastScanSuccess?.isOffline ? "cloud-done-sharp" : "checkmark-done-sharp"}
+                size={40}
+                color={PALETTE.pureBlack}
+              />
+            </View>
+
+            <Text style={[styles.peakHeading, { color: colors.textPrimary }]}>
+              {lastScanSuccess?.isOffline ? "SAVED OFFLINE" : "ATTENDANCE SECURED!"}
+            </Text>
+
+            <View style={styles.streakNoticePill}>
+              <Text style={{ fontSize: 16 }}>🔥</Text>
+              <Text style={styles.streakNoticeText}>
+                STREAK ACTIVE: {stats?.streak || 1} DAYS
+              </Text>
+            </View>
+
+            <Text style={[styles.peakMessage, { color: colors.textSecondary }]}>{statusMessage}</Text>
+
+            <View style={[styles.receiptDivider, { backgroundColor: colors.divider }]} />
+
+            <View style={styles.receiptDetailsRow}>
+              <View style={{ gap: 4 }}>
+                <Text style={[styles.receiptDetailLabel, { color: colors.textMuted }]}>TIMESTAMP</Text>
+                <Text style={[styles.receiptDetailValue, { color: colors.textPrimary }]}>
+                  {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </Text>
+              </View>
+              <View style={{ gap: 4, alignItems: "flex-end" }}>
+                <Text style={[styles.receiptDetailLabel, { color: colors.textMuted }]}>VERIFICATION</Text>
+                <Badge
+                  label={lastScanSuccess?.isOffline ? "CACHED" : "GPS VERIFIED"}
+                  variant={lastScanSuccess?.isOffline ? "offline" : "present"}
+                  size="sm"
+                />
+              </View>
+            </View>
+
+            <Button
+              label="DONE & RETURN HOME"
+              variant="accent"
+              size="lg"
+              onPress={handleDismissSuccess}
+              style={{ width: "100%", marginTop: 20 }}
+            />
+          </Card>
+        </View>
+      )}
+
+      {/* Error Feedback Overlay */}
+      {scanStatus === "error" && (
+        <View style={styles.peakModalBackdrop}>
+          <Card variant="alert" style={styles.peakReceiptCard}>
+            <View style={[styles.peakIconCircle, { backgroundColor: PALETTE.boneWhite }]}>
+              <Ionicons name="close-sharp" size={38} color={PALETTE.firecrackerRed} />
+            </View>
+
+            <Text style={[styles.peakHeading, { color: PALETTE.boneWhite }]}>
+              SCAN FAILED
+            </Text>
+
+            <Text style={[styles.peakMessage, { color: PALETTE.boneWhite }]}>
+              {statusMessage}
+            </Text>
+
+            <Button
+              label="TRY AGAIN"
+              variant="primary"
+              size="md"
+              onPress={() => setScanStatus("idle")}
+              style={{ width: "100%", marginTop: 18 }}
+            />
+          </Card>
+        </View>
+      )}
     </View>
   );
 }
@@ -269,187 +414,258 @@ export default function ScanScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: PALETTE.pureBlack,
   },
   permissionContainer: {
     flex: 1,
+    backgroundColor: PALETTE.duskViolet,
+    alignItems: "center",
     justifyContent: "center",
+    padding: 20,
+  },
+  permissionCard: {
+    width: "100%",
+    maxWidth: 340,
     alignItems: "center",
     padding: 24,
-    backgroundColor: COLORS.background,
   },
-  iconWrapper: {
-    width: 80,
-    height: 80,
-    backgroundColor: COLORS.secondary,
-    borderRadius: 40,
+  permissionIconWrapper: {
+    width: 64,
+    height: 64,
+    borderRadius: RADIUS.full,
+    backgroundColor: PALETTE.hiVisYellow,
+    borderWidth: BORDERS.heavy,
+    borderColor: PALETTE.pureBlack,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
   },
   permissionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: COLORS.foreground,
-    marginBottom: 8,
+    fontSize: 16,
+    fontWeight: "900",
+    fontFamily: FONTS.display,
+    color: PALETTE.inkBlack,
     textAlign: "center",
+    marginBottom: 8,
+    letterSpacing: 0.5,
   },
   permissionSubtitle: {
-    color: COLORS.muted,
+    fontSize: 13,
+    fontFamily: FONTS.body,
+    color: "rgba(26, 26, 26, 0.75)",
     textAlign: "center",
-    marginBottom: 32,
+    lineHeight: 18,
+    marginBottom: 18,
+  },
+  topHud: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
+    paddingBottom: 12,
   },
-  button: {
-    backgroundColor: COLORS.primary,
-    height: 48,
-    borderRadius: 8,
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.full,
+    backgroundColor: PALETTE.boneWhite,
+    borderWidth: BORDERS.default,
+    borderColor: PALETTE.inkBlack,
+    alignItems: "center",
     justifyContent: "center",
+  },
+  topHudTags: {
+    flexDirection: "row",
     alignItems: "center",
-    width: "100%",
+    gap: 8,
   },
-  buttonText: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontWeight: "600",
+  gpsPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: PALETTE.hiVisYellow,
+    borderWidth: BORDERS.hairline,
+    borderColor: PALETTE.pureBlack,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    gap: 4,
   },
-  overlayContainer: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+  gpsPillText: {
+    fontSize: 10,
+    fontWeight: "700",
+    fontFamily: FONTS.mono,
+    color: PALETTE.pureBlack,
+  },
+  viewfinderWrapper: {
+    ...StyleSheet.absoluteFill,
+    alignItems: "center",
     justifyContent: "center",
-    alignItems: "center",
   },
-  topTextContainer: {
-    position: "absolute",
-    top: 64,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    paddingHorizontal: 24,
-  },
-  topTitle: {
-    color: "#ffffff",
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
-  topSubtitle: {
-    color: "rgba(255,255,255,0.8)",
-    textAlign: "center",
-    fontWeight: "500",
-  },
-  reticleContainer: {
-    width: 256,
-    height: 256,
+  scanBox: {
     position: "relative",
-  },
-  corner: {
-    position: "absolute",
-    width: 48,
-    height: 48,
-    borderColor: COLORS.primary,
-  },
-  cornerTL: {
-    top: 0,
-    left: 0,
-    borderTopWidth: 4,
-    borderLeftWidth: 4,
-    borderTopLeftRadius: 16,
-  },
-  cornerTR: {
-    top: 0,
-    right: 0,
-    borderTopWidth: 4,
-    borderRightWidth: 4,
-    borderTopRightRadius: 16,
-  },
-  cornerBL: {
-    bottom: 0,
-    left: 0,
-    borderBottomWidth: 4,
-    borderLeftWidth: 4,
-    borderBottomLeftRadius: 16,
-  },
-  cornerBR: {
-    bottom: 0,
-    right: 0,
-    borderBottomWidth: 4,
-    borderRightWidth: 4,
-    borderBottomRightRadius: 16,
-  },
-  scanningLineContainer: {
-    position: "absolute",
-    top: 0,
-    left: 16,
-    right: 16,
-    height: "100%",
+    backgroundColor: "transparent",
     overflow: "hidden",
   },
-  scanningLine: {
-    height: 2,
-    backgroundColor: COLORS.primary,
-    shadowColor: COLORS.primary,
+  cornerBracket: {
+    position: "absolute",
+    width: 28,
+    height: 28,
+    borderColor: PALETTE.hiVisYellow,
+  },
+  topLeft: {
+    top: 0,
+    left: 0,
+    borderTopWidth: 4,
+    borderLeftWidth: 4,
+    borderTopLeftRadius: RADIUS.md,
+  },
+  topRight: {
+    top: 0,
+    right: 0,
+    borderTopWidth: 4,
+    borderRightWidth: 4,
+    borderTopRightRadius: RADIUS.md,
+  },
+  bottomLeft: {
+    bottom: 0,
+    left: 0,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+    borderBottomLeftRadius: RADIUS.md,
+  },
+  bottomRight: {
+    bottom: 0,
+    right: 0,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+    borderBottomRightRadius: RADIUS.md,
+  },
+  laserLine: {
+    height: 3,
+    backgroundColor: PALETTE.hiVisYellow,
+    shadowColor: PALETTE.hiVisYellow,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
+    shadowOpacity: 0.9,
     shadowRadius: 8,
+    elevation: 4,
   },
-  statusBoxDark: {
-    width: 256,
-    height: 256,
-    backgroundColor: "rgba(0,0,0,0.8)",
-    borderRadius: 24,
-    justifyContent: "center",
+  processingOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0,0,0,0.6)",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
-  },
-  statusTextProcessing: {
-    color: "#ffffff",
-    marginTop: 16,
-    fontWeight: "500",
-    fontSize: 18,
-  },
-  statusBoxSuccess: {
-    width: 256,
-    height: 256,
-    backgroundColor: "rgba(16, 185, 129, 0.9)",
-    borderRadius: 24,
     justifyContent: "center",
+    gap: 12,
+  },
+  processingText: {
+    fontSize: 12,
+    fontWeight: "800",
+    fontFamily: FONTS.mono,
+    color: PALETTE.hiVisYellow,
+    letterSpacing: 0.5,
+  },
+  instructionPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: PALETTE.boneWhite,
+    borderWidth: BORDERS.default,
+    borderColor: PALETTE.inkBlack,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginTop: 24,
+  },
+  instructionText: {
+    fontSize: 10,
+    fontWeight: "700",
+    fontFamily: FONTS.mono,
+    color: PALETTE.pureBlack,
+    letterSpacing: 0.4,
+  },
+  peakModalBackdrop: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(18, 17, 36, 0.88)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+    zIndex: 50,
+  },
+  peakReceiptCard: {
+    width: "100%",
+    maxWidth: 340,
     alignItems: "center",
     padding: 24,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
   },
-  statusBoxError: {
-    width: 256,
-    height: 256,
-    backgroundColor: "rgba(239, 68, 68, 0.9)",
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
-  },
-  statusIconWrapper: {
-    width: 80,
-    height: 80,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 40,
+  peakIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: RADIUS.full,
+    borderWidth: BORDERS.heavy,
+    borderColor: PALETTE.pureBlack,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
   },
-  statusTitle: {
-    color: "#ffffff",
-    fontWeight: "bold",
-    fontSize: 24,
-    marginBottom: 8,
+  peakHeading: {
+    fontSize: 18,
+    fontWeight: "900",
+    fontFamily: FONTS.display,
+    color: PALETTE.inkBlack,
     textAlign: "center",
+    letterSpacing: 0.5,
   },
-  statusSubtitle: {
-    color: "rgba(255,255,255,0.9)",
+  streakNoticePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(244, 237, 54, 0.3)",
+    borderWidth: BORDERS.hairline,
+    borderColor: PALETTE.pureBlack,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  streakNoticeText: {
+    fontSize: 11,
+    fontWeight: "700",
+    fontFamily: FONTS.mono,
+    color: PALETTE.pureBlack,
+  },
+  peakMessage: {
+    fontSize: 13,
+    fontFamily: FONTS.body,
+    color: "rgba(26, 26, 26, 0.8)",
     textAlign: "center",
-    fontSize: 14,
+    lineHeight: 18,
+  },
+  receiptDivider: {
+    height: 1,
+    backgroundColor: "rgba(26,26,26,0.15)",
+    width: "100%",
+    marginVertical: 14,
+  },
+  receiptDetailsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  receiptDetailLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    fontFamily: FONTS.mono,
+    color: "rgba(26,26,26,0.6)",
+  },
+  receiptDetailValue: {
+    fontSize: 13,
+    fontWeight: "700",
+    fontFamily: FONTS.mono,
+    color: PALETTE.inkBlack,
   },
 });

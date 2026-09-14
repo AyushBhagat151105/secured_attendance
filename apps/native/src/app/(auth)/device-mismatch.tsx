@@ -1,27 +1,21 @@
-import { useState } from "react";
-import { Text, View, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
+import { useState, useEffect } from "react";
+import { Text, View, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { authClient } from "@/lib/auth-client";
 import { clearAllCachedAuth, getCachedProfile } from "@/lib/session-cache";
 import { Container } from "@/components/container";
-import { useEffect } from "react";
-
-const COLORS = {
-  background: "#ffffff",
-  card: "#ffffff",
-  border: "#e5e7eb",
-  primary: "#4f46e5",
-  foreground: "#111827",
-  muted: "#6b7280",
-  destructive: "#ef4444",
-};
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { PALETTE, FONTS, RADIUS, BORDERS } from "@/lib/theme";
+import { useAppTheme } from "@/contexts/app-theme-context";
 
 export default function DeviceMismatchScreen() {
   const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [boundModel, setBoundModel] = useState<string>("another phone");
+  const { colors } = useAppTheme();
 
   useEffect(() => {
     getCachedProfile().then((p) => {
@@ -43,138 +37,138 @@ export default function DeviceMismatchScreen() {
   }
 
   return (
-    <Container style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.iconCircle}>
-          <Ionicons name="phone-portrait-outline" size={48} color={COLORS.destructive} />
-        </View>
-        <Text style={styles.title}>Device Not Authorized</Text>
-        <Text style={styles.subtitle}>
-          Your account is registered to {boundModel}.
-        </Text>
-      </View>
-
-      <View style={styles.card}>
-        <View style={styles.warningBox}>
-          <Ionicons name="shield-half" size={24} color={COLORS.destructive} style={{ marginTop: 2 }} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.warningTitle}>Security Policy Violation</Text>
-            <Text style={styles.warningText}>
-              To prevent proxy attendance, each student is strictly bound to one physical device. You cannot log into your account from another student's phone.
-            </Text>
+    <Container scroll={true}>
+      <View style={styles.contentWrapper}>
+        <View style={styles.header}>
+          <View style={styles.iconBox}>
+            <Ionicons name="phone-portrait-sharp" size={38} color={PALETTE.boneWhite} />
           </View>
-        </View>
-
-        <View style={styles.infoSection}>
-          <Text style={styles.infoText}>
-            • Use your own registered phone to attend classes.
+          <Text maxFontSizeMultiplier={1.2} style={styles.title}>
+            DEVICE NOT AUTHORIZED
           </Text>
-          <Text style={styles.infoText}>
-            • If you lost or changed your phone, contact your department administrator to rebind your account.
+          <Text style={styles.subtitle}>
+            Your student account is cryptographically bound to {boundModel}.
           </Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.signOutButton}
-          onPress={handleSignOut}
-          disabled={isSigningOut}
-        >
-          {isSigningOut ? (
-            <ActivityIndicator size="small" color="#ffffff" />
-          ) : (
-            <Text style={styles.signOutButtonText}>Sign Out of This Device</Text>
-          )}
-        </TouchableOpacity>
+        <Card variant="bone" style={styles.card}>
+          <View style={styles.warningBox}>
+            <Ionicons name="warning-sharp" size={20} color={PALETTE.boneWhite} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.warningTitle}>PROXY PREVENTION ACTIVE</Text>
+              <Text style={styles.warningText}>
+                To ensure attendance authenticity, students can only log in from their own registered smartphone.
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.infoList}>
+            <View style={styles.infoItem}>
+              <Ionicons name="checkmark-circle-sharp" size={16} color={colors.textPrimary} />
+              <Text style={[styles.infoItemText, { color: colors.textSecondary }]}>
+                Log in using your registered phone to scan classroom QR codes.
+              </Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Ionicons name="information-circle-sharp" size={16} color={colors.textPrimary} />
+              <Text style={[styles.infoItemText, { color: colors.textSecondary }]}>
+                If you lost or changed your device, request a rebind from your department administrator.
+              </Text>
+            </View>
+          </View>
+
+          <Button
+            label={isSigningOut ? "SIGNING OUT..." : "SIGN OUT OF THIS DEVICE"}
+            variant="destructive"
+            size="lg"
+            loading={isSigningOut}
+            onPress={handleSignOut}
+            icon={<Ionicons name="log-out-sharp" size={18} color={PALETTE.boneWhite} />}
+            style={{ width: "100%", marginTop: 18 }}
+          />
+        </Card>
       </View>
     </Container>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  contentWrapper: {
     flex: 1,
-    backgroundColor: COLORS.background,
     justifyContent: "center",
-    padding: 24,
+    paddingVertical: 24,
   },
   header: {
     alignItems: "center",
-    marginBottom: 28,
+    marginBottom: 24,
   },
-  iconCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: "rgba(239, 68, 68, 0.1)",
+  iconBox: {
+    width: 68,
+    height: 68,
+    borderRadius: RADIUS.md,
+    backgroundColor: PALETTE.firecrackerRed,
+    borderWidth: BORDERS.heavy,
+    borderColor: PALETTE.boneWhite,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: 14,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: COLORS.foreground,
+    fontSize: 20,
+    fontWeight: "900",
+    fontFamily: FONTS.display,
+    color: PALETTE.boneWhite,
     textAlign: "center",
+    letterSpacing: 0.5,
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: 15,
-    color: COLORS.muted,
+    fontSize: 13,
+    fontFamily: FONTS.body,
+    color: "rgba(249, 245, 242, 0.8)",
     textAlign: "center",
-    marginTop: 8,
-    lineHeight: 22,
+    lineHeight: 18,
+    maxWidth: 300,
   },
   card: {
-    backgroundColor: COLORS.card,
-    borderRadius: 16,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    padding: 20,
   },
   warningBox: {
     flexDirection: "row",
-    backgroundColor: "rgba(239, 68, 68, 0.08)",
-    borderColor: "rgba(239, 68, 68, 0.2)",
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
-    gap: 12,
-    marginBottom: 20,
+    gap: 10,
+    backgroundColor: PALETTE.firecrackerRed,
+    borderRadius: RADIUS.md,
+    padding: 12,
+    marginBottom: 16,
   },
   warningTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: COLORS.destructive,
+    fontSize: 11,
+    fontWeight: "800",
+    fontFamily: FONTS.mono,
+    color: PALETTE.boneWhite,
+    letterSpacing: 0.5,
     marginBottom: 4,
   },
   warningText: {
-    fontSize: 13,
-    color: COLORS.foreground,
-    lineHeight: 18,
+    fontSize: 12,
+    fontFamily: FONTS.body,
+    color: "rgba(255, 255, 255, 0.95)",
+    lineHeight: 16,
   },
-  infoSection: {
+  infoList: {
+    gap: 12,
+    marginVertical: 6,
+  },
+  infoItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
     gap: 8,
-    marginBottom: 24,
   },
-  infoText: {
-    fontSize: 13,
-    color: COLORS.muted,
-    lineHeight: 18,
-  },
-  signOutButton: {
-    backgroundColor: COLORS.destructive,
-    height: 48,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  signOutButtonText: {
-    color: "#ffffff",
-    fontSize: 15,
-    fontWeight: "600",
+  infoItemText: {
+    fontSize: 12,
+    fontFamily: FONTS.body,
+    color: "rgba(26, 26, 26, 0.8)",
+    flex: 1,
+    lineHeight: 17,
   },
 });

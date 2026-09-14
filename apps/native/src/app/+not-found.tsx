@@ -1,24 +1,31 @@
 import { Link, Stack } from "expo-router";
-import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
-
+import { Text, View, StyleSheet } from "react-native";
 import { Container } from "@/components/container";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { PALETTE, FONTS, RADIUS, BORDERS } from "@/lib/theme";
+import { useAppTheme } from "@/contexts/app-theme-context";
 
 export default function NotFoundScreen() {
+  const { colors } = useAppTheme();
+
   return (
     <>
-      <Stack.Screen options={{ title: "Not Found" }} />
-      <Container>
+      <Stack.Screen options={{ title: "Not Found", headerShown: false }} />
+      <Container scroll={true}>
         <View style={styles.container}>
-          <View style={styles.surface}>
-            <Text style={styles.emoji}>🤔</Text>
-            <Text style={styles.title}>Page Not Found</Text>
-            <Text style={styles.subtitle}>The page you're looking for doesn't exist.</Text>
+          <Card variant="bone" style={styles.surface}>
+            <View style={styles.iconContainer}>
+              <Text style={styles.emoji}>🤔</Text>
+            </View>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>PAGE NOT FOUND</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+              The screen you are attempting to reach does not exist or has moved.
+            </Text>
             <Link href="/" asChild>
-              <TouchableOpacity style={styles.button}>
-                <Text style={styles.buttonText}>Go Home</Text>
-              </TouchableOpacity>
+              <Button label="RETURN TO HOME" variant="accent" size="md" onPress={() => {}} />
             </Link>
-          </View>
+          </Card>
         </View>
       </Container>
     </>
@@ -30,39 +37,42 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 16,
+    padding: 20,
   },
   surface: {
+    width: "100%",
+    maxWidth: 320,
     alignItems: "center",
     padding: 24,
-    maxWidth: 320,
-    borderRadius: 8,
-    backgroundColor: "#f3f4f6", // secondary
+  },
+  iconContainer: {
+    width: 60,
+    height: 60,
+    backgroundColor: PALETTE.hiVisYellow,
+    borderWidth: BORDERS.heavy,
+    borderColor: PALETTE.pureBlack,
+    borderRadius: RADIUS.md,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 14,
   },
   emoji: {
-    fontSize: 36,
-    marginBottom: 12,
+    fontSize: 28,
   },
   title: {
-    color: "#111827", // foreground
-    fontWeight: "500",
+    color: PALETTE.inkBlack,
+    fontWeight: "900",
+    fontFamily: FONTS.display,
     fontSize: 18,
-    marginBottom: 4,
+    marginBottom: 6,
+    letterSpacing: 0.5,
   },
   subtitle: {
-    color: "#6b7280", // muted
-    fontSize: 14,
+    color: "rgba(26, 26, 26, 0.75)",
+    fontSize: 13,
+    fontFamily: FONTS.body,
     textAlign: "center",
-    marginBottom: 16,
-  },
-  button: {
-    backgroundColor: "#4f46e5", // primary
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  buttonText: {
-    color: "white",
-    fontWeight: "500",
+    marginBottom: 20,
+    lineHeight: 18,
   },
 });

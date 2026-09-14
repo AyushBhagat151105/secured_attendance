@@ -5,34 +5,34 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
 } from "react-native";
-import { useRouter, Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signInSchema, type SignInSchema } from "@secured_attendance/validators";
+import { Ionicons } from "@expo/vector-icons";
 
 import { authClient } from "@/lib/auth-client";
 import { apiClient } from "@/lib/api-client";
 import { getDeviceFingerprint } from "@/lib/device";
-import { clearAllCachedAuth } from "@/lib/session-cache";
+import {
+  clearAllCachedAuth,
+  saveCachedSession,
+  saveCachedProfile,
+  type CachedSessionData,
+} from "@/lib/session-cache";
 import { Container } from "@/components/container";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
-
-const COLORS = {
-  background: "#ffffff",
-  card: "#ffffff",
-  border: "#e5e7eb",
-  primary: "#4f46e5",
-  foreground: "#111827",
-  muted: "#6b7280",
-  destructive: "#ef4444",
-};
+import { PALETTE, FONTS, RADIUS, BORDERS } from "@/lib/theme";
+import { useAppTheme } from "@/contexts/app-theme-context";
+import { queryClient } from "../_layout";
 
 export default function SignInScreen() {
   const [error, setError] = useState<string | null>(null);
-
   const router = useRouter();
+  const { colors, isDark } = useAppTheme();
 
   const {
     control,
@@ -48,16 +48,18 @@ export default function SignInScreen() {
 
   async function onSubmit(data: SignInSchema) {
     setError(null);
+    const trimmedEmail = data.email.trim().toLowerCase();
+    const rawPassword = data.password;
 
     await authClient.signIn.email(
       {
-        email: data.email,
-        password: data.password,
+        email: trimmedEmail,
+        password: rawPassword,
       },
       {
-        onError(error) {
-          const rawMsg = (error.error?.message || "").toLowerCase();
-          const code = (error.error?.code || "").toLowerCase();
+        onError(err) {
+          const rawMsg = (err.error?.message || "").toLowerCase();
+          const code = (err.error?.code || "").toLowerCase();
 
           if (
             !rawMsg ||
@@ -66,7 +68,7 @@ export default function SignInScreen() {
             rawMsg.includes("failed to fetch")
           ) {
             setError(
-              "No internet connection. Please connect to WiFi or mobile data to sign in for the first time.",
+              "No network connection. Please connect to campus WiFi or mobile data to sign in.",
             );
           } else if (
             rawMsg.includes("invalid password") ||
@@ -74,30 +76,56 @@ export default function SignInScreen() {
             rawMsg.includes("credential") ||
             code.includes("invalid_password")
           ) {
-            setError("Incorrect email or password. Please verify your credentials and try again.");
+            setError("Incorrect email or password. Please verify and try again.");
           } else if (rawMsg.includes("user not found") || code.includes("user_not_found")) {
-            setError("No student account found with this email. Please check with your college admin.");
+            setError("No student account found with this email. Contact your college admin.");
           } else {
-            setError(error.error?.message || "Failed to sign in. Please check your credentials.");
+            setError(err.error?.message || "Failed to sign in. Please check your credentials.");
           }
         },
         async onSuccess() {
           try {
-            const [profileRes, device] = await Promise.all([
+            // 1. Fetch fresh session and cache it for offline support
+            const [sessionRes, profileRes, device] = await Promise.all([
+              authClient.getSession(),
               apiClient.get("/api/student/profile").catch(() => null),
               getDeviceFingerprint(),
             ]);
 
+            if (sessionRes?.data) {
+              await saveCachedSession(sessionRes.data as unknown as CachedSessionData);
+            }
+
             const p = profileRes?.data;
+            if (p) {
+              await saveCachedProfile(p);
+            }
+
+            // 2. Hardware ID check: verify this device matches the bound phone
             if (p?.deviceBound && p?.deviceId && p.deviceId !== device.id) {
               await clearAllCachedAuth();
               await authClient.signOut();
               setError(
-                `Account locked to another device: Your account is registered to ${p.deviceModel || "another phone"}. You cannot log in from this device. Contact your admin to rebind.`,
+                `Account locked: Your profile is bound to ${p.deviceModel || "another phone"}. You cannot log in from this device. Contact your admin to rebind.`,
               );
+              return;
             }
-          } catch {
-            // Layout guard handles any fallback
+
+            // 3. Invalidate queries so tabs load fresh data
+            await queryClient.invalidateQueries();
+
+            // 4. Navigate immediately to target screen
+            const user = sessionRes?.data?.user as { role?: string; requiresPasswordChange?: boolean } | undefined;
+            if (user?.requiresPasswordChange) {
+              router.replace("/(auth)/reset-password");
+            } else if (user?.role === "student" && p && !p.deviceBound) {
+              router.replace("/(auth)/device-binding");
+            } else {
+              router.replace("/(tabs)");
+            }
+          } catch (navErr) {
+            console.error("Navigation after sign-in error:", navErr);
+            router.replace("/(tabs)");
           }
         },
       },
@@ -105,174 +133,245 @@ export default function SignInScreen() {
   }
 
   return (
-    <Container style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Sign in to mark your attendance</Text>
-      </View>
-
-      <View style={styles.card}>
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email</Text>
-          <Controller
-            control={control}
-            name="email"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <>
-                <TextInput
-                  style={[styles.input, errors.email && { borderColor: COLORS.destructive }]}
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  placeholder="student@charusat.edu.in"
-                  placeholderTextColor={COLORS.muted}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  editable={!isSubmitting}
-                />
-                {errors.email && <Text style={styles.errorTextSmall}>{errors.email.message}</Text>}
-              </>
-            )}
-          />
+    <Container scroll={true}>
+      <View style={styles.contentWrapper}>
+        {/* Brand Header */}
+        <View style={styles.brandHeader}>
+          <View style={styles.brandIconBox}>
+            <Ionicons name="shield-checkmark-sharp" size={32} color={PALETTE.pureBlack} />
+          </View>
+          <Text maxFontSizeMultiplier={1.2} style={styles.brandTitle}>
+            SECURED ATTENDANCE
+          </Text>
+          <Text style={styles.brandSubtitle}>STUDENT ACCESS PORTAL</Text>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Password</Text>
-          <Controller
-            control={control}
-            name="password"
-            render={({ field: { onChange, value } }) => (
-              <>
-                <PasswordInput
-                  style={[styles.input, errors.password && { borderColor: COLORS.destructive }]}
-                  value={value}
-                  onChangeText={onChange}
-                  placeholder="Password"
-                  placeholderTextColor={COLORS.muted}
-                  editable={!isSubmitting}
-                />
-                {errors.password && (
-                  <Text style={styles.errorTextSmall}>{errors.password.message}</Text>
-                )}
-              </>
-            )}
-          />
-        </View>
-
-        <View style={styles.forgotPasswordContainer}>
-          <Link href={"/(auth)/reset-password" as any} asChild>
-            <TouchableOpacity hitSlop={10}>
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
-          </Link>
-        </View>
-
-        <TouchableOpacity
-          style={[styles.button, isSubmitting && styles.buttonDisabled]}
-          onPress={handleSubmit(onSubmit)}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator size="small" color="#ffffff" />
-          ) : (
-            <Text style={styles.buttonText}>Sign In</Text>
+        {/* Login Card */}
+        <Card variant="bone" style={styles.loginCard}>
+          {error && (
+            <View style={styles.errorBanner}>
+              <Ionicons name="alert-circle-sharp" size={16} color={PALETTE.pureWhite} />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
           )}
-        </TouchableOpacity>
+
+          <View style={styles.inputGroup}>
+            <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>COLLEGE EMAIL</Text>
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View>
+                  <TextInput
+                    style={[
+                      styles.inputBox,
+                      {
+                        backgroundColor: isDark ? PALETTE.darkNested : PALETTE.boneWhite,
+                        borderColor: isDark ? colors.border : PALETTE.inkBlack,
+                        color: colors.textPrimary,
+                      },
+                      errors.email && { borderColor: PALETTE.firecrackerRed },
+                    ]}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    placeholder="student@charusat.edu.in"
+                    placeholderTextColor={isDark ? "rgba(249,245,242,0.4)" : "rgba(26,26,26,0.4)"}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!isSubmitting}
+                  />
+                  {errors.email && (
+                    <Text style={styles.fieldError}>{errors.email.message}</Text>
+                  )}
+                </View>
+              )}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>PASSWORD</Text>
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View>
+                  <PasswordInput
+                    style={[
+                      styles.inputBox,
+                      {
+                        backgroundColor: isDark ? PALETTE.darkNested : PALETTE.boneWhite,
+                        borderColor: isDark ? colors.border : PALETTE.inkBlack,
+                        color: colors.textPrimary,
+                      },
+                      errors.password && { borderColor: PALETTE.firecrackerRed },
+                    ]}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    placeholder="••••••••"
+                    placeholderTextColor={isDark ? "rgba(249,245,242,0.4)" : "rgba(26,26,26,0.4)"}
+                    editable={!isSubmitting}
+                  />
+                  {errors.password && (
+                    <Text style={styles.fieldError}>{errors.password.message}</Text>
+                  )}
+                </View>
+              )}
+            />
+          </View>
+
+          <View style={styles.forgotRow}>
+            <Link href="/(auth)/reset-password" asChild>
+              <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <Text
+                  style={[
+                    styles.forgotText,
+                    { color: isDark ? PALETTE.hiVisYellow : "rgba(26,26,26,0.7)" },
+                  ]}
+                >
+                  FORGOT PASSWORD?
+                </Text>
+              </TouchableOpacity>
+            </Link>
+          </View>
+
+          <Button
+            label="SIGN IN TO PORTAL"
+            variant="accent"
+            size="lg"
+            loading={isSubmitting}
+            onPress={handleSubmit(onSubmit, (fieldErrors) => {
+              const firstMsg =
+                fieldErrors.email?.message || fieldErrors.password?.message;
+              if (firstMsg) setError(firstMsg);
+            })}
+            icon={<Ionicons name="arrow-forward-sharp" size={18} color={PALETTE.pureBlack} />}
+            iconPosition="right"
+            style={{ width: "100%", marginTop: 8 }}
+          />
+        </Card>
+
+        {/* Security Note Footer */}
+        <View style={styles.securityFooter}>
+          <Ionicons name="lock-closed-sharp" size={12} color="rgba(249, 245, 242, 0.7)" />
+          <Text style={styles.securityFooterText}>
+            PROXY PREVENTION ACTIVE • HARDWARE BOUND
+          </Text>
+        </View>
       </View>
     </Container>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  contentWrapper: {
     flex: 1,
-    backgroundColor: COLORS.background,
     justifyContent: "center",
-    padding: 24,
+    paddingVertical: 20,
   },
-  header: {
+  brandHeader: {
     alignItems: "center",
-    marginBottom: 32,
+    marginBottom: 24,
   },
-  title: {
-    fontSize: 30,
-    fontWeight: "bold",
-    color: COLORS.foreground,
+  brandIconBox: {
+    width: 60,
+    height: 60,
+    borderRadius: RADIUS.md,
+    backgroundColor: PALETTE.hiVisYellow,
+    borderWidth: BORDERS.heavy,
+    borderColor: PALETTE.pureBlack,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
   },
-  subtitle: {
-    color: COLORS.muted,
-    marginTop: 8,
-    textAlign: "center",
+  brandTitle: {
+    fontSize: 22,
+    fontWeight: "900",
+    fontFamily: FONTS.display,
+    color: PALETTE.boneWhite,
+    letterSpacing: 0.8,
   },
-  card: {
-    backgroundColor: COLORS.card,
-    padding: 24,
-    borderRadius: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    gap: 16,
+  brandSubtitle: {
+    fontSize: 11,
+    fontWeight: "700",
+    fontFamily: FONTS.mono,
+    color: PALETTE.hiVisYellow,
+    letterSpacing: 1,
+    marginTop: 4,
+  },
+  loginCard: {
+    padding: 20,
+  },
+  errorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: PALETTE.firecrackerRed,
+    borderRadius: RADIUS.md,
+    padding: 10,
+    marginBottom: 16,
   },
   errorText: {
-    color: COLORS.destructive,
-    textAlign: "center",
-    fontWeight: "500",
-    marginBottom: 8,
-  },
-  errorTextSmall: {
-    color: COLORS.destructive,
     fontSize: 12,
-    marginTop: 4,
+    fontFamily: FONTS.body,
+    color: PALETTE.pureWhite,
+    flex: 1,
+    lineHeight: 16,
   },
   inputGroup: {
     marginBottom: 16,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: COLORS.foreground,
-    marginBottom: 8,
+  inputLabel: {
+    fontSize: 11,
+    fontWeight: "800",
+    fontFamily: FONTS.mono,
+    color: PALETTE.inkBlack,
+    marginBottom: 6,
+    letterSpacing: 0.4,
   },
-  input: {
+  inputBox: {
     height: 48,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 16,
-    color: COLORS.foreground,
-    backgroundColor: COLORS.background,
-  },
-  forgotPasswordContainer: {
-    alignItems: "flex-end",
-    marginBottom: 8,
-  },
-  forgotPasswordText: {
-    color: COLORS.primary,
+    borderWidth: BORDERS.default,
+    borderColor: PALETTE.inkBlack,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: 14,
     fontSize: 14,
-    fontWeight: "500",
-    padding: 8,
+    fontFamily: FONTS.body,
+    color: PALETTE.inkBlack,
+    backgroundColor: PALETTE.boneWhite,
   },
-  button: {
-    backgroundColor: COLORS.primary,
-    height: 48,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonText: {
-    color: "#ffffff",
-    fontSize: 16,
+  fieldError: {
+    fontSize: 11,
+    fontFamily: FONTS.mono,
+    color: PALETTE.firecrackerRed,
+    marginTop: 4,
     fontWeight: "600",
+  },
+  forgotRow: {
+    alignItems: "flex-end",
+    marginBottom: 16,
+  },
+  forgotText: {
+    fontSize: 11,
+    fontWeight: "700",
+    fontFamily: FONTS.mono,
+    color: "rgba(26,26,26,0.7)",
+    letterSpacing: 0.3,
+  },
+  securityFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 24,
+  },
+  securityFooterText: {
+    fontSize: 10,
+    fontWeight: "700",
+    fontFamily: FONTS.mono,
+    color: "rgba(249, 245, 242, 0.75)",
+    letterSpacing: 0.5,
   },
 });

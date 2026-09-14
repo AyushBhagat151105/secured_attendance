@@ -1,34 +1,35 @@
 import { useState } from "react";
-import { Text, View, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
+import { Text, View, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { resetPasswordSchema, type ResetPasswordSchema } from "@secured_attendance/validators";
+import { Ionicons } from "@expo/vector-icons";
 
 import { authClient } from "@/lib/auth-client";
 import { apiClient } from "@/lib/api-client";
+import { saveCachedSession, type CachedSessionData } from "@/lib/session-cache";
 import { Container } from "@/components/container";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
-
-const COLORS = {
-  background: "#ffffff",
-  card: "#ffffff",
-  border: "#e5e7eb",
-  primary: "#4f46e5",
-  foreground: "#111827",
-  muted: "#6b7280",
-  destructive: "#ef4444",
-};
+import { PALETTE, FONTS, RADIUS, BORDERS } from "@/lib/theme";
+import { useAppTheme } from "@/contexts/app-theme-context";
 
 export default function ResetPasswordScreen() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
+  const { colors, isDark } = useAppTheme();
+  const { data: session } = authClient.useSession();
+  const user = session?.user as { requiresPasswordChange?: boolean } | undefined;
+  const requiresPasswordChange = !!user?.requiresPasswordChange;
 
   const {
     control,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<ResetPasswordSchema>({
     resolver: zodResolver(resetPasswordSchema),
@@ -38,6 +39,9 @@ export default function ResetPasswordScreen() {
       confirmPassword: "",
     },
   });
+
+  const newPasswordValue = watch("newPassword") || "";
+  const hasMinLength = newPasswordValue.length >= 8;
 
   async function onSubmit(data: ResetPasswordSchema) {
     setError(null);
@@ -49,31 +53,50 @@ export default function ResetPasswordScreen() {
         revokeOtherSessions: false,
       },
       {
-        onError(error) {
-          const rawMsg = (error.error?.message || "").toLowerCase();
+        onError(err) {
+          const rawMsg = (err.error?.message || "").toLowerCase();
           if (rawMsg.includes("invalid password") || rawMsg.includes("incorrect")) {
-            setError("Your current password is incorrect. Please check and try again.");
+            setError("Your current password is incorrect. Please verify and try again.");
           } else if (rawMsg.includes("too short") || rawMsg.includes("characters")) {
             setError("New password must be at least 8 characters long.");
           } else {
-            setError(error.error?.message || "Failed to change password. Please try again.");
+            setError(err.error?.message || "Failed to update password. Please try again.");
           }
         },
         async onSuccess() {
           try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
+            await new Promise((resolve) => setTimeout(resolve, 300));
 
-            // Clear the onboarding flag
-            try {
-              await apiClient.patch("/api/auth-custom/complete-onboarding");
-            } catch (err: any) {
-              setError(err.response?.data?.message || err.message || "Failed to update account status");
-              return;
+            // Clear the onboarding flag if present
+            if (requiresPasswordChange) {
+              try {
+                await apiClient.patch("/api/auth-custom/complete-onboarding");
+              } catch (patchErr: unknown) {
+                const errObj = patchErr as { response?: { data?: { message?: string } }; message?: string };
+                setError(errObj.response?.data?.message || errObj.message || "Failed to finalize account status");
+                return;
+              }
             }
 
-            // Refresh the session
-            await authClient.getSession();
-          } catch (err: any) {
+            // Refresh session and update offline cache
+            const freshSession = await authClient.getSession();
+            if (freshSession?.data) {
+              await saveCachedSession(freshSession.data as unknown as CachedSessionData);
+            }
+
+            Alert.alert("Password Updated", "Your password has been changed successfully.", [
+              {
+                text: "OK",
+                onPress: () => {
+                  if (requiresPasswordChange) {
+                    router.replace("/(tabs)");
+                  } else {
+                    router.back();
+                  }
+                },
+              },
+            ]);
+          } catch {
             setError("An unexpected error occurred. Please try again.");
           }
         },
@@ -87,11 +110,11 @@ export default function ResetPasswordScreen() {
       fetchOptions: {
         onSuccess: () => {
           setIsLoggingOut(false);
-          router.replace("/(auth)/sign-in" as any);
+          router.replace("/(auth)/sign-in");
         },
         onError: () => {
           setIsLoggingOut(false);
-          router.replace("/(auth)/sign-in" as any);
+          router.replace("/(auth)/sign-in");
         },
       },
     });
@@ -100,210 +123,298 @@ export default function ResetPasswordScreen() {
   const isLoading = isSubmitting || isLoggingOut;
 
   return (
-    <Container style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Update Password</Text>
-        <Text style={styles.subtitle}>
-          For your security, please choose a new password before continuing.
-        </Text>
-      </View>
+    <Container scroll={true}>
+      {!requiresPasswordChange && (
+        <View style={styles.topBar}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => router.back()}
+            style={[
+              styles.backButton,
+              {
+                backgroundColor: isDark ? PALETTE.darkCard : PALETTE.boneWhite,
+                borderColor: isDark ? colors.border : PALETTE.inkBlack,
+              },
+            ]}
+          >
+            <Ionicons
+              name="arrow-back-sharp"
+              size={20}
+              color={isDark ? PALETTE.boneWhite : PALETTE.pureBlack}
+            />
+          </TouchableOpacity>
+        </View>
+      )}
 
-      <View style={styles.card}>
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Current Password</Text>
-          <Controller
-            control={control}
-            name="currentPassword"
-            render={({ field: { onChange, value } }) => (
-              <>
-                <PasswordInput
-                  style={[
-                    styles.input,
-                    errors.currentPassword && { borderColor: COLORS.destructive },
-                  ]}
-                  value={value}
-                  onChangeText={onChange}
-                  placeholder="••••••••"
-                  placeholderTextColor={COLORS.muted}
-                  editable={!isLoading}
-                />
-                {errors.currentPassword && (
-                  <Text style={styles.errorTextSmall}>{errors.currentPassword.message}</Text>
-                )}
-              </>
-            )}
-          />
+      <View style={styles.contentWrapper}>
+        <View style={styles.header}>
+          <View style={styles.iconBox}>
+            <Ionicons name="key-sharp" size={32} color={PALETTE.pureBlack} />
+          </View>
+          <Text maxFontSizeMultiplier={1.2} style={styles.title}>
+            UPDATE PASSWORD
+          </Text>
+          <Text style={styles.subtitle}>
+            Choose a strong password to protect your account and attendance credentials.
+          </Text>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>New Password</Text>
-          <Controller
-            control={control}
-            name="newPassword"
-            render={({ field: { onChange, value } }) => (
-              <>
-                <PasswordInput
-                  style={[styles.input, errors.newPassword && { borderColor: COLORS.destructive }]}
-                  value={value}
-                  onChangeText={onChange}
-                  placeholder="••••••••"
-                  placeholderTextColor={COLORS.muted}
-                  editable={!isLoading}
-                />
-                {errors.newPassword && (
-                  <Text style={styles.errorTextSmall}>{errors.newPassword.message}</Text>
-                )}
-              </>
-            )}
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Confirm New Password</Text>
-          <Controller
-            control={control}
-            name="confirmPassword"
-            render={({ field: { onChange, value } }) => (
-              <>
-                <PasswordInput
-                  style={[
-                    styles.input,
-                    errors.confirmPassword && { borderColor: COLORS.destructive },
-                  ]}
-                  value={value}
-                  onChangeText={onChange}
-                  placeholder="••••••••"
-                  placeholderTextColor={COLORS.muted}
-                  editable={!isLoading}
-                />
-                {errors.confirmPassword && (
-                  <Text style={styles.errorTextSmall}>{errors.confirmPassword.message}</Text>
-                )}
-              </>
-            )}
-          />
-        </View>
-
-        <TouchableOpacity
-          style={[styles.button, isSubmitting && styles.buttonDisabled]}
-          onPress={handleSubmit(onSubmit)}
-          disabled={isLoading}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator size="small" color="#ffffff" />
-          ) : (
-            <Text style={styles.buttonText}>Update Password</Text>
+        <Card variant="bone" style={styles.card}>
+          {error && (
+            <View style={styles.errorBox}>
+              <Ionicons name="alert-circle-sharp" size={16} color={PALETTE.pureWhite} />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
           )}
-        </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.button, styles.logoutButton, isLoggingOut && styles.buttonDisabled]}
-          onPress={handleLogout}
-          disabled={isLoading}
-        >
-          {isLoggingOut ? (
-            <ActivityIndicator size="small" color={COLORS.muted} />
-          ) : (
-            <Text style={styles.logoutButtonText}>Logout & Try Again</Text>
-          )}
-        </TouchableOpacity>
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>CURRENT PASSWORD</Text>
+            <Controller
+              control={control}
+              name="currentPassword"
+              render={({ field: { onChange, value } }) => (
+                <View>
+                  <PasswordInput
+                    style={[
+                      styles.inputBox,
+                      {
+                        backgroundColor: isDark ? PALETTE.darkNested : PALETTE.boneWhite,
+                        borderColor: isDark ? colors.border : PALETTE.inkBlack,
+                        color: colors.textPrimary,
+                      },
+                      errors.currentPassword && { borderColor: PALETTE.firecrackerRed },
+                    ]}
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder="••••••••"
+                    placeholderTextColor={isDark ? "rgba(249,245,242,0.4)" : "rgba(26,26,26,0.4)"}
+                    editable={!isLoading}
+                  />
+                  {errors.currentPassword && (
+                    <Text style={styles.fieldError}>{errors.currentPassword.message}</Text>
+                  )}
+                </View>
+              )}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>NEW PASSWORD</Text>
+            <Controller
+              control={control}
+              name="newPassword"
+              render={({ field: { onChange, value } }) => (
+                <View>
+                  <PasswordInput
+                    style={[
+                      styles.inputBox,
+                      {
+                        backgroundColor: isDark ? PALETTE.darkNested : PALETTE.boneWhite,
+                        borderColor: isDark ? colors.border : PALETTE.inkBlack,
+                        color: colors.textPrimary,
+                      },
+                      errors.newPassword && { borderColor: PALETTE.firecrackerRed },
+                    ]}
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder="At least 8 characters"
+                    placeholderTextColor={isDark ? "rgba(249,245,242,0.4)" : "rgba(26,26,26,0.4)"}
+                    editable={!isLoading}
+                  />
+                  {errors.newPassword && (
+                    <Text style={styles.fieldError}>{errors.newPassword.message}</Text>
+                  )}
+                </View>
+              )}
+            />
+          </View>
+
+          {/* Real-time password requirement */}
+          <View style={styles.requirementRow}>
+            <Ionicons
+              name={hasMinLength ? "checkmark-circle-sharp" : "ellipse-outline"}
+              size={14}
+              color={hasMinLength ? colors.textPrimary : colors.textMuted}
+            />
+            <Text
+              style={[
+                styles.requirementText,
+                { color: colors.textMuted },
+                hasMinLength && { color: colors.textPrimary, fontWeight: "700" },
+              ]}
+            >
+              Minimum 8 characters
+            </Text>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>CONFIRM NEW PASSWORD</Text>
+            <Controller
+              control={control}
+              name="confirmPassword"
+              render={({ field: { onChange, value } }) => (
+                <View>
+                  <PasswordInput
+                    style={[
+                      styles.inputBox,
+                      {
+                        backgroundColor: isDark ? PALETTE.darkNested : PALETTE.boneWhite,
+                        borderColor: isDark ? colors.border : PALETTE.inkBlack,
+                        color: colors.textPrimary,
+                      },
+                      errors.confirmPassword && { borderColor: PALETTE.firecrackerRed },
+                    ]}
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder="Re-enter new password"
+                    placeholderTextColor={isDark ? "rgba(249,245,242,0.4)" : "rgba(26,26,26,0.4)"}
+                    editable={!isLoading}
+                  />
+                  {errors.confirmPassword && (
+                    <Text style={styles.fieldError}>{errors.confirmPassword.message}</Text>
+                  )}
+                </View>
+              )}
+            />
+          </View>
+
+          <Button
+            label={isSubmitting ? "UPDATING PASSWORD..." : "SAVE NEW PASSWORD"}
+            variant="accent"
+            size="lg"
+            loading={isSubmitting}
+            disabled={isLoading}
+            onPress={handleSubmit(onSubmit)}
+            icon={<Ionicons name="shield-checkmark-sharp" size={18} color={PALETTE.pureBlack} />}
+            style={{ width: "100%", marginTop: 12 }}
+          />
+
+          <Button
+            label={requiresPasswordChange ? "CANCEL & SIGN OUT" : "CANCEL"}
+            variant="ghost"
+            size="md"
+            disabled={isLoading}
+            onPress={requiresPasswordChange ? handleLogout : () => router.back()}
+            style={{
+              width: "100%",
+              marginTop: 10,
+              borderColor: colors.border,
+            }}
+            labelStyle={{ color: colors.textPrimary }}
+          />
+        </Card>
       </View>
     </Container>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
+  topBar: {
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.full,
+    borderWidth: BORDERS.default,
+    alignItems: "center",
     justifyContent: "center",
-    padding: 24,
+  },
+  contentWrapper: {
+    flex: 1,
+    justifyContent: "center",
+    paddingVertical: 16,
   },
   header: {
     alignItems: "center",
-    marginBottom: 32,
+    marginBottom: 20,
+  },
+  iconBox: {
+    width: 60,
+    height: 60,
+    borderRadius: RADIUS.md,
+    backgroundColor: PALETTE.hiVisYellow,
+    borderWidth: BORDERS.heavy,
+    borderColor: PALETTE.pureBlack,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
   },
   title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: COLORS.foreground,
+    fontSize: 20,
+    fontWeight: "900",
+    fontFamily: FONTS.display,
+    color: PALETTE.boneWhite,
+    textAlign: "center",
+    letterSpacing: 0.5,
+    marginBottom: 4,
   },
   subtitle: {
-    color: COLORS.muted,
-    marginTop: 8,
+    fontSize: 13,
+    fontFamily: FONTS.body,
+    color: "rgba(249, 245, 242, 0.8)",
     textAlign: "center",
-    lineHeight: 22,
+    lineHeight: 18,
+    maxWidth: 290,
   },
   card: {
-    backgroundColor: COLORS.card,
-    padding: 24,
-    borderRadius: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    gap: 16,
+    padding: 20,
+  },
+  errorBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: PALETTE.firecrackerRed,
+    borderRadius: RADIUS.md,
+    padding: 10,
+    marginBottom: 14,
   },
   errorText: {
-    color: COLORS.destructive,
-    textAlign: "center",
-    fontWeight: "500",
-    marginBottom: 8,
-  },
-  errorTextSmall: {
-    color: COLORS.destructive,
     fontSize: 12,
-    marginTop: 4,
+    fontFamily: FONTS.body,
+    color: PALETTE.pureWhite,
+    flex: 1,
   },
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: 14,
   },
   label: {
+    fontSize: 10,
+    fontWeight: "800",
+    fontFamily: FONTS.mono,
+    color: PALETTE.inkBlack,
+    marginBottom: 6,
+    letterSpacing: 0.4,
+  },
+  inputBox: {
+    height: 48,
+    borderWidth: BORDERS.default,
+    borderColor: PALETTE.inkBlack,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: 14,
     fontSize: 14,
-    fontWeight: "500",
-    color: COLORS.foreground,
-    marginBottom: 8,
+    fontFamily: FONTS.body,
+    color: PALETTE.inkBlack,
+    backgroundColor: PALETTE.boneWhite,
   },
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 16,
-    color: COLORS.foreground,
-    backgroundColor: COLORS.background,
+  fieldError: {
+    fontSize: 11,
+    fontFamily: FONTS.mono,
+    color: PALETTE.firecrackerRed,
+    marginTop: 4,
+    fontWeight: "600",
   },
-  button: {
-    backgroundColor: COLORS.primary,
-    height: 48,
-    borderRadius: 8,
-    justifyContent: "center",
+  requirementRow: {
+    flexDirection: "row",
     alignItems: "center",
-    marginTop: 8,
+    gap: 6,
+    marginBottom: 14,
+    marginTop: -4,
   },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonText: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  logoutButton: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginTop: 0,
-  },
-  logoutButtonText: {
-    color: COLORS.muted,
-    fontSize: 16,
-    fontWeight: "600",
+  requirementText: {
+    fontSize: 11,
+    fontFamily: FONTS.mono,
+    color: "rgba(26,26,26,0.6)",
   },
 });

@@ -1,31 +1,38 @@
-﻿import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
-
+import { Text, View, StyleSheet } from "react-native";
 import { Container } from "@/components/container";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { PALETTE, FONTS, RADIUS, BORDERS } from "@/lib/theme";
+import { useAppTheme } from "@/contexts/app-theme-context";
 
-function Modal() {
+export default function Modal() {
+  const { colors } = useAppTheme();
+
   function handleClose() {
     router.back();
   }
 
   return (
-    <Container>
+    <Container scroll={true}>
       <View style={styles.container}>
-        <View style={styles.surface}>
-          <View style={styles.content}>
-            <View style={styles.iconContainer}>
-              <Ionicons name="checkmark" size={24} color="#111827" />
-            </View>
-            <Text style={styles.title}>Modal Screen</Text>
-            <Text style={styles.subtitle}>
-              This is an example modal screen for dialogs and confirmations.
-            </Text>
+        <Card variant="bone" style={styles.surface}>
+          <View style={styles.iconContainer}>
+            <Ionicons name="information-sharp" size={28} color={PALETTE.pureBlack} />
           </View>
-          <TouchableOpacity style={styles.button} onPress={handleClose}>
-            <Text style={styles.buttonText}>Close</Text>
-          </TouchableOpacity>
-        </View>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>INFORMATION</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            Secured Attendance application dialog.
+          </Text>
+          <Button
+            label="CLOSE"
+            variant="accent"
+            size="md"
+            onPress={handleClose}
+            style={{ width: "100%", marginTop: 8 }}
+          />
+        </Card>
       </View>
     </Container>
   );
@@ -36,51 +43,38 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 16,
+    padding: 20,
   },
   surface: {
-    padding: 20,
     width: "100%",
     maxWidth: 320,
-    borderRadius: 8,
-    backgroundColor: "#f3f4f6", // secondary
-  },
-  content: {
     alignItems: "center",
+    padding: 24,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    backgroundColor: "#e5e7eb", // accent
-    borderRadius: 8,
+    width: 52,
+    height: 52,
+    backgroundColor: PALETTE.hiVisYellow,
+    borderWidth: BORDERS.heavy,
+    borderColor: PALETTE.pureBlack,
+    borderRadius: RADIUS.md,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+    marginBottom: 14,
   },
   title: {
-    color: "#111827", // foreground
-    fontWeight: "500",
+    color: PALETTE.inkBlack,
+    fontWeight: "900",
+    fontFamily: FONTS.display,
     fontSize: 18,
-    marginBottom: 4,
+    marginBottom: 6,
+    letterSpacing: 0.5,
   },
   subtitle: {
-    color: "#6b7280", // muted
-    fontSize: 14,
+    color: "rgba(26, 26, 26, 0.75)",
+    fontSize: 13,
+    fontFamily: FONTS.body,
     textAlign: "center",
     marginBottom: 16,
   },
-  button: {
-    backgroundColor: "#4f46e5", // primary
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 6,
-    width: "100%",
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "white",
-    fontWeight: "500",
-  },
 });
-
-export default Modal;

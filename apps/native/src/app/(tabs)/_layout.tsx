@@ -2,35 +2,47 @@ import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { View, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-const COLORS = {
-  background: "#ffffff",
-  primary: "#4f46e5",
-  foreground: "#111827",
-  muted: "#6b7280",
-  border: "#e5e7eb",
-};
+import { PALETTE, BORDERS, FONTS } from "@/lib/theme";
+import { useAppTheme } from "@/contexts/app-theme-context";
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
+  const { isDark } = useAppTheme();
+
+  // Ensure bottom padding accommodates Android 3-button navigation bars as well as iOS home indicator
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === "android" ? 12 : 8);
+  const tabHeight = 58 + bottomPadding;
+
+  const barBg = isDark ? PALETTE.darkStage : PALETTE.duskViolet;
+  const barBorder = isDark ? PALETTE.darkBorder : "rgba(249, 245, 242, 0.4)";
+  const activeColor = PALETTE.hiVisYellow;
+  const inactiveColor = "rgba(249, 245, 242, 0.7)";
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.muted,
+        tabBarActiveTintColor: activeColor,
+        tabBarInactiveTintColor: inactiveColor,
         tabBarStyle: {
-          backgroundColor: COLORS.background,
-          borderTopWidth: 1,
-          borderTopColor: COLORS.border,
-          height: Platform.OS === "ios" ? 85 : 70,
-          paddingBottom: Platform.OS === "ios" ? insets.bottom : 10,
-          paddingTop: 10,
+          backgroundColor: barBg,
+          borderTopWidth: BORDERS.heavy,
+          borderTopColor: barBorder,
+          height: tabHeight,
+          paddingBottom: bottomPadding,
+          paddingTop: 8,
+          elevation: 8,
+          shadowColor: PALETTE.pureBlack,
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.15,
+          shadowRadius: 6,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: "500",
+          fontSize: 10,
+          fontWeight: "700",
+          fontFamily: FONTS.mono,
+          textTransform: "uppercase",
+          letterSpacing: 0.6,
           marginTop: 2,
         },
       }}
@@ -39,33 +51,8 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="scan"
-        options={{
-          title: "Scan",
-          tabBarLabel: () => null,
-          tabBarIcon: ({ color, focused }) => (
-            <View
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 28,
-                backgroundColor: COLORS.primary,
-                justifyContent: "center",
-                alignItems: "center",
-                marginTop: Platform.OS === "ios" ? -15 : -25,
-                shadowColor: COLORS.primary,
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.3,
-                shadowRadius: 8,
-                elevation: 5,
-              }}
-            >
-              <Ionicons name="qr-code-outline" size={28} color="#ffffff" />
-            </View>
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home-sharp" size={size - 2} color={color} />
           ),
         }}
       />
@@ -73,21 +60,56 @@ export default function TabLayout() {
         name="history"
         options={{
           title: "History",
-          tabBarIcon: ({ color, size }) => <Ionicons name="time" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="time-sharp" size={size - 2} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="scan"
+        options={{
+          title: "Scan",
+          tabBarLabel: () => null,
+          tabBarIcon: () => (
+            <View
+              style={{
+                width: 54,
+                height: 54,
+                borderRadius: 27,
+                backgroundColor: PALETTE.hiVisYellow,
+                borderWidth: BORDERS.heavy,
+                borderColor: PALETTE.pureBlack,
+                justifyContent: "center",
+                alignItems: "center",
+                marginTop: Platform.OS === "ios" ? -18 : -22,
+                shadowColor: PALETTE.pureBlack,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.25,
+                shadowRadius: 5,
+                elevation: 6,
+              }}
+            >
+              <Ionicons name="qr-code" size={26} color={PALETTE.pureBlack} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-sharp" size={size - 2} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",
-          tabBarIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings-sharp" size={size - 2} color={color} />
+          ),
         }}
       />
     </Tabs>

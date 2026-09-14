@@ -1,27 +1,30 @@
-import { Text, View, StyleSheet, TouchableOpacity, RefreshControl } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import {
+  Text,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  RefreshControl,
+  ActivityIndicator,
+  ScrollView,
+} from "react-native";
 import { Container } from "@/components/container";
 import { useTodaySchedule } from "@/hooks/api/use-schedule";
 import { useAttendanceStats } from "@/hooks/api/use-attendance-history";
 import { authClient } from "@/lib/auth-client";
-import { ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState, useCallback } from "react";
 import { syncPendingAttendance, getPendingScansCount } from "@/lib/offline-sync";
 import { NetworkStatusBadge } from "@/components/network-status-badge";
-
-const COLORS = {
-  background: "#ffffff",
-  card: "#ffffff",
-  border: "#e5e7eb",
-  primary: "#4f46e5",
-  foreground: "#111827",
-  muted: "#6b7280",
-  success: "#10b981",
-  orange: "#f97316",
-  destructive: "#ef4444",
-};
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { StatCard } from "@/components/ui/stat-card";
+import { SectionHeader } from "@/components/ui/section-header";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PALETTE, FONTS, RADIUS, BORDERS } from "@/lib/theme";
+import { useResponsive } from "@/hooks/use-responsive";
+import { useAppTheme } from "@/contexts/app-theme-context";
 
 function format12Hour(timeStr?: string | null): string {
   if (!timeStr || typeof timeStr !== "string") return "";
@@ -56,11 +59,30 @@ function getStudentSlotStatus(startTime?: string | null, endTime?: string | null
   return "UPCOMING";
 }
 
+interface SubjectAttendanceWarning {
+  subjectId?: string | number;
+  subjectName?: string;
+  percentage: number;
+}
+
+interface ScheduleCardItem {
+  id?: string | number;
+  startTime?: string | null;
+  endTime?: string | null;
+  attendanceStatus?: string | null;
+  activeSession?: boolean | null;
+  subject?: { name?: string | null } | null;
+  room?: { name?: string | null } | null;
+  teacher?: { name?: string | null } | null;
+}
+
 export default function HomeScreen() {
   const { data: session } = authClient.useSession();
   const { data: schedule, isLoading: scheduleLoading, refetch: refetchSchedule } = useTodaySchedule();
-  const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useAttendanceStats();
+  const { data: stats, refetch: refetchStats } = useAttendanceStats();
   const router = useRouter();
+  const { bottomInset } = useResponsive();
+  const { colors, isDark } = useAppTheme();
 
   const [refreshing, setRefreshing] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
@@ -99,468 +121,401 @@ export default function HomeScreen() {
       ? user.name.trim().split(" ")[0]
       : "Student";
 
-  const today = new Date().toLocaleDateString("en-IN", {
-    weekday: "long",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  const todayReceipt = new Date()
+    .toLocaleDateString("en-US", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    })
+    .toUpperCase();
 
-  const renderScheduleItem = ({ item }: { item: any }) => {
-    if (!item || typeof item !== "object") return null;
-    const slotStatus = getStudentSlotStatus(item.startTime, item.endTime);
+  const overallPercentage = stats?.overallPercentage ? Math.round(stats.overallPercentage) : 0;
+  const lowAttendanceSubjects: SubjectAttendanceWarning[] = (stats?.bySubject || []).filter(
+    (s: SubjectAttendanceWarning) => s.percentage < 75,
+  );
 
-    return (
-      <View style={styles.card}>
-        <View style={styles.cardContent}>
-          <Text style={styles.subjectName}>{item.subject?.name || "Unknown Subject"}</Text>
-          <View style={styles.rowInfo}>
-            <Ionicons name="time-outline" size={14} color={COLORS.muted} />
-            <Text style={styles.infoText}>
-              {format12Hour(item.startTime)} - {format12Hour(item.endTime)}
-            </Text>
-          </View>
-          <View style={styles.rowDetails}>
-            <View style={[styles.rowInfo, { marginRight: 12 }]}>
-              <Ionicons name="location-outline" size={14} color={COLORS.muted} />
-              <Text style={styles.infoText}>{item.room?.name || "No Room"}</Text>
-            </View>
-            <View style={styles.rowInfo}>
-              <Ionicons name="person-outline" size={14} color={COLORS.muted} />
-              <Text style={styles.infoText}>{item.teacher?.name || "Unknown Teacher"}</Text>
-            </View>
-          </View>
-        </View>
-
-        {item.attendanceStatus === "PRESENT" ? (
-          <View
-            style={[
-              styles.scanButton,
-              {
-                backgroundColor: COLORS.success + "20",
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                flexDirection: "row",
-                alignItems: "center",
-              },
-            ]}
-          >
-            <Ionicons
-              name="checkmark-circle"
-              size={16}
-              color={COLORS.success}
-              style={{ marginRight: 4 }}
-            />
-            <Text style={{ color: COLORS.success, fontWeight: "600", fontSize: 12 }}>Present</Text>
-          </View>
-        ) : item.attendanceStatus === "ABSENT" ? (
-          <View
-            style={[
-              styles.scanButton,
-              {
-                backgroundColor: COLORS.destructive + "20",
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                flexDirection: "row",
-                alignItems: "center",
-              },
-            ]}
-          >
-            <Ionicons
-              name="close-circle"
-              size={16}
-              color={COLORS.destructive}
-              style={{ marginRight: 4 }}
-            />
-            <Text style={{ color: COLORS.destructive, fontWeight: "600", fontSize: 12 }}>Missed</Text>
-          </View>
-        ) : item.activeSession ? (
-          <TouchableOpacity
-            onPress={() => router.push("/(tabs)/scan")}
-            style={[
-              styles.scanButton,
-              { backgroundColor: COLORS.primary, paddingHorizontal: 14, paddingVertical: 8, flexDirection: "row", alignItems: "center" },
-            ]}
-          >
-            <Ionicons name="qr-code-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
-            <Text style={{ color: "white", fontWeight: "600", fontSize: 13 }}>Scan</Text>
-          </TouchableOpacity>
-        ) : slotStatus === "ENDED" ? (
-          <View
-            style={[
-              styles.scanButton,
-              { backgroundColor: "#f3f4f6", paddingHorizontal: 10, paddingVertical: 6 },
-            ]}
-          >
-            <Text style={{ color: COLORS.muted, fontWeight: "600", fontSize: 11 }}>Class Ended</Text>
-          </View>
-        ) : slotStatus === "LIVE_SLOT" ? (
-          <View
-            style={[
-              styles.scanButton,
-              { backgroundColor: "#fef3c7", paddingHorizontal: 10, paddingVertical: 6 },
-            ]}
-          >
-            <Text style={{ color: "#d97706", fontWeight: "600", fontSize: 11 }}>In Session</Text>
-          </View>
-        ) : (
-          <View
-            style={[
-              styles.scanButton,
-              { backgroundColor: "#eff6ff", paddingHorizontal: 10, paddingVertical: 6 },
-            ]}
-          >
-            <Text style={{ color: "#3b82f6", fontWeight: "600", fontSize: 11 }}>Upcoming</Text>
-          </View>
-        )}
-      </View>
-    );
-  };
+  const scheduleList: ScheduleCardItem[] = Array.isArray(schedule) ? (schedule as ScheduleCardItem[]) : [];
 
   return (
-    <Container style={styles.container} scroll={false}>
-      {/* Header Area */}
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <View>
-            <Text style={styles.dateText}>{today}</Text>
-            <Text style={styles.greetingText}>Hi, {firstName}</Text>
-          </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <NetworkStatusBadge />
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{firstName.charAt(0)}</Text>
+    <Container scroll={false} padded={false}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 8,
+          paddingBottom: Math.max(bottomInset, 16) + 30,
+        }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={PALETTE.boneWhite}
+            colors={[PALETTE.duskViolet]}
+          />
+        }
+      >
+        {/* Top Header Row */}
+        <View style={styles.topHeader}>
+          <View style={{ flex: 1 }}>
+            <View
+              style={[
+                styles.dateReceiptPill,
+                {
+                  backgroundColor: isDark ? PALETTE.darkCard : PALETTE.boneWhite,
+                  borderColor: isDark ? colors.border : PALETTE.inkBlack,
+                },
+              ]}
+            >
+              <Ionicons
+                name="calendar-sharp"
+                size={12}
+                color={isDark ? PALETTE.boneWhite : PALETTE.inkBlack}
+              />
+              <Text
+                style={[
+                  styles.dateReceiptText,
+                  { color: isDark ? PALETTE.boneWhite : PALETTE.inkBlack },
+                ]}
+              >
+                {todayReceipt}
+              </Text>
             </View>
+            <Text maxFontSizeMultiplier={1.2} style={styles.greetingTitle}>
+              HEY, {firstName.toUpperCase()}
+            </Text>
+          </View>
+
+          <View style={styles.headerRightActions}>
+            <NetworkStatusBadge compact />
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => router.push("/(tabs)/profile")}
+              style={styles.avatarPill}
+            >
+              <Text style={styles.avatarLetter}>{firstName.charAt(0).toUpperCase()}</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Streak & Stats Card */}
-        {statsLoading ? (
-          <View style={styles.statsLoading}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
-          </View>
-        ) : (
-          <View style={styles.statsRow}>
-            <View style={styles.statBox}>
-              <View style={[styles.iconCircle, { backgroundColor: "rgba(249, 115, 22, 0.2)" }]}>
-                <Text style={{ fontSize: 20 }}>🔥</Text>
-              </View>
-              <Text style={styles.statValue}>{stats?.streak || 0}</Text>
-              <Text style={styles.statLabel}>Day Streak</Text>
-            </View>
-            <View style={styles.statBox}>
-              <View style={[styles.iconCircle, { backgroundColor: "rgba(16, 185, 129, 0.2)" }]}>
-                <Ionicons name="pie-chart" size={20} color={COLORS.success} />
-              </View>
-              <Text style={styles.statValue}>
-                {stats?.overallPercentage ? Math.round(stats.overallPercentage) : 0}%
-              </Text>
-              <Text style={styles.statLabel}>Overall</Text>
-            </View>
-          </View>
-        )}
-
-        {pendingCount > 0 && (
-          <TouchableOpacity
-            onPress={onRefresh}
-            style={{
-              backgroundColor: "#fef3c7",
-              borderColor: "#f59e0b",
-              borderWidth: 1,
-              borderRadius: 8,
-              padding: 10,
-              marginTop: 12,
-              flexDirection: "row",
-              alignItems: "center",
-            }}
-          >
-            <Ionicons name="cloud-offline-outline" size={20} color="#b45309" style={{ marginRight: 8 }} />
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: "#b45309", fontWeight: "600", fontSize: 13 }}>
-                {pendingCount} attendance scan{pendingCount > 1 ? "s" : ""} saved offline
-              </Text>
-              <Text style={{ color: "#92400e", fontSize: 11 }}>
-                Pull down or tap to sync when your connection is restored
-              </Text>
-            </View>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Schedule Section */}
-      <View style={styles.scheduleSection}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Today's Classes</Text>
+        {/* Hero Metrics Row */}
+        <View style={styles.statsGridRow}>
+          <StatCard
+            label="Day Streak"
+            value={stats?.streak || 0}
+            variant="lilac"
+            badgeText="ACTIVE"
+            icon={<Text style={{ fontSize: 18 }}>🔥</Text>}
+            iconBg="rgba(244, 237, 54, 0.2)"
+          />
+          <StatCard
+            label="Attendance"
+            value={overallPercentage}
+            unit="%"
+            variant="bone"
+            badgeText={overallPercentage >= 75 ? "SAFE" : "ALERT"}
+            icon={<Ionicons name="pie-chart-sharp" size={18} color={PALETTE.pureBlack} />}
+            iconBg={overallPercentage >= 75 ? PALETTE.matchaCream : PALETTE.bubblegumPink}
+          />
         </View>
 
-        <View style={styles.listContainer}>
-          {scheduleLoading && !refreshing ? (
-            <View style={styles.centerAll}>
-              <ActivityIndicator size="large" color={COLORS.primary} />
+        {/* Attendance Risk Warning Banner */}
+        {lowAttendanceSubjects.length > 0 && (
+          <Card variant="alert" style={styles.warningCard}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <Ionicons name="alert-circle-sharp" size={18} color={PALETTE.boneWhite} />
+              <Text style={styles.warningHeading}>ATTENDANCE WARNING</Text>
             </View>
-          ) : (
-            <FlashList
-              data={Array.isArray(schedule) ? schedule : []}
-              renderItem={renderScheduleItem}
-              keyExtractor={(item: any, index: number) => item?.id?.toString() || index.toString()}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={[{ paddingBottom: 20 }, (!Array.isArray(schedule) || schedule.length === 0) && { flex: 1 }]}
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />
-              }
-              ListEmptyComponent={
-                <View style={styles.emptyState}>
-                  <Ionicons
-                    name="calendar-clear-outline"
-                    size={48}
-                    color={COLORS.muted}
-                    style={{ marginBottom: 12 }}
-                  />
-                  <Text style={styles.emptyStateTitle}>No Classes Today</Text>
-
-                  <Text style={styles.emptyStateSub}>
-                    Take a break or check your upcoming schedule.
+            {lowAttendanceSubjects.map((subj: SubjectAttendanceWarning, index: number) => {
+              const pct = Math.round(subj.percentage);
+              const needed = Math.ceil(75 - pct);
+              return (
+                <View key={subj.subjectId || index} style={styles.warningRow}>
+                  <Text style={styles.warningSubject} numberOfLines={1}>
+                    • {subj.subjectName || "Subject"}
+                  </Text>
+                  <Text style={styles.warningMeta}>
+                    {pct}% (need +{needed}%)
                   </Text>
                 </View>
-              }
-            />
-          )}
-        </View>
+              );
+            })}
+          </Card>
+        )}
 
-        {/* Below-75% Attendance Warnings */}
-        {stats && (() => {
-          const warnings = (stats.bySubject || []).filter((s: any) => s.percentage < 75);
-          if (warnings.length === 0) return null;
-          return (
-            <View style={styles.warningCard}>
-              <Text style={styles.warningTitle}>⚠️ Attendance Alerts</Text>
-              {warnings.map((subj: any, idx: number) => {
-                const pct = Math.round(subj.percentage);
-                const needed = Math.ceil(75 - pct);
-                return (
-                  <View key={subj.subjectId || idx} style={styles.warningRow}>
-                    <Text style={styles.warningSubject} numberOfLines={1}>{subj.subjectName}</Text>
-                    <Text style={styles.warningDetail}>{pct}% — need {needed}% more</Text>
+        {/* Offline Scans Notice */}
+        {pendingCount > 0 && (
+          <TouchableOpacity activeOpacity={0.85} onPress={onRefresh}>
+            <Card variant="yellow" style={styles.offlineCard}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                <Ionicons name="cloud-offline-sharp" size={24} color={PALETTE.pureBlack} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.offlineTitle}>
+                    {pendingCount} OFFLINE SCAN{pendingCount > 1 ? "S" : ""} QUEUED
+                  </Text>
+                  <Text style={styles.offlineSub}>Tap to synchronize now</Text>
+                </View>
+                <Ionicons name="sync-sharp" size={18} color={PALETTE.pureBlack} />
+              </View>
+            </Card>
+          </TouchableOpacity>
+        )}
+
+        {/* Schedule Section Header */}
+        <SectionHeader
+          title="TODAY'S SCHEDULE"
+          badge={scheduleList.length}
+          style={{ marginTop: 20 }}
+        />
+
+        {/* Schedule Cards or Loading or Empty State */}
+        {scheduleLoading && !refreshing ? (
+          <View style={styles.loadingBox}>
+            <ActivityIndicator size="large" color={PALETTE.boneWhite} />
+          </View>
+        ) : scheduleList.length === 0 ? (
+          <EmptyState
+            icon={<Ionicons name="sunny-sharp" size={28} color={PALETTE.hiVisYellow} />}
+            title="NO CLASSES TODAY"
+            description="You have no scheduled lectures for today. Relax or review your attendance history."
+            actionLabel="VIEW HISTORY"
+            onAction={() => router.push("/(tabs)/history")}
+          />
+        ) : (
+          <View style={{ gap: 12 }}>
+            {scheduleList.map((item: ScheduleCardItem, index: number) => {
+              const slotStatus = getStudentSlotStatus(item.startTime, item.endTime);
+              const isPresent = item.attendanceStatus === "PRESENT";
+              const isMissed = item.attendanceStatus === "ABSENT";
+              const canScan = item.activeSession && !isPresent;
+
+              return (
+                <Card
+                  key={item?.id?.toString() || index.toString()}
+                  variant="bone"
+                  style={styles.scheduleCard}
+                >
+                  <View style={styles.scheduleCardTop}>
+                    <View style={{ flex: 1, paddingRight: 8 }}>
+                      <Text
+                        maxFontSizeMultiplier={1.2}
+                        numberOfLines={1}
+                        style={[
+                          styles.subjectTitle,
+                          { color: colors.textPrimary },
+                        ]}
+                      >
+                        {item.subject?.name || "Subject"}
+                      </Text>
+                      <View style={styles.timeTagRow}>
+                        <Ionicons name="time-sharp" size={13} color={colors.textSecondary} />
+                        <Text style={[styles.timeTagText, { color: colors.textSecondary }]}>
+                          {format12Hour(item.startTime)} — {format12Hour(item.endTime)}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Status Badge or Scan Action */}
+                    {isPresent ? (
+                      <Badge label="PRESENT" variant="present" icon={<Ionicons name="checkmark-sharp" size={12} color={PALETTE.pureBlack} />} />
+                    ) : isMissed ? (
+                      <Badge label="MISSED" variant="missed" icon={<Ionicons name="close-sharp" size={12} color={PALETTE.boneWhite} />} />
+                    ) : canScan ? (
+                      <Button
+                        label="SCAN NOW"
+                        variant="accent"
+                        size="sm"
+                        icon={<Ionicons name="qr-code-sharp" size={14} color={PALETTE.pureBlack} />}
+                        onPress={() => router.push("/(tabs)/scan")}
+                      />
+                    ) : slotStatus === "LIVE_SLOT" ? (
+                      <Badge label="IN SESSION" variant="live" />
+                    ) : slotStatus === "ENDED" ? (
+                      <Badge label="ENDED" variant="neutral" />
+                    ) : (
+                      <Badge label="UPCOMING" variant="upcoming" />
+                    )}
                   </View>
-                );
-              })}
-            </View>
-          );
-        })()}
-      </View>
+
+                  <View style={[styles.cardDivider, { backgroundColor: colors.divider }]} />
+
+                  <View style={styles.scheduleMetaRow}>
+                    <View style={styles.metaItem}>
+                      <Ionicons name="location-sharp" size={13} color={colors.textMuted} />
+                      <Text style={[styles.metaText, { color: colors.textMuted }]}>{item.room?.name || "Hall"}</Text>
+                    </View>
+                    <View style={styles.metaItem}>
+                      <Ionicons name="person-sharp" size={13} color={colors.textMuted} />
+                      <Text style={[styles.metaText, { color: colors.textMuted }]}>{item.teacher?.name || "Faculty"}</Text>
+                    </View>
+                  </View>
+                </Card>
+              );
+            })}
+          </View>
+        )}
+      </ScrollView>
     </Container>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 16,
-    backgroundColor: "rgba(79, 70, 229, 0.05)",
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    marginBottom: 16,
-  },
-  headerTop: {
+  topHeader: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 16,
+    paddingTop: 4,
   },
-  dateText: {
-    color: COLORS.muted,
-    fontWeight: "500",
-    marginBottom: 4,
-  },
-  greetingText: {
-    fontSize: 30,
-    fontWeight: "bold",
-    color: COLORS.foreground,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "rgba(79, 70, 229, 0.2)",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(79, 70, 229, 0.3)",
-  },
-  avatarText: {
-    color: COLORS.primary,
-    fontWeight: "bold",
-    fontSize: 18,
-  },
-  statsLoading: {
-    height: 96,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  statsRow: {
+  dateReceiptPill: {
     flexDirection: "row",
-    gap: 16,
-  },
-  statBox: {
-    flex: 1,
-    backgroundColor: COLORS.card,
-    padding: 16,
-    borderRadius: 16,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-    marginHorizontal: 8,
+    alignSelf: "flex-start",
+    backgroundColor: PALETTE.boneWhite,
+    borderWidth: BORDERS.hairline,
+    borderColor: PALETTE.inkBlack,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    gap: 4,
+    marginBottom: 6,
   },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 8,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: COLORS.foreground,
-  },
-  statLabel: {
+  dateReceiptText: {
     fontSize: 10,
-    color: COLORS.muted,
-    fontWeight: "600",
-    textTransform: "uppercase",
+    fontWeight: "700",
+    fontFamily: FONTS.mono,
+    color: PALETTE.inkBlack,
     letterSpacing: 0.5,
   },
-  scheduleSection: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 8,
+  greetingTitle: {
+    fontSize: 22,
+    fontWeight: "900",
+    fontFamily: FONTS.display,
+    color: PALETTE.boneWhite,
+    letterSpacing: 0.5,
   },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: COLORS.foreground,
-  },
-  listContainer: {
-    flex: 1,
-    minHeight: 300,
-  },
-  card: {
-    backgroundColor: COLORS.card,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
+  headerRightActions: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    gap: 8,
   },
-  cardContent: {
-    flex: 1,
-    paddingRight: 8,
-  },
-  subjectName: {
-    color: COLORS.foreground,
-    fontWeight: "600",
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  rowInfo: {
-    flexDirection: "row",
+  avatarPill: {
+    width: 36,
+    height: 36,
+    borderRadius: RADIUS.full,
+    backgroundColor: PALETTE.hiVisYellow,
+    borderWidth: BORDERS.heavy,
+    borderColor: PALETTE.pureBlack,
     alignItems: "center",
-    marginBottom: 4,
-  },
-  rowDetails: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  infoText: {
-    color: COLORS.muted,
-    fontSize: 14,
-    marginLeft: 4,
-  },
-  scanButton: {
-    borderRadius: 9999,
-  },
-  centerAll: {
-    flex: 1,
     justifyContent: "center",
-    alignItems: "center",
   },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: COLORS.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 32,
+  avatarLetter: {
+    fontSize: 15,
+    fontWeight: "800",
+    fontFamily: FONTS.mono,
+    color: PALETTE.pureBlack,
   },
-  emptyStateTitle: {
-    color: COLORS.foreground,
-    fontWeight: "500",
-    fontSize: 18,
-    marginBottom: 4,
-  },
-  emptyStateSub: {
-    color: COLORS.muted,
-    textAlign: "center",
+  statsGridRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 14,
   },
   warningCard: {
-    marginTop: 16,
-    padding: 16,
-    backgroundColor: "#fff7ed",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#ffedd5",
+    marginBottom: 14,
+    paddingVertical: 12,
   },
-  warningTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#ea580c",
-    marginBottom: 8,
+  warningHeading: {
+    fontSize: 12,
+    fontWeight: "800",
+    fontFamily: FONTS.mono,
+    color: PALETTE.boneWhite,
+    letterSpacing: 0.5,
   },
   warningRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 4,
+    marginTop: 4,
   },
   warningSubject: {
     fontSize: 13,
-    color: "#9a3412",
+    fontWeight: "600",
+    fontFamily: FONTS.body,
+    color: PALETTE.boneWhite,
     flex: 1,
-    marginRight: 8,
   },
-  warningDetail: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#c2410c",
-  }
+  warningMeta: {
+    fontSize: 12,
+    fontWeight: "700",
+    fontFamily: FONTS.mono,
+    color: PALETTE.hiVisYellow,
+  },
+  offlineCard: {
+    marginBottom: 14,
+    paddingVertical: 12,
+  },
+  offlineTitle: {
+    fontSize: 12,
+    fontWeight: "800",
+    fontFamily: FONTS.mono,
+    color: PALETTE.pureBlack,
+    letterSpacing: 0.4,
+  },
+  offlineSub: {
+    fontSize: 11,
+    fontFamily: FONTS.body,
+    color: "rgba(0,0,0,0.7)",
+  },
+  loadingBox: {
+    paddingVertical: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scheduleCard: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  scheduleCardTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  subjectTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    fontFamily: FONTS.display,
+    color: PALETTE.inkBlack,
+    marginBottom: 4,
+  },
+  timeTagRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  timeTagText: {
+    fontSize: 12,
+    fontFamily: FONTS.mono,
+    fontWeight: "600",
+    color: "rgba(26,26,26,0.75)",
+  },
+  cardDivider: {
+    height: 1,
+    backgroundColor: "rgba(26,26,26,0.1)",
+    marginVertical: 10,
+  },
+  scheduleMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+  },
+  metaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  metaText: {
+    fontSize: 12,
+    fontFamily: FONTS.mono,
+    color: "rgba(26,26,26,0.7)",
+  },
 });
-

@@ -7,7 +7,7 @@ const DEVICE_ID_KEY = "sa_device_id";
 
 export async function getDeviceFingerprint(): Promise<{ id: string; name: string }> {
   // Generate a stable device ID
-  let storedId = await SecureStore.getItemAsync(DEVICE_ID_KEY);
+  const storedId = await SecureStore.getItemAsync(DEVICE_ID_KEY);
   let deviceId: string;
 
   if (!storedId) {

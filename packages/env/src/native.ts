@@ -6,7 +6,7 @@ export const env = createEnv({
   client: {
     EXPO_PUBLIC_SERVER_URL: z
       .string()
-      .default("https://attendance-api.ayushbhagat.com"),
+      .default("http://localhost:3000"),
     EXPO_PUBLIC_AUTH_REDIRECT_PATH: z.string().default("auth/callback"),
   },
   runtimeEnv: {

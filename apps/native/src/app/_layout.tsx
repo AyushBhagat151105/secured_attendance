@@ -9,6 +9,24 @@ import * as SplashScreen from "expo-splash-screen";
 // Prevent auto-hiding until ready
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
+// Global network request logging for ADB logcat debugging
+if (typeof globalThis !== "undefined" && (globalThis as any).fetch) {
+  const originalFetch = globalThis.fetch;
+  (globalThis as any).fetch = async (input: any, init: any) => {
+    const url = typeof input === "string" ? input : input?.url || input?.toString();
+    const method = init?.method || "GET";
+    console.log(`🌐 [Fetch Request] ${method} ${url}`);
+    try {
+      const response = await originalFetch(input, init);
+      console.log(`✅ [Fetch Response] ${response.status} ${url}`);
+      return response;
+    } catch (err: any) {
+      console.log(`❌ [Fetch Network Error] ${url}: ${err?.message}`);
+      throw err;
+    }
+  };
+}
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppThemeProvider } from "@/contexts/app-theme-context";
 import { useUpdateCheck } from "@/lib/updates";
@@ -160,11 +178,11 @@ function StackLayout() {
             if (path !== "(auth)/device-mismatch") {
               router.replace("/(auth)/device-mismatch" as any);
             }
-          } else if (inAuthGroup) {
+          } else if (path === "(auth)/sign-in") {
             router.replace("/(tabs)");
           }
         }
-      } else if (inAuthGroup) {
+      } else if (path === "(auth)/sign-in") {
         router.replace("/(tabs)");
       }
     } else if (!inAuthGroup) {
