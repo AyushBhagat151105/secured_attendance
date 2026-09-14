@@ -67,7 +67,9 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
           name="name"
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name} className="font-medium">Full Name</FieldLabel>
+              <FieldLabel htmlFor={field.name} className="font-medium">
+                Full Name
+              </FieldLabel>
               <Input
                 {...field}
                 id={field.name}
@@ -85,7 +87,9 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
           name="email"
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name} className="font-medium">Email address</FieldLabel>
+              <FieldLabel htmlFor={field.name} className="font-medium">
+                Email address
+              </FieldLabel>
               <Input
                 {...field}
                 id={field.name}
@@ -104,7 +108,9 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
           name="password"
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name} className="font-medium">Password</FieldLabel>
+              <FieldLabel htmlFor={field.name} className="font-medium">
+                Password
+              </FieldLabel>
               <PasswordInput
                 {...field}
                 id={field.name}

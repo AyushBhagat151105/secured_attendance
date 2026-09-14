@@ -82,9 +82,7 @@ export class StudentHistoryService {
       return { streak: 0, overallPercentage: 0, bySubject: [] };
     }
 
-    const overallPercentage = Math.round(
-      (attendedRecords.length / totalSessions.length) * 100,
-    );
+    const overallPercentage = Math.round((attendedRecords.length / totalSessions.length) * 100);
 
     const attendedSessionIds = new Set(attendedRecords.map((r) => r.sessionId));
 

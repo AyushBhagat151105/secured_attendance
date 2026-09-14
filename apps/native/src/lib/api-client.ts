@@ -27,7 +27,9 @@ apiClient.interceptors.request.use(
     config.headers["expo-origin"] = Constants.expoConfig?.scheme || "native";
     config.headers["x-skip-oauth-proxy"] = "true";
 
-    console.log(`🌐 [Axios Request] ${config.method?.toUpperCase()} ${config.baseURL || ""}${config.url}`);
+    console.log(
+      `🌐 [Axios Request] ${config.method?.toUpperCase()} ${config.baseURL || ""}${config.url}`,
+    );
 
     return config;
   },
@@ -44,7 +46,10 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     if (error.response) {
-      console.log(`❌ [Axios Response Error] ${error.response.status} ${error.config?.url}:`, JSON.stringify(error.response.data));
+      console.log(
+        `❌ [Axios Response Error] ${error.response.status} ${error.config?.url}:`,
+        JSON.stringify(error.response.data),
+      );
     } else if (error.request) {
       console.log(`❌ [Axios Network Error - No Response] ${error.config?.url}: ${error.message}`);
     } else {

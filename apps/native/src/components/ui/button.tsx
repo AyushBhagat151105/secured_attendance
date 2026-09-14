@@ -130,11 +130,7 @@ export function Button({
       ) : (
         <>
           {icon && iconPosition === "left" ? icon : null}
-          <Text
-            maxFontSizeMultiplier={1.25}
-            style={[textStyle, labelStyle]}
-            numberOfLines={1}
-          >
+          <Text maxFontSizeMultiplier={1.25} style={[textStyle, labelStyle]} numberOfLines={1}>
             {label}
           </Text>
           {icon && iconPosition === "right" ? icon : null}

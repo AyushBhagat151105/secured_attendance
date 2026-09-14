@@ -29,7 +29,8 @@ export default function DeviceBindingScreen() {
   const isAlreadyBound = !!profile?.deviceBound;
   const boundModel = profile?.deviceModel || deviceInfo?.name || "Registered Phone";
   const boundId = profile?.deviceId || deviceInfo?.id || "N/A";
-  const isCurrentDeviceMatch = !profile?.deviceId || (deviceInfo?.id && profile?.deviceId === deviceInfo.id);
+  const isCurrentDeviceMatch =
+    !profile?.deviceId || (deviceInfo?.id && profile?.deviceId === deviceInfo.id);
 
   useEffect(() => {
     async function loadDevice() {
@@ -70,7 +71,10 @@ export default function DeviceBindingScreen() {
         });
       } catch (err: unknown) {
         const errorObj = err as { response?: { data?: { message?: string } }; message?: string };
-        throw new Error(errorObj.response?.data?.message || errorObj.message || "Failed to bind device", { cause: err });
+        throw new Error(
+          errorObj.response?.data?.message || errorObj.message || "Failed to bind device",
+          { cause: err },
+        );
       }
 
       // Refetch profile cache so it gets the new deviceBound status
@@ -155,7 +159,9 @@ export default function DeviceBindingScreen() {
                   <Ionicons name="phone-portrait-sharp" size={24} color={PALETTE.pureBlack} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.deviceLabel, { color: colors.textMuted }]}>REGISTERED MODEL</Text>
+                  <Text style={[styles.deviceLabel, { color: colors.textMuted }]}>
+                    REGISTERED MODEL
+                  </Text>
                   <Text style={[styles.deviceName, { color: colors.textPrimary }]}>
                     {boundModel}
                   </Text>
@@ -168,22 +174,33 @@ export default function DeviceBindingScreen() {
               <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
               <View style={styles.detailRow}>
-                <Text style={[styles.detailKey, { color: colors.textMuted }]}>DEVICE FINGERPRINT</Text>
+                <Text style={[styles.detailKey, { color: colors.textMuted }]}>
+                  DEVICE FINGERPRINT
+                </Text>
                 <Text numberOfLines={1} style={[styles.detailValue, { color: colors.textPrimary }]}>
                   {boundId}
                 </Text>
               </View>
 
               <View style={styles.detailRow}>
-                <Text style={[styles.detailKey, { color: colors.textMuted }]}>BIOMETRICS STATUS</Text>
+                <Text style={[styles.detailKey, { color: colors.textMuted }]}>
+                  BIOMETRICS STATUS
+                </Text>
                 <Text style={[styles.detailValue, { color: colors.textPrimary }]}>
                   {profile?.biometricEnabled ? "Biometric Auth Active" : "Hardware Signature Only"}
                 </Text>
               </View>
 
               <View style={styles.detailRow}>
-                <Text style={[styles.detailKey, { color: colors.textMuted }]}>DEVICE VERIFICATION</Text>
-                <Text style={[styles.detailValue, { color: isCurrentDeviceMatch ? PALETTE.matchaCream : PALETTE.firecrackerRed }]}>
+                <Text style={[styles.detailKey, { color: colors.textMuted }]}>
+                  DEVICE VERIFICATION
+                </Text>
+                <Text
+                  style={[
+                    styles.detailValue,
+                    { color: isCurrentDeviceMatch ? PALETTE.matchaCream : PALETTE.firecrackerRed },
+                  ]}
+                >
                   {isCurrentDeviceMatch ? "✓ Matches Active Phone" : "⚠️ Device Mismatch"}
                 </Text>
               </View>
@@ -200,7 +217,8 @@ export default function DeviceBindingScreen() {
               />
 
               <Text style={[styles.disclaimerText, { color: colors.textMuted }]}>
-                Notice: To rebind to a new phone (in case of loss or replacement), contact your department administrator.
+                Notice: To rebind to a new phone (in case of loss or replacement), contact your
+                department administrator.
               </Text>
             </>
           ) : (
@@ -222,7 +240,9 @@ export default function DeviceBindingScreen() {
                   />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.deviceLabel, { color: colors.textMuted }]}>DETECTED HARDWARE</Text>
+                  <Text style={[styles.deviceLabel, { color: colors.textMuted }]}>
+                    DETECTED HARDWARE
+                  </Text>
                   <Text style={[styles.deviceName, { color: colors.textPrimary }]}>
                     {deviceInfo ? deviceInfo.name : "Detecting device..."}
                   </Text>
@@ -241,7 +261,9 @@ export default function DeviceBindingScreen() {
                 loading={isLoading}
                 disabled={isLoading || !deviceInfo}
                 onPress={handleBindDevice}
-                icon={<Ionicons name="shield-checkmark-sharp" size={18} color={PALETTE.pureBlack} />}
+                icon={
+                  <Ionicons name="shield-checkmark-sharp" size={18} color={PALETTE.pureBlack} />
+                }
                 style={{ width: "100%", marginTop: 8 }}
               />
 
@@ -261,7 +283,8 @@ export default function DeviceBindingScreen() {
               />
 
               <Text style={[styles.disclaimerText, { color: colors.textMuted }]}>
-                Note: This device will become your registered attendance device. To swap phones later, contact your department administrator.
+                Note: This device will become your registered attendance device. To swap phones
+                later, contact your department administrator.
               </Text>
             </>
           )}

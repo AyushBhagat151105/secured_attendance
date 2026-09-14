@@ -2,12 +2,12 @@ name: Deploy OTA JS Bundle (1-Minute Fast Deploy)
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [master, main]
     paths:
-      - 'apps/native/src/**'
-      - 'apps/native/assets/**'
-      - 'apps/native/package.json'
-      - 'packages/**'
+      - "apps/native/src/**"
+      - "apps/native/assets/**"
+      - "apps/native/package.json"
+      - "packages/**"
   workflow_dispatch:
 
 concurrency:

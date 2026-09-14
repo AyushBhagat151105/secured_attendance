@@ -38,7 +38,9 @@ export default function UserMenu() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="font-medium">{session.user.name}</Button>
+          <Button variant="outline" className="font-medium">
+            {session.user.name}
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="bg-card w-56" align="end">
           <DropdownMenuGroup>
@@ -49,7 +51,10 @@ export default function UserMenu() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setShowPasswordModal(true)} className="cursor-pointer gap-2">
+            <DropdownMenuItem
+              onClick={() => setShowPasswordModal(true)}
+              className="cursor-pointer gap-2"
+            >
               <IconKey className="h-4 w-4 text-muted-foreground" />
               Change Password
             </DropdownMenuItem>
@@ -76,10 +81,7 @@ export default function UserMenu() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <ChangePasswordModal
-        open={showPasswordModal}
-        onOpenChange={setShowPasswordModal}
-      />
+      <ChangePasswordModal open={showPasswordModal} onOpenChange={setShowPasswordModal} />
     </>
   );
 }

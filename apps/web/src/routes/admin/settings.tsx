@@ -32,7 +32,8 @@ const SYSTEM_DEFAULTS: ConfigRow[] = [
     label: "Attendance Rate Limit",
     value: "5",
     unit: "scans / min",
-    description: "Maximum QR scan attempts accepted per student per minute to prevent replay abuse.",
+    description:
+      "Maximum QR scan attempts accepted per student per minute to prevent replay abuse.",
   },
 ];
 
@@ -90,8 +91,8 @@ function AdminSettingsPage() {
             <p className="text-xs text-muted-foreground">
               Dynamic overrides via the dashboard are in development. For now, adjust these defaults
               by editing your{" "}
-              <code className="bg-muted rounded px-1 py-0.5 font-mono text-[11px]">.env</code>{" "}
-              file on the server and restarting the API.
+              <code className="bg-muted rounded px-1 py-0.5 font-mono text-[11px]">.env</code> file
+              on the server and restarting the API.
             </p>
           </div>
         </CardContent>

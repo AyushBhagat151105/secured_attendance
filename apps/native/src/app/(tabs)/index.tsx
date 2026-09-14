@@ -78,7 +78,11 @@ interface ScheduleCardItem {
 
 export default function HomeScreen() {
   const { data: session } = authClient.useSession();
-  const { data: schedule, isLoading: scheduleLoading, refetch: refetchSchedule } = useTodaySchedule();
+  const {
+    data: schedule,
+    isLoading: scheduleLoading,
+    refetch: refetchSchedule,
+  } = useTodaySchedule();
   const { data: stats, refetch: refetchStats } = useAttendanceStats();
   const router = useRouter();
   const { bottomInset } = useResponsive();
@@ -135,7 +139,9 @@ export default function HomeScreen() {
     (s: SubjectAttendanceWarning) => s.percentage < 75,
   );
 
-  const scheduleList: ScheduleCardItem[] = Array.isArray(schedule) ? (schedule as ScheduleCardItem[]) : [];
+  const scheduleList: ScheduleCardItem[] = Array.isArray(schedule)
+    ? (schedule as ScheduleCardItem[])
+    : [];
 
   return (
     <Container scroll={false} padded={false}>
@@ -300,10 +306,7 @@ export default function HomeScreen() {
                       <Text
                         maxFontSizeMultiplier={1.2}
                         numberOfLines={1}
-                        style={[
-                          styles.subjectTitle,
-                          { color: colors.textPrimary },
-                        ]}
+                        style={[styles.subjectTitle, { color: colors.textPrimary }]}
                       >
                         {item.subject?.name || "Subject"}
                       </Text>
@@ -317,9 +320,19 @@ export default function HomeScreen() {
 
                     {/* Status Badge or Scan Action */}
                     {isPresent ? (
-                      <Badge label="PRESENT" variant="present" icon={<Ionicons name="checkmark-sharp" size={12} color={PALETTE.pureBlack} />} />
+                      <Badge
+                        label="PRESENT"
+                        variant="present"
+                        icon={
+                          <Ionicons name="checkmark-sharp" size={12} color={PALETTE.pureBlack} />
+                        }
+                      />
                     ) : isMissed ? (
-                      <Badge label="MISSED" variant="missed" icon={<Ionicons name="close-sharp" size={12} color={PALETTE.boneWhite} />} />
+                      <Badge
+                        label="MISSED"
+                        variant="missed"
+                        icon={<Ionicons name="close-sharp" size={12} color={PALETTE.boneWhite} />}
+                      />
                     ) : canScan ? (
                       <Button
                         label="SCAN NOW"
@@ -342,11 +355,15 @@ export default function HomeScreen() {
                   <View style={styles.scheduleMetaRow}>
                     <View style={styles.metaItem}>
                       <Ionicons name="location-sharp" size={13} color={colors.textMuted} />
-                      <Text style={[styles.metaText, { color: colors.textMuted }]}>{item.room?.name || "Hall"}</Text>
+                      <Text style={[styles.metaText, { color: colors.textMuted }]}>
+                        {item.room?.name || "Hall"}
+                      </Text>
                     </View>
                     <View style={styles.metaItem}>
                       <Ionicons name="person-sharp" size={13} color={colors.textMuted} />
-                      <Text style={[styles.metaText, { color: colors.textMuted }]}>{item.teacher?.name || "Faculty"}</Text>
+                      <Text style={[styles.metaText, { color: colors.textMuted }]}>
+                        {item.teacher?.name || "Faculty"}
+                      </Text>
                     </View>
                   </View>
                 </Card>

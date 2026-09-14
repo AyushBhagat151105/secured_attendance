@@ -57,7 +57,8 @@ export default function DeviceMismatchScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.warningTitle}>PROXY PREVENTION ACTIVE</Text>
               <Text style={styles.warningText}>
-                To ensure attendance authenticity, students can only log in from their own registered smartphone.
+                To ensure attendance authenticity, students can only log in from their own
+                registered smartphone.
               </Text>
             </View>
           </View>
@@ -72,7 +73,8 @@ export default function DeviceMismatchScreen() {
             <View style={styles.infoItem}>
               <Ionicons name="information-circle-sharp" size={16} color={colors.textPrimary} />
               <Text style={[styles.infoItemText, { color: colors.textSecondary }]}>
-                If you lost or changed your device, request a rebind from your department administrator.
+                If you lost or changed your device, request a rebind from your department
+                administrator.
               </Text>
             </View>
           </View>

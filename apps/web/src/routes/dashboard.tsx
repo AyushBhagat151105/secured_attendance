@@ -42,9 +42,26 @@ function format12Hour(timeStr: string): string {
   return `${hour12.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")} ${ampm}`;
 }
 
-function getSlotStatus(startTime: string, endTime: string, isCompleted: boolean, isActive: boolean) {
-  if (isActive) return { label: "Live Now", badgeClass: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 animate-pulse", type: "live" };
-  if (isCompleted) return { label: "Completed", badgeClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20", type: "completed" };
+function getSlotStatus(
+  startTime: string,
+  endTime: string,
+  isCompleted: boolean,
+  isActive: boolean,
+) {
+  if (isActive)
+    return {
+      label: "Live Now",
+      badgeClass:
+        "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 animate-pulse",
+      type: "live",
+    };
+  if (isCompleted)
+    return {
+      label: "Completed",
+      badgeClass:
+        "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20",
+      type: "completed",
+    };
 
   const now = new Date();
   const currentMins = now.getHours() * 60 + now.getMinutes();
@@ -54,12 +71,25 @@ function getSlotStatus(startTime: string, endTime: string, isCompleted: boolean,
   const endMins = eh * 60 + em;
 
   if (currentMins > endMins) {
-    return { label: "Ended", badgeClass: "bg-muted text-muted-foreground border border-border", type: "ended" };
+    return {
+      label: "Ended",
+      badgeClass: "bg-muted text-muted-foreground border border-border",
+      type: "ended",
+    };
   }
   if (currentMins >= startMins && currentMins <= endMins) {
-    return { label: "Current Slot", badgeClass: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20", type: "current" };
+    return {
+      label: "Current Slot",
+      badgeClass:
+        "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20",
+      type: "current",
+    };
   }
-  return { label: "Upcoming", badgeClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20", type: "upcoming" };
+  return {
+    label: "Upcoming",
+    badgeClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20",
+    type: "upcoming",
+  };
 }
 
 export const Route = createFileRoute("/dashboard")({
@@ -129,7 +159,8 @@ function RouteComponent() {
                   day: "numeric",
                   month: "short",
                   year: "numeric",
-                })} (IST)
+                })}{" "}
+                (IST)
               </div>
             </div>
           </CardHeader>
@@ -152,9 +183,15 @@ function RouteComponent() {
                   const activeSess = dashboardData?.activeSession as any;
                   const isActive = activeSess?.timetableEntryId
                     ? activeSess.timetableEntryId === entry.id
-                    : activeSess?.subjectId === entry.subject.id && activeSess?.roomId === entry.room.id;
+                    : activeSess?.subjectId === entry.subject.id &&
+                      activeSess?.roomId === entry.room.id;
                   const isCompleted = !!entry.completedSessionId;
-                  const statusInfo = getSlotStatus(entry.startTime, entry.endTime, isCompleted, isActive);
+                  const statusInfo = getSlotStatus(
+                    entry.startTime,
+                    entry.endTime,
+                    isCompleted,
+                    isActive,
+                  );
 
                   return (
                     <div
@@ -163,9 +200,15 @@ function RouteComponent() {
                     >
                       <div className="flex items-start gap-4">
                         <div className="flex flex-col items-center justify-center min-w-28 px-3 py-2 bg-muted/60 rounded-md border border-border">
-                          <span className="text-xs font-semibold text-foreground">{format12Hour(entry.startTime)}</span>
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground my-0.5">to</span>
-                          <span className="text-xs font-semibold text-foreground">{format12Hour(entry.endTime)}</span>
+                          <span className="text-xs font-semibold text-foreground">
+                            {format12Hour(entry.startTime)}
+                          </span>
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground my-0.5">
+                            to
+                          </span>
+                          <span className="text-xs font-semibold text-foreground">
+                            {format12Hour(entry.endTime)}
+                          </span>
                         </div>
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
@@ -173,7 +216,9 @@ function RouteComponent() {
                             <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
                               {entry.type}
                             </span>
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.badgeClass}`}>
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.badgeClass}`}
+                            >
                               {statusInfo.label}
                             </span>
                           </div>
@@ -216,7 +261,13 @@ function RouteComponent() {
                                 },
                               });
                             }}
-                            variant={isActive ? "secondary" : statusInfo.type === "ended" ? "outline" : "default"}
+                            variant={
+                              isActive
+                                ? "secondary"
+                                : statusInfo.type === "ended"
+                                  ? "outline"
+                                  : "default"
+                            }
                             className="w-full sm:w-auto shrink-0"
                           >
                             {isActive ? (

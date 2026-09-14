@@ -143,39 +143,36 @@ function AdminAuditLogsPage() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      data?.logs.map(
-                        (log: any) => (
-                          <TableRow key={log.id}>
-                            <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
-                              {new Date(log.timestamp).toLocaleString()}
-
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="secondary" className="text-xs font-mono">
-                                {log.eventType}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="text-sm font-medium">{log.actor ?? "System"}</div>
-                              {log.actorRole && (
-                                <div className="text-xs text-muted-foreground">{log.actorRole}</div>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-xs font-mono text-muted-foreground">
-                              {log.targetId ?? "—"}
-                            </TableCell>
-                            <TableCell>
-                              <div className="text-xs">{log.ipAddress ?? "—"}</div>
-                              <div className="text-[10px] text-muted-foreground max-w-37.5 truncate">
-                                {log.userAgent}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-xs text-muted-foreground max-w-50 truncate">
-                              {log.details ? JSON.stringify(log.details) : "—"}
-                            </TableCell>
-                          </TableRow>
-                        ),
-                      )
+                      data?.logs.map((log: any) => (
+                        <TableRow key={log.id}>
+                          <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
+                            {new Date(log.timestamp).toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="text-xs font-mono">
+                              {log.eventType}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm font-medium">{log.actor ?? "System"}</div>
+                            {log.actorRole && (
+                              <div className="text-xs text-muted-foreground">{log.actorRole}</div>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs font-mono text-muted-foreground">
+                            {log.targetId ?? "—"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-xs">{log.ipAddress ?? "—"}</div>
+                            <div className="text-[10px] text-muted-foreground max-w-37.5 truncate">
+                              {log.userAgent}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground max-w-50 truncate">
+                            {log.details ? JSON.stringify(log.details) : "—"}
+                          </TableCell>
+                        </TableRow>
+                      ))
                     )}
                   </TableBody>
                 </Table>

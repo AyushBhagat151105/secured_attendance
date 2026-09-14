@@ -5,9 +5,8 @@ import { teacherReportModule } from "../services/teacher-report.service";
 import { CreateSessionBody } from "../models/teacher.model";
 import { auth } from "@secured_attendance/auth";
 import prisma from "@secured_attendance/db";
-import crypto from "crypto";
 import { logger } from "../lib/logger";
-import { attendanceRedis } from "../lib/redis";
+import { defaultQrTokenManager } from "../domain/qr-token-manager";
 
 // A map to store active WebSocket intervals
 const activeTimers = new Map<string, ReturnType<typeof setInterval>>();
@@ -103,7 +102,11 @@ export const teacherModule = new Elysia({ prefix: "/api/teacher" })
       const session = await auth.api.getSession({ headers: request.headers });
       if (!session) return status(401, { message: "Unauthorized" });
 
-      return TeacherService.finalizeSessionAttendance(session.user.id, params.id, body.presentStudentIds);
+      return TeacherService.finalizeSessionAttendance(
+        session.user.id,
+        params.id,
+        body.presentStudentIds,
+      );
     },
     {
       params: t.Object({
@@ -176,49 +179,13 @@ export const teacherModule = new Elysia({ prefix: "/api/teacher" })
       // Subscribe to live feed updates for this session
       ws.subscribe(`session-${sessionId}`);
 
-      // Generate a single token immediately and send it
+      // Generate a batch of rotating tokens and send via WebSocket
       const generateAndSendTokens = async () => {
         try {
-          const tokens = [];
-          for (let i = 0; i < 5; i++) {
-            const nonce = crypto.randomBytes(16).toString("base64url");
-
-            // Expiry: 45 seconds from generation to allow slow internet
-            const expiresAt = new Date(Date.now() + 45000 + i * 10000); // offset each token by 10s
-
-            // Calculate signature: HMAC-SHA256 of "sessionId:nonce:expiresAt.getTime()"
-            const payloadString = `${sessionId}:${nonce}:${expiresAt.getTime()}`;
-            const signature = crypto
-              .createHmac("sha256", dbSession.sessionSecret)
-              .update(payloadString)
-              .digest("hex");
-
-            tokens.push({
-              nonce,
-              expiresAt: expiresAt.getTime(),
-              signature,
-              activeAfter: Date.now() + i * 10000, // Client knows when to show this
-            });
-
-            // Store in Redis with TTL (sub-millisecond student scan verification)
-            void attendanceRedis
-              .setex(`qr:${sessionId}:${nonce}`, 60 + i * 10, "1")
-              .catch(() => {});
-
-            // Store in DB for persistence and offline sync verification
-            await prisma.qrToken.create({
-              data: {
-                sessionId,
-                nonce,
-                issuedAt: new Date(),
-                expiresAt,
-              },
-            });
-          }
-
+          const tokens = await defaultQrTokenManager.issueBatch(sessionId, dbSession.sessionSecret);
           ws.send({ type: "QR_TOKENS_BATCH", tokens, sessionId });
         } catch (error) {
-          logger.error("Failed to generate QR tokens", { error });
+          logger.error("Failed to generate QR tokens", { error, sessionId });
         }
       };
 

@@ -98,7 +98,12 @@ function ProgramRowActions({ program }: { program: any }) {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => { form.reset(); setShowEdit(true); }}>
+          <DropdownMenuItem
+            onClick={() => {
+              form.reset();
+              setShowEdit(true);
+            }}
+          >
             <Pencil className="mr-2 h-4 w-4" /> Edit
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -171,7 +176,10 @@ function ProgramRowActions({ program }: { program: any }) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={(e) => { e.preventDefault(); onDeleteConfirm(); }}
+              onClick={(e) => {
+                e.preventDefault();
+                onDeleteConfirm();
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleteProgram.isPending}
             >
@@ -207,12 +215,16 @@ function ProgramsRoute() {
         <div className="flex items-center space-x-2">
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" /> Add Program</Button>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" /> Add Program
+              </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Add New Program</DialogTitle>
-                <DialogDescription>Create an academic program (e.g. B.Tech, M.Tech).</DialogDescription>
+                <DialogDescription>
+                  Create an academic program (e.g. B.Tech, M.Tech).
+                </DialogDescription>
               </DialogHeader>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <Controller
@@ -221,7 +233,12 @@ function ProgramsRoute() {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor={field.name}>Program Name</FieldLabel>
-                      <Input {...field} id={field.name} placeholder="Bachelor of Technology" aria-invalid={fieldState.invalid} />
+                      <Input
+                        {...field}
+                        id={field.name}
+                        placeholder="Bachelor of Technology"
+                        aria-invalid={fieldState.invalid}
+                      />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
                   )}
@@ -232,7 +249,12 @@ function ProgramsRoute() {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor={field.name}>Code</FieldLabel>
-                      <Input {...field} id={field.name} placeholder="B.Tech" aria-invalid={fieldState.invalid} />
+                      <Input
+                        {...field}
+                        id={field.name}
+                        placeholder="B.Tech"
+                        aria-invalid={fieldState.invalid}
+                      />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
                   )}
@@ -243,7 +265,12 @@ function ProgramsRoute() {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor={field.name}>Short Name (Optional)</FieldLabel>
-                      <Input {...field} id={field.name} placeholder="BT" aria-invalid={fieldState.invalid} />
+                      <Input
+                        {...field}
+                        id={field.name}
+                        placeholder="BT"
+                        aria-invalid={fieldState.invalid}
+                      />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
                   )}
@@ -265,7 +292,9 @@ function ProgramsRoute() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center p-8"><Spinner /></div>
+            <div className="flex justify-center p-8">
+              <Spinner />
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -284,12 +313,16 @@ function ProgramsRoute() {
                     <TableCell>{program.name}</TableCell>
                     <TableCell>{program.shortName || "-"}</TableCell>
                     <TableCell>{new Date(program.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell><ProgramRowActions program={program} /></TableCell>
+                    <TableCell>
+                      <ProgramRowActions program={program} />
+                    </TableCell>
                   </TableRow>
                 ))}
                 {(!programs || programs.length === 0) && (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">No programs found.</TableCell>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      No programs found.
+                    </TableCell>
                   </TableRow>
                 )}
               </TableBody>

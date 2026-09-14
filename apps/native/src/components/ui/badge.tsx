@@ -4,13 +4,7 @@ import { PALETTE, RADIUS, BORDERS, FONTS } from "@/lib/theme";
 import { useAppTheme } from "@/contexts/app-theme-context";
 
 export type BadgeVariant =
-  | "present"
-  | "missed"
-  | "live"
-  | "upcoming"
-  | "offline"
-  | "neutral"
-  | "warning";
+  "present" | "missed" | "live" | "upcoming" | "offline" | "neutral" | "warning";
 
 interface BadgeProps {
   label: string;

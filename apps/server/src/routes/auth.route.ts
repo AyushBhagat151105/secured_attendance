@@ -76,7 +76,8 @@ export const authModule = new Elysia({ prefix: "/api/auth-custom" })
             },
           });
           return status(403, {
-            message: "This device is already registered to another student. One device per student is strictly enforced.",
+            message:
+              "This device is already registered to another student. One device per student is strictly enforced.",
           });
         }
 
@@ -96,7 +97,11 @@ export const authModule = new Elysia({ prefix: "/api/auth-custom" })
           actor: user.id,
           actorRole: "student",
           targetId: profile.id,
-          details: { deviceId: body.deviceId, deviceName: body.deviceName, biometricEnabled: body.biometricEnabled },
+          details: {
+            deviceId: body.deviceId,
+            deviceName: body.deviceName,
+            biometricEnabled: body.biometricEnabled,
+          },
         });
 
         return { success: true };
@@ -114,4 +119,3 @@ export const authModule = new Elysia({ prefix: "/api/auth-custom" })
       }),
     },
   );
-

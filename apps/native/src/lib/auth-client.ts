@@ -8,9 +8,7 @@ import * as SecureStore from "expo-secure-store";
 // Direct reference to process.env.EXPO_PUBLIC_SERVER_URL ensures Metro inlines
 // the variable at bundle time rather than relying on dynamic object resolution.
 export const SERVER_URL =
-  process.env.EXPO_PUBLIC_SERVER_URL ||
-  env.EXPO_PUBLIC_SERVER_URL ||
-  "http://localhost:3000";
+  process.env.EXPO_PUBLIC_SERVER_URL || env.EXPO_PUBLIC_SERVER_URL || "http://localhost:3000";
 
 console.log("🚀 [Auth Client Initialized with Server URL]:", SERVER_URL);
 

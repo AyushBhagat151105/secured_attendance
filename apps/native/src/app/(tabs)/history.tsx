@@ -217,10 +217,7 @@ export default function HistoryScreen() {
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setViewMode("recent")}
-              style={[
-                styles.segmentTab,
-                viewMode === "recent" && styles.segmentTabActive,
-              ]}
+              style={[styles.segmentTab, viewMode === "recent" && styles.segmentTabActive]}
             >
               <Text
                 style={[
@@ -236,10 +233,7 @@ export default function HistoryScreen() {
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setViewMode("subjects")}
-              style={[
-                styles.segmentTab,
-                viewMode === "subjects" && styles.segmentTabActive,
-              ]}
+              style={[styles.segmentTab, viewMode === "subjects" && styles.segmentTabActive]}
             >
               <Text
                 style={[
@@ -256,7 +250,9 @@ export default function HistoryScreen() {
 
         {/* Overall Status Banner */}
         <Card variant="lilac" style={styles.overallBanner}>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <View
+            style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}
+          >
             <View>
               <Text style={styles.overallBannerLabel}>OVERALL RECORD</Text>
               <Text style={styles.overallBannerValue}>{overallPercentage}%</Text>
@@ -266,9 +262,7 @@ export default function HistoryScreen() {
                 label={overallPercentage >= 75 ? "MEETS REQUIREMENT" : "BELOW 75% TARGET"}
                 variant={overallPercentage >= 75 ? "present" : "warning"}
               />
-              <Text style={styles.overallBannerSub}>
-                STREAK: {stats?.streak || 0} DAYS 🔥
-              </Text>
+              <Text style={styles.overallBannerSub}>STREAK: {stats?.streak || 0} DAYS 🔥</Text>
             </View>
           </View>
         </Card>
@@ -289,7 +283,9 @@ export default function HistoryScreen() {
             <FlashList
               data={historyItems}
               renderItem={renderHistoryItem}
-              keyExtractor={(item: HistorySessionItem, index: number) => item.id?.toString() || index.toString()}
+              keyExtractor={(item: HistorySessionItem, index: number) =>
+                item.id?.toString() || index.toString()
+              }
               showsVerticalScrollIndicator={false}
               ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
               contentContainerStyle={{ paddingBottom: 24 }}
@@ -330,7 +326,9 @@ export default function HistoryScreen() {
           <FlashList
             data={subjectStats}
             renderItem={renderSubjectStat}
-            keyExtractor={(item: SubjectStatItem, index: number) => item.subjectId?.toString() || index.toString()}
+            keyExtractor={(item: SubjectStatItem, index: number) =>
+              item.subjectId?.toString() || index.toString()
+            }
             showsVerticalScrollIndicator={false}
             ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
             contentContainerStyle={{ paddingBottom: 24 }}

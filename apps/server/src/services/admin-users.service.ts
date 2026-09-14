@@ -22,16 +22,16 @@ export class AdminUsersService {
       ...(query.role ? { role: query.role } : {}),
       ...(query.status
         ? {
-          OR: [{ studentProfile: { status: query.status } }],
-        }
+            OR: [{ studentProfile: { status: query.status } }],
+          }
         : {}),
       ...(query.search
         ? {
-          OR: [
-            { name: { contains: query.search, mode: "insensitive" as const } },
-            { email: { contains: query.search, mode: "insensitive" as const } },
-          ],
-        }
+            OR: [
+              { name: { contains: query.search, mode: "insensitive" as const } },
+              { email: { contains: query.search, mode: "insensitive" as const } },
+            ],
+          }
         : {}),
     };
 

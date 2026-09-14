@@ -34,7 +34,12 @@ export function ManualAttendanceModal({
   onOpenChange,
   format12Hour,
 }: ManualAttendanceModalProps) {
-  const { data: rosterData, isLoading, error, refetch } = useTimetableRoster(open ? entry?.id : null);
+  const {
+    data: rosterData,
+    isLoading,
+    error,
+    refetch,
+  } = useTimetableRoster(open ? entry?.id : null);
   const submitMutation = useSubmitManualAttendance();
 
   const [presentIds, setPresentIds] = useState<Set<string>>(new Set());
@@ -168,7 +173,9 @@ export function ManualAttendanceModal({
                   type="button"
                   onClick={() => setFilterMode("all")}
                   className={`px-3 py-1.5 rounded-md font-medium transition-all ${
-                    filterMode === "all" ? "bg-background shadow-xs text-foreground font-semibold" : "text-muted-foreground hover:text-foreground"
+                    filterMode === "all"
+                      ? "bg-background shadow-xs text-foreground font-semibold"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   All ({totalCount})
@@ -246,7 +253,9 @@ export function ManualAttendanceModal({
               <IconUsers className="h-12 w-12 mx-auto mb-3 opacity-20" />
               <p className="font-semibold text-foreground text-base">No students found</p>
               <p className="text-xs mt-1">
-                {searchQuery ? "Try searching with a different roll number or name." : "No students are enrolled in this division."}
+                {searchQuery
+                  ? "Try searching with a different roll number or name."
+                  : "No students are enrolled in this division."}
               </p>
             </div>
           ) : (
@@ -268,7 +277,9 @@ export function ManualAttendanceModal({
                       {student.rollNumber || "—"}
                     </span>
                     <div className="min-w-0">
-                      <p className="font-semibold text-sm text-foreground truncate">{student.name}</p>
+                      <p className="font-semibold text-sm text-foreground truncate">
+                        {student.name}
+                      </p>
                       <p className="text-xs text-muted-foreground truncate flex items-center gap-1.5 mt-0.5">
                         <span>{student.enrollmentNo || student.email}</span>
                         <span>•</span>

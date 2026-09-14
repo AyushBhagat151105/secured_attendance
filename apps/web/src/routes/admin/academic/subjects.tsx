@@ -108,7 +108,12 @@ function SubjectRowActions({ subject }: { subject: any }) {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => { form.reset(); setShowEdit(true); }}>
+          <DropdownMenuItem
+            onClick={() => {
+              form.reset();
+              setShowEdit(true);
+            }}
+          >
             <Pencil className="mr-2 h-4 w-4" /> Edit
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -172,7 +177,9 @@ function SubjectRowActions({ subject }: { subject: any }) {
                     </SelectTrigger>
                     <SelectContent>
                       {programs?.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>{p.code}</SelectItem>
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.code}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -201,7 +208,10 @@ function SubjectRowActions({ subject }: { subject: any }) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={(e) => { e.preventDefault(); onDeleteConfirm(); }}
+              onClick={(e) => {
+                e.preventDefault();
+                onDeleteConfirm();
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleteSubject.isPending}
             >
@@ -238,7 +248,9 @@ function SubjectsRoute() {
         <div className="flex items-center space-x-2">
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" /> Add Subject</Button>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" /> Add Subject
+              </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -252,7 +264,12 @@ function SubjectsRoute() {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor={field.name}>Subject Name</FieldLabel>
-                      <Input {...field} id={field.name} placeholder="Data Structures" aria-invalid={fieldState.invalid} />
+                      <Input
+                        {...field}
+                        id={field.name}
+                        placeholder="Data Structures"
+                        aria-invalid={fieldState.invalid}
+                      />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
                   )}
@@ -263,7 +280,12 @@ function SubjectsRoute() {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor={field.name}>Code</FieldLabel>
-                      <Input {...field} id={field.name} placeholder="CS201" aria-invalid={fieldState.invalid} />
+                      <Input
+                        {...field}
+                        id={field.name}
+                        placeholder="CS201"
+                        aria-invalid={fieldState.invalid}
+                      />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
                   )}
@@ -274,7 +296,12 @@ function SubjectsRoute() {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor={field.name}>Short Name (Optional)</FieldLabel>
-                      <Input {...field} id={field.name} placeholder="DS" aria-invalid={fieldState.invalid} />
+                      <Input
+                        {...field}
+                        id={field.name}
+                        placeholder="DS"
+                        aria-invalid={fieldState.invalid}
+                      />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
                   )}
@@ -291,7 +318,9 @@ function SubjectsRoute() {
                         </SelectTrigger>
                         <SelectContent>
                           {programs?.map((p) => (
-                            <SelectItem key={p.id} value={p.id}>{p.code}</SelectItem>
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.code}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -316,7 +345,9 @@ function SubjectsRoute() {
         </CardHeader>
         <CardContent>
           {isLoadingSubjects ? (
-            <div className="flex justify-center p-8"><Spinner /></div>
+            <div className="flex justify-center p-8">
+              <Spinner />
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -335,12 +366,16 @@ function SubjectsRoute() {
                     <TableCell>{subject.name}</TableCell>
                     <TableCell>{subject.shortName || "-"}</TableCell>
                     <TableCell>{subject.program?.code || "-"}</TableCell>
-                    <TableCell><SubjectRowActions subject={subject} /></TableCell>
+                    <TableCell>
+                      <SubjectRowActions subject={subject} />
+                    </TableCell>
                   </TableRow>
                 ))}
                 {(!subjects || subjects.length === 0) && (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">No subjects found.</TableCell>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      No subjects found.
+                    </TableCell>
                   </TableRow>
                 )}
               </TableBody>

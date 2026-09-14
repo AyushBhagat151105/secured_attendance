@@ -48,7 +48,9 @@ export function ChangePasswordModal({ open, onOpenChange }: ChangePasswordModalP
         {
           onError: (ctx) => {
             failed = true;
-            toast.error(ctx.error.message || "Failed to change password. Check your current password.");
+            toast.error(
+              ctx.error.message || "Failed to change password. Check your current password.",
+            );
           },
         },
       );

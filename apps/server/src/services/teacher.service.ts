@@ -90,7 +90,8 @@ export class TeacherService {
         const slotMins = sh * 60 + sm;
 
         completedSession = todaysSessions.find((s) => {
-          if (s.subjectId !== entry.subjectId || s.roomId !== entry.roomId || s.status !== "closed") return false;
+          if (s.subjectId !== entry.subjectId || s.roomId !== entry.roomId || s.status !== "closed")
+            return false;
           // If the session was explicitly assigned to another timetable entry, don't hijack it
           if (s.timetableEntryId && s.timetableEntryId !== entry.id) return false;
 

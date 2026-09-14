@@ -66,7 +66,9 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
           name="email"
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name} className="font-medium">Email address</FieldLabel>
+              <FieldLabel htmlFor={field.name} className="font-medium">
+                Email address
+              </FieldLabel>
               <Input
                 {...field}
                 id={field.name}
@@ -86,11 +88,10 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <div className="flex items-center justify-between">
-                <FieldLabel htmlFor={field.name} className="font-medium">Password</FieldLabel>
-                <button
-                  type="button"
-                  className="text-sm font-medium text-primary hover:underline"
-                >
+                <FieldLabel htmlFor={field.name} className="font-medium">
+                  Password
+                </FieldLabel>
+                <button type="button" className="text-sm font-medium text-primary hover:underline">
                   Forgot password?
                 </button>
               </div>

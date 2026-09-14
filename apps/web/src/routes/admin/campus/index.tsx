@@ -282,9 +282,7 @@ function CampusRoute() {
               <form onSubmit={buildingForm.handleSubmit(onAddBuilding)}>
                 <DialogHeader>
                   <DialogTitle>Add New Building</DialogTitle>
-                  <DialogDescription>
-                    Create a new building with GPS coordinates.
-                  </DialogDescription>
+                  <DialogDescription>Create a new building with GPS coordinates.</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <Controller
@@ -353,7 +351,13 @@ function CampusRoute() {
                       render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
                           <FieldLabel>Latitude</FieldLabel>
-                          <Input {...field} type="number" step="any" placeholder="22.6018" onChange={e => field.onChange(e.target.valueAsNumber)} />
+                          <Input
+                            {...field}
+                            type="number"
+                            step="any"
+                            placeholder="22.6018"
+                            onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                          />
                           {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                         </Field>
                       )}
@@ -364,7 +368,13 @@ function CampusRoute() {
                       render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
                           <FieldLabel>Longitude</FieldLabel>
-                          <Input {...field} type="number" step="any" placeholder="72.8194" onChange={e => field.onChange(e.target.valueAsNumber)} />
+                          <Input
+                            {...field}
+                            type="number"
+                            step="any"
+                            placeholder="72.8194"
+                            onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                          />
                           {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                         </Field>
                       )}
@@ -375,7 +385,11 @@ function CampusRoute() {
                       render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
                           <FieldLabel>Radius (m)</FieldLabel>
-                          <Input {...field} type="number" onChange={e => field.onChange(e.target.valueAsNumber)} />
+                          <Input
+                            {...field}
+                            type="number"
+                            onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                          />
                           {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                         </Field>
                       )}
@@ -479,7 +493,12 @@ function CampusRoute() {
                       render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
                           <FieldLabel>Latitude</FieldLabel>
-                          <Input {...field} type="number" step="any" onChange={e => field.onChange(e.target.valueAsNumber)} />
+                          <Input
+                            {...field}
+                            type="number"
+                            step="any"
+                            onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                          />
                           {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                         </Field>
                       )}
@@ -490,7 +509,12 @@ function CampusRoute() {
                       render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
                           <FieldLabel>Longitude</FieldLabel>
-                          <Input {...field} type="number" step="any" onChange={e => field.onChange(e.target.valueAsNumber)} />
+                          <Input
+                            {...field}
+                            type="number"
+                            step="any"
+                            onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                          />
                           {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                         </Field>
                       )}
@@ -501,7 +525,11 @@ function CampusRoute() {
                       render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
                           <FieldLabel>Radius (m)</FieldLabel>
-                          <Input {...field} type="number" onChange={e => field.onChange(e.target.valueAsNumber)} />
+                          <Input
+                            {...field}
+                            type="number"
+                            onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                          />
                           {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                         </Field>
                       )}
@@ -510,9 +538,7 @@ function CampusRoute() {
                 </div>
                 <DialogFooter>
                   <Button type="submit" disabled={editBuildingForm.formState.isSubmitting}>
-                    {editBuildingForm.formState.isSubmitting ? (
-                      <Spinner className="mr-2" />
-                    ) : null}
+                    {editBuildingForm.formState.isSubmitting ? <Spinner className="mr-2" /> : null}
                     Save Changes
                   </Button>
                 </DialogFooter>
@@ -536,9 +562,7 @@ function CampusRoute() {
               <form onSubmit={roomForm.handleSubmit(onAddRoom)}>
                 <DialogHeader>
                   <DialogTitle>Add New Room</DialogTitle>
-                  <DialogDescription>
-                    Create a room and assign it to a building.
-                  </DialogDescription>
+                  <DialogDescription>Create a room and assign it to a building.</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <Controller
@@ -736,17 +760,12 @@ function CampusRoute() {
           </CardContent>
         </Card>
       </div>
-      <Dialog
-        open={!!editingRoom}
-        onOpenChange={(open) => !open && setEditingRoom(null)}
-      >
+      <Dialog open={!!editingRoom} onOpenChange={(open) => !open && setEditingRoom(null)}>
         <DialogContent>
           <form onSubmit={editRoomForm.handleSubmit(onEditRoom)}>
             <DialogHeader>
               <DialogTitle>Edit Room</DialogTitle>
-              <DialogDescription>
-                Update room details and assignment.
-              </DialogDescription>
+              <DialogDescription>Update room details and assignment.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <Controller
@@ -806,9 +825,7 @@ function CampusRoute() {
             </div>
             <DialogFooter>
               <Button type="submit" disabled={editRoomForm.formState.isSubmitting}>
-                {editRoomForm.formState.isSubmitting ? (
-                  <Spinner className="mr-2" />
-                ) : null}
+                {editRoomForm.formState.isSubmitting ? <Spinner className="mr-2" /> : null}
                 Save Changes
               </Button>
             </DialogFooter>
@@ -816,16 +833,14 @@ function CampusRoute() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog
-        open={!!deletingRoom}
-        onOpenChange={(open) => !open && setDeletingRoom(null)}
-      >
+      <AlertDialog open={!!deletingRoom} onOpenChange={(open) => !open && setDeletingRoom(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the room <span className="font-semibold">{deletingRoom?.name}</span>.
-              This action cannot be undone.
+              This will permanently delete the room{" "}
+              <span className="font-semibold">{deletingRoom?.name}</span>. This action cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

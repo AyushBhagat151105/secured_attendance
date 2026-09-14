@@ -1,12 +1,6 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useState, useEffect } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  ActivityIndicator,
-} from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from "react-native";
 import * as Location from "expo-location";
 import * as Haptics from "expo-haptics";
 import Animated, {
@@ -85,7 +79,9 @@ export default function ScanScreen() {
           <View style={styles.permissionIconWrapper}>
             <Ionicons name="camera-sharp" size={36} color={PALETTE.pureBlack} />
           </View>
-          <Text style={[styles.permissionTitle, { color: colors.textPrimary }]}>CAMERA PERMISSION REQUIRED</Text>
+          <Text style={[styles.permissionTitle, { color: colors.textPrimary }]}>
+            CAMERA PERMISSION REQUIRED
+          </Text>
           <Text style={[styles.permissionSubtitle, { color: colors.textSecondary }]}>
             To mark attendance securely, we need access to your camera to scan classroom QR codes.
           </Text>
@@ -180,7 +176,9 @@ export default function ScanScreen() {
         queryClient.invalidateQueries({ queryKey: historyKeys.stats() });
         queryClient.invalidateQueries({ queryKey: historyKeys.history() });
 
-        const pct = stats?.overallPercentage ? `Overall: ${Math.round(stats.overallPercentage)}%` : "";
+        const pct = stats?.overallPercentage
+          ? `Overall: ${Math.round(stats.overallPercentage)}%`
+          : "";
         if (result.gpsWithinGeofence) {
           setStatusMessage(`Attendance confirmed inside classroom area! ${pct}`);
         } else {
@@ -205,7 +203,9 @@ export default function ScanScreen() {
           }
           setScanStatus("success");
           setLastScanSuccess({ gpsOk: true, isOffline: true });
-          setStatusMessage("Saved to offline queue. Will synchronize automatically once connection restores.");
+          setStatusMessage(
+            "Saved to offline queue. Will synchronize automatically once connection restores.",
+          );
         } else {
           throw error;
         }
@@ -279,9 +279,7 @@ export default function ScanScreen() {
           <View style={[styles.cornerBracket, styles.bottomRight]} />
 
           {/* Animated Laser Line */}
-          {scanStatus === "idle" && (
-            <Animated.View style={[styles.laserLine, lineStyle]} />
-          )}
+          {scanStatus === "idle" && <Animated.View style={[styles.laserLine, lineStyle]} />}
 
           {scanStatus === "processing" && (
             <View style={styles.processingOverlay}>
@@ -344,24 +342,28 @@ export default function ScanScreen() {
 
             <View style={styles.streakNoticePill}>
               <Text style={{ fontSize: 16 }}>🔥</Text>
-              <Text style={styles.streakNoticeText}>
-                STREAK ACTIVE: {stats?.streak || 1} DAYS
-              </Text>
+              <Text style={styles.streakNoticeText}>STREAK ACTIVE: {stats?.streak || 1} DAYS</Text>
             </View>
 
-            <Text style={[styles.peakMessage, { color: colors.textSecondary }]}>{statusMessage}</Text>
+            <Text style={[styles.peakMessage, { color: colors.textSecondary }]}>
+              {statusMessage}
+            </Text>
 
             <View style={[styles.receiptDivider, { backgroundColor: colors.divider }]} />
 
             <View style={styles.receiptDetailsRow}>
               <View style={{ gap: 4 }}>
-                <Text style={[styles.receiptDetailLabel, { color: colors.textMuted }]}>TIMESTAMP</Text>
+                <Text style={[styles.receiptDetailLabel, { color: colors.textMuted }]}>
+                  TIMESTAMP
+                </Text>
                 <Text style={[styles.receiptDetailValue, { color: colors.textPrimary }]}>
                   {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </Text>
               </View>
               <View style={{ gap: 4, alignItems: "flex-end" }}>
-                <Text style={[styles.receiptDetailLabel, { color: colors.textMuted }]}>VERIFICATION</Text>
+                <Text style={[styles.receiptDetailLabel, { color: colors.textMuted }]}>
+                  VERIFICATION
+                </Text>
                 <Badge
                   label={lastScanSuccess?.isOffline ? "CACHED" : "GPS VERIFIED"}
                   variant={lastScanSuccess?.isOffline ? "offline" : "present"}
@@ -389,13 +391,9 @@ export default function ScanScreen() {
               <Ionicons name="close-sharp" size={38} color={PALETTE.firecrackerRed} />
             </View>
 
-            <Text style={[styles.peakHeading, { color: PALETTE.boneWhite }]}>
-              SCAN FAILED
-            </Text>
+            <Text style={[styles.peakHeading, { color: PALETTE.boneWhite }]}>SCAN FAILED</Text>
 
-            <Text style={[styles.peakMessage, { color: PALETTE.boneWhite }]}>
-              {statusMessage}
-            </Text>
+            <Text style={[styles.peakMessage, { color: PALETTE.boneWhite }]}>{statusMessage}</Text>
 
             <Button
               label="TRY AGAIN"

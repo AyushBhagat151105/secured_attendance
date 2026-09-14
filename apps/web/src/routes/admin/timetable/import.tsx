@@ -277,9 +277,13 @@ function TimetableImportPage() {
               <div className="flex-1 px-8">
                 {isImporting && (
                   <div className="space-y-1.5">
-                    <Progress value={importProgress} className="h-2.5 transition-all duration-300" />
+                    <Progress
+                      value={importProgress}
+                      className="h-2.5 transition-all duration-300"
+                    />
                     <p className="text-xs text-center text-muted-foreground font-medium">
-                      Importing schedule {processedCount} of {previewData.validCount} ({importProgress}%)
+                      Importing schedule {processedCount} of {previewData.validCount} (
+                      {importProgress}%)
                     </p>
                   </div>
                 )}

@@ -4,23 +4,9 @@ import { logger } from "../lib/logger";
 import { attendanceRedis } from "../lib/redis";
 import { queueAuditLog } from "../lib/audit";
 import { checkImpossibleTravel, reportAnomaly } from "./anomaly.service";
-import crypto from "crypto";
+import { AttendanceValidator, type ScanContext } from "../domain/attendance-validator";
+import { defaultQrTokenManager } from "../domain/qr-token-manager";
 import type { ScanAttendanceDto } from "../models/student.model";
-
-// Calculate distance in meters between two GPS coordinates using Haversine formula
-function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371e3; // Earth radius in meters
-  const p1 = (lat1 * Math.PI) / 180;
-  const p2 = (lat2 * Math.PI) / 180;
-  const deltaP = p2 - p1;
-  const deltaLon = lon2 - lon1;
-  const deltaLambda = (deltaLon * Math.PI) / 180;
-  const a =
-    Math.sin(deltaP / 2) * Math.sin(deltaP / 2) +
-    Math.cos(p1) * Math.cos(p2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
-  const d = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * d;
-}
 
 export class StudentService {
   /**
@@ -40,7 +26,8 @@ export class StudentService {
 
   /**
    * Processes a QR code scan by a student to mark attendance.
-   * Performs cryptographic signature validation, enrollment validation, and geofence validation.
+   * Coordinates rate-limiting, data gathering, domain validation via AttendanceValidator,
+   * persistence, and async events/audit.
    */
   static async submitAttendance(userId: string, body: ScanAttendanceDto, server?: any) {
     const {
@@ -59,7 +46,7 @@ export class StudentService {
 
     logger.info("Received QR attendance scan", { userId, sessionId, mockFlag, gpsLat, gpsLng });
 
-    // 0. Rate Limiting Check
+    // 0. Rate Limiting Check (Fast-path in Redis)
     const rateLimitKey = `ratelimit:${userId}`;
     const attempts = await attendanceRedis.incr(rateLimitKey);
     if (attempts === 1) {
@@ -80,63 +67,14 @@ export class StudentService {
       };
     }
 
-    // 0.5 Mock Location Check
-    if (mockFlag) {
-      logger.warn("Mock location detected", { userId, sessionId });
-      void queueAuditLog({
-        eventType: "attendance.rejected",
-        actor: userId,
-        actorRole: "student",
-        targetId: sessionId,
-        details: { reason: "mock_location" },
-      });
-      return { success: false, error: "BAD_REQUEST", message: "Location error" };
-    }
-
-
-    // 1. Get student profile
+    // 1. Gather Entities for Validation
     const profile = await prisma.studentProfile.findUnique({
       where: { userId },
     });
-
     if (!profile) {
       return { success: false, error: "NOT_FOUND", message: "Student profile not found" };
     }
 
-    if (!profile.divisionId) {
-      return {
-        success: false,
-        error: "BAD_REQUEST",
-        message: "You are not assigned to any division",
-      };
-    }
-
-    // 1.5 Device Binding Enforcement
-    if (profile.deviceBound && profile.deviceId) {
-      if (!deviceFingerprint) {
-        return {
-          success: false,
-          error: "FORBIDDEN",
-          message: "Device fingerprint is required",
-        };
-      }
-      if (profile.deviceId !== deviceFingerprint) {
-        void queueAuditLog({
-          eventType: "attendance.rejected",
-          actor: userId,
-          actorRole: "student",
-          targetId: sessionId,
-          details: { reason: "device_mismatch" },
-        });
-        return {
-          success: false,
-          error: "FORBIDDEN",
-          message: "This device is not authorized for your account",
-        };
-      }
-    }
-
-    // 2. Fetch session and its details
     const session = await prisma.attendanceSession.findUnique({
       where: { id: sessionId },
       include: {
@@ -146,58 +84,10 @@ export class StudentService {
         },
       },
     });
-
     if (!session) {
       return { success: false, error: "NOT_FOUND", message: "Session not found" };
     }
 
-    // For live scans, session must still be active.
-    // For offline sync, allow active OR closed session within a 24-hour sync window.
-    if (!isOfflineSync && session.status !== "active") {
-      return { success: false, error: "BAD_REQUEST", message: "This session is no longer active" };
-    }
-
-    if (isOfflineSync) {
-      const sessionAgeMs = Date.now() - session.createdAt.getTime();
-      const MAX_OFFLINE_SYNC_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
-      if (sessionAgeMs > MAX_OFFLINE_SYNC_WINDOW_MS) {
-        return {
-          success: false,
-          error: "BAD_REQUEST",
-          message: "Offline attendance sync window (24 hours) has expired for this session.",
-        };
-      }
-    }
-
-    // 3. Validation: Verify student's division is part of this session
-    const isEnrolled = session.sessionDivisions.some((sd) => sd.divisionId === profile.divisionId);
-    if (!isEnrolled) {
-      return { success: false, error: "FORBIDDEN", message: "You are not enrolled in this class" };
-    }
-
-    // 4. Validation: Check Expiry
-    // For online live scans, enforce the 45-second QR rotation window
-    if (!isOfflineSync && Date.now() > expiresAt) {
-      return {
-        success: false,
-        error: "BAD_REQUEST",
-        message: "QR code has expired. Please scan the current code.",
-      };
-    }
-
-    // 5. Validation: Cryptographic Signature
-    const payloadString = `${sessionId}:${nonce}:${expiresAt}`;
-    const expectedSignature = crypto
-      .createHmac("sha256", session.sessionSecret)
-      .update(payloadString)
-      .digest("hex");
-
-    if (signature !== expectedSignature) {
-      logger.warn("Invalid QR signature", { userId, sessionId, nonce });
-      return { success: false, error: "BAD_REQUEST", message: "Invalid QR code" };
-    }
-
-    // 6. Validation: Check if student already marked attendance
     const existingAttendance = await prisma.attendance.findUnique({
       where: {
         studentProfileId_sessionId: {
@@ -207,114 +97,75 @@ export class StudentService {
       },
     });
 
-    if (existingAttendance) {
-      return {
-        success: false,
-        error: "BAD_REQUEST",
-        message: "You have already marked attendance for this session",
-      };
-    }
+    // Fast-path token check across Redis cache & PostgreSQL via QrTokenManager
+    const tokenLookup = await defaultQrTokenManager.lookupNonce(sessionId, nonce, isOfflineSync);
 
-    // 7. Validation: Nonce exists and belongs to this session
-    // Fast path: Check Redis cache first (sub-millisecond latency for live scans)
-    const inRedis = !isOfflineSync
-      ? await attendanceRedis.get(`qr:${sessionId}:${nonce}`).catch(() => null)
-      : null;
+    // 2. Assemble ScanContext & Evaluate Domain Invariants
+    const context: ScanContext = {
+      userId,
+      studentProfileId: profile.id,
+      divisionId: profile.divisionId,
+      deviceBound: profile.deviceBound,
+      boundDeviceId: profile.deviceId,
+      detectedFingerprint: deviceFingerprint,
+      mockFlag,
+      session,
+      token: {
+        nonce,
+        signature,
+        expiresAt,
+        tokenFoundInCacheOrDb: tokenLookup.found,
+        tokenDbExpired: !!tokenLookup.isExpired,
+      },
+      attendanceAlreadyMarked: !!existingAttendance,
+      gps: {
+        lat: gpsLat,
+        lng: gpsLng,
+        accuracy: gpsAccuracy,
+      },
+      isOfflineSync,
+      scannedAt,
+    };
 
-    if (!inRedis) {
-      const token = await prisma.qrToken.findUnique({
-        where: {
-          sessionId_nonce: {
-            sessionId,
-            nonce,
-          },
-        },
-      });
+    const verdict = AttendanceValidator.evaluate(context);
 
-      if (!token) {
-        return { success: false, error: "BAD_REQUEST", message: "Invalid token" };
+    // 3. Handle Rejection
+    if (verdict.outcome === "REJECTED") {
+      for (const anomaly of verdict.anomaliesToReport) {
+        void reportAnomaly({
+          userId,
+          type: anomaly.type,
+          severity: anomaly.severity,
+          details: anomaly.details,
+        });
       }
 
-      // For live scans, ensure token has not expired
-      if (!isOfflineSync && new Date() > token.expiresAt) {
-        return {
-          success: false,
-          error: "BAD_REQUEST",
-          message: "QR code has expired. Please scan the current code.",
-        };
+      if (verdict.auditRejectionDetails) {
+        void queueAuditLog({
+          eventType:
+            verdict.rejectionReason === "OUTSIDE_GEOFENCE"
+              ? "attendance.gps_outside_geofence"
+              : "attendance.rejected",
+          actor: userId,
+          actorRole: "student",
+          targetId: sessionId,
+          details: verdict.auditRejectionDetails,
+        });
       }
-    }
 
-    // 8. Validation: Geofence
-    if (!gpsLat || !gpsLng) {
       return {
         success: false,
-        error: "BAD_REQUEST",
-        message: "GPS location is required to mark attendance",
+        error: verdict.errorCode || "BAD_REQUEST",
+        message: verdict.clientMessage || "Attendance validation failed",
       };
     }
 
-    if (!session.room.building.gpsLat || !session.room.building.gpsLng) {
-      return {
-        success: false,
-        error: "BAD_REQUEST",
-        message: "Building geofence not configured. Contact your administrator.",
-      };
-    }
-
-    const distance = getDistanceInMeters(
-      gpsLat,
-      gpsLng,
-      session.room.building.gpsLat,
-      session.room.building.gpsLng,
-    );
-
-    const allowedRadius = session.room.building.radiusMeters;
-    // Accommodate indoor GPS attenuation/drift based on device reported horizontal accuracy, capped at 45m
-    const gpsTolerance = Math.min(Math.max(gpsAccuracy || 20, 15), 45);
-    const effectiveRadius = allowedRadius + gpsTolerance;
-    const gpsWithinGeofence = distance <= effectiveRadius;
-
-    if (!gpsWithinGeofence) {
-      void reportAnomaly({
-        userId,
-        type: "GEOFENCE_VIOLATION",
-        severity: "MEDIUM",
-        details: {
-          reason: "gps_outside_geofence",
-          distanceMeters: Math.round(distance),
-          allowedRadius,
-          gpsAccuracy,
-          studentGps: { lat: gpsLat, lng: gpsLng },
-          buildingGps: { lat: session.room.building.gpsLat, lng: session.room.building.gpsLng },
-          buildingName: session.room.building.name,
-        },
-      });
-      void queueAuditLog({
-        eventType: "attendance.gps_outside_geofence",
-        actor: userId,
-        actorRole: "student",
-        targetId: sessionId,
-        details: { distanceMeters: Math.round(distance), allowedRadius, gpsAccuracy },
-      });
-      return {
-        success: false,
-        error: "BAD_REQUEST",
-        message: `Location outside classroom (Detected ~${Math.round(distance)}m from ${session.room.building.name}, allowed radius is ${allowedRadius}m). Move closer to windows or retry GPS.`,
-      };
-    }
-
-    // 8.5 Impossible Travel Check (async, non-blocking)
+    // 4. Handle Acceptance: Impossible Travel Check (async, non-blocking)
     if (gpsLat && gpsLng) {
       void checkImpossibleTravel(profile.id, userId, gpsLat, gpsLng, new Date());
     }
 
-    // 9. Persist Attendance
-    const anomalyFlags: string[] = [];
-    if (isOfflineSync) {
-      anomalyFlags.push("offline_sync");
-    }
-
+    // 5. Persist Attendance Record
     const attendance = await prisma.attendance.create({
       data: {
         studentProfileId: profile.id,
@@ -322,7 +173,7 @@ export class StudentService {
         gpsLat,
         gpsLng,
         gpsWithinGeofence: true,
-        anomalyFlags,
+        anomalyFlags: verdict.anomalyFlags,
       },
     });
 
@@ -333,7 +184,7 @@ export class StudentService {
       isOfflineSync: !!isOfflineSync,
     });
 
-    // 10. Async Audit Log + Live Feed Update
+    // 6. Async Audit Log + Live WebSocket Feed Update
     void queueAuditLog({
       eventType: isOfflineSync ? "attendance.offline_synced" : "attendance.submitted",
       actor: userId,

@@ -34,8 +34,7 @@ export function useAdminAnomalies(filters: AnomalyFilters = {}) {
 export function useResolveAnomaly() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      unwrapEden(apiClient.api.admin.anomalies({ id }).resolve.patch()),
+    mutationFn: (id: string) => unwrapEden(apiClient.api.admin.anomalies({ id }).resolve.patch()),
     onSuccess: () => {
       toast.success("Anomaly marked as resolved");
       qc.invalidateQueries({ queryKey: ["admin", "anomalies"] });

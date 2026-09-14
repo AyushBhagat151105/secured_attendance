@@ -37,7 +37,14 @@ export function StatCard({
 
   return (
     <Card variant={variant} style={[{ flex: 1, minHeight: isSmallDevice ? 88 : 100 }, style]}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: 8,
+        }}
+      >
         <View
           style={{
             width: isSmallDevice ? 32 : 36,

@@ -7,7 +7,15 @@ export const adminAnomaliesModule = new Elysia({ prefix: "/anomalies" })
   .get(
     "/",
     async ({ query }) => {
-      const { status: statusFilter, userId, type, dateFrom, dateTo, limit = 50, offset = 0 } = query;
+      const {
+        status: statusFilter,
+        userId,
+        type,
+        dateFrom,
+        dateTo,
+        limit = 50,
+        offset = 0,
+      } = query;
 
       const where: Record<string, unknown> = {};
       if (statusFilter) where.status = statusFilter;
@@ -82,4 +90,3 @@ export const adminAnomaliesModule = new Elysia({ prefix: "/anomalies" })
       }),
     },
   );
-

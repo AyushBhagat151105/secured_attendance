@@ -85,14 +85,14 @@ function AdminAnomaliesPage() {
   const lowerSearch = search.toLowerCase();
   const filtered = search.trim()
     ? anomalyList.filter(
-      (a) =>
-        (a as { user: { name: string; email: string } }).user.name
-          .toLowerCase()
-          .includes(lowerSearch) ||
-        (a as { user: { name: string; email: string } }).user.email
-          .toLowerCase()
-          .includes(lowerSearch),
-    )
+        (a) =>
+          (a as { user: { name: string; email: string } }).user.name
+            .toLowerCase()
+            .includes(lowerSearch) ||
+          (a as { user: { name: string; email: string } }).user.email
+            .toLowerCase()
+            .includes(lowerSearch),
+      )
     : anomalyList;
 
   return (
@@ -183,76 +183,76 @@ function AdminAnomaliesPage() {
                   ) : filtered.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                        {hasFilters ? "No anomalies match the current filters." : "No anomalies detected!"}
+                        {hasFilters
+                          ? "No anomalies match the current filters."
+                          : "No anomalies detected!"}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filtered.map(
-                      (anomaly: any) => (
-                        <TableRow key={anomaly.id}>
-                          <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
-                            {new Date(anomaly.createdAt).toLocaleString()}
-                          </TableCell>
-                          <TableCell>
-                            <div className="font-medium text-sm">{anomaly.user.name}</div>
-                            <div className="text-xs text-muted-foreground">{anomaly.user.email}</div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="text-xs font-mono">
-                              {anomaly.type}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
+                    filtered.map((anomaly: any) => (
+                      <TableRow key={anomaly.id}>
+                        <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
+                          {new Date(anomaly.createdAt).toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium text-sm">{anomaly.user.name}</div>
+                          <div className="text-xs text-muted-foreground">{anomaly.user.email}</div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs font-mono">
+                            {anomaly.type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              anomaly.severity === "HIGH"
+                                ? "destructive"
+                                : anomaly.severity === "MEDIUM"
+                                  ? "default"
+                                  : "secondary"
+                            }
+                            className="text-xs"
+                          >
+                            {anomaly.severity}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-56">
+                          <AnomalyDetailCell type={anomaly.type} details={anomaly.details} />
+                        </TableCell>
+                        <TableCell>
+                          {anomaly.status === "OPEN" ? (
                             <Badge
-                              variant={
-                                anomaly.severity === "HIGH"
-                                  ? "destructive"
-                                  : anomaly.severity === "MEDIUM"
-                                    ? "default"
-                                    : "secondary"
-                              }
-                              className="text-xs"
+                              variant="outline"
+                              className="text-xs text-orange-500 border-orange-200 bg-orange-500/10"
                             >
-                              {anomaly.severity}
+                              OPEN
                             </Badge>
-                          </TableCell>
-                          <TableCell className="max-w-56">
-                            <AnomalyDetailCell type={anomaly.type} details={anomaly.details} />
-                          </TableCell>
-                          <TableCell>
-                            {anomaly.status === "OPEN" ? (
-                              <Badge
-                                variant="outline"
-                                className="text-xs text-orange-500 border-orange-200 bg-orange-500/10"
-                              >
-                                OPEN
-                              </Badge>
-                            ) : (
-                              <Badge
-                                variant="outline"
-                                className="text-xs text-emerald-500 border-emerald-200 bg-emerald-500/10"
-                              >
-                                RESOLVED
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {anomaly.status === "OPEN" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-8 gap-1"
-                                onClick={() => resolveMutation.mutate(anomaly.id)}
-                                disabled={resolveMutation.isPending}
-                              >
-                                <IconCheck className="h-3.5 w-3.5" />
-                                Resolve
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ),
-                    )
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="text-xs text-emerald-500 border-emerald-200 bg-emerald-500/10"
+                            >
+                              RESOLVED
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {anomaly.status === "OPEN" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 gap-1"
+                              onClick={() => resolveMutation.mutate(anomaly.id)}
+                              disabled={resolveMutation.isPending}
+                            >
+                              <IconCheck className="h-3.5 w-3.5" />
+                              Resolve
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))
                   )}
                 </TableBody>
               </Table>

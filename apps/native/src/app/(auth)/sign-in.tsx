@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  Text,
-  View,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-} from "react-native";
+import { Text, View, StyleSheet, TextInput, TouchableOpacity } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -115,7 +109,8 @@ export default function SignInScreen() {
             await queryClient.invalidateQueries();
 
             // 4. Navigate immediately to target screen
-            const user = sessionRes?.data?.user as { role?: string; requiresPasswordChange?: boolean } | undefined;
+            const user = sessionRes?.data?.user as
+              { role?: string; requiresPasswordChange?: boolean } | undefined;
             if (user?.requiresPasswordChange) {
               router.replace("/(auth)/reset-password");
             } else if (user?.role === "student" && p && !p.deviceBound) {
@@ -182,9 +177,7 @@ export default function SignInScreen() {
                     autoCorrect={false}
                     editable={!isSubmitting}
                   />
-                  {errors.email && (
-                    <Text style={styles.fieldError}>{errors.email.message}</Text>
-                  )}
+                  {errors.email && <Text style={styles.fieldError}>{errors.email.message}</Text>}
                 </View>
               )}
             />
@@ -243,8 +236,7 @@ export default function SignInScreen() {
             size="lg"
             loading={isSubmitting}
             onPress={handleSubmit(onSubmit, (fieldErrors) => {
-              const firstMsg =
-                fieldErrors.email?.message || fieldErrors.password?.message;
+              const firstMsg = fieldErrors.email?.message || fieldErrors.password?.message;
               if (firstMsg) setError(firstMsg);
             })}
             icon={<Ionicons name="arrow-forward-sharp" size={18} color={PALETTE.pureBlack} />}
@@ -256,9 +248,7 @@ export default function SignInScreen() {
         {/* Security Note Footer */}
         <View style={styles.securityFooter}>
           <Ionicons name="lock-closed-sharp" size={12} color="rgba(249, 245, 242, 0.7)" />
-          <Text style={styles.securityFooterText}>
-            PROXY PREVENTION ACTIVE • HARDWARE BOUND
-          </Text>
+          <Text style={styles.securityFooterText}>PROXY PREVENTION ACTIVE • HARDWARE BOUND</Text>
         </View>
       </View>
     </Container>

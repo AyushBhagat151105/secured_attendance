@@ -1,10 +1,4 @@
-import {
-  Text,
-  View,
-  StyleSheet,
-  ScrollView,
-  RefreshControl,
-} from "react-native";
+import { Text, View, StyleSheet, ScrollView, RefreshControl } from "react-native";
 import { useCallback, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { authClient } from "@/lib/auth-client";
@@ -118,7 +112,14 @@ export default function ProfileScreen() {
             </View>
 
             <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 4,
+                }}
+              >
                 <Text style={styles.securityTitle}>
                   {deviceBound ? "DEVICE BOUND" : "DEVICE NOT BOUND"}
                 </Text>
@@ -154,7 +155,13 @@ export default function ProfileScreen() {
             unit="%"
             variant="bone"
             badgeText={overallPct >= 75 ? "SAFE" : "LOW"}
-            icon={<Ionicons name="pie-chart-sharp" size={16} color={isDark ? PALETTE.boneWhite : PALETTE.inkBlack} />}
+            icon={
+              <Ionicons
+                name="pie-chart-sharp"
+                size={16}
+                color={isDark ? PALETTE.boneWhite : PALETTE.inkBlack}
+              />
+            }
           />
         </View>
       </ScrollView>

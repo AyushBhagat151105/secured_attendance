@@ -74,7 +74,6 @@ import {
 } from "@/components/ui/table";
 import { IconLocation } from "@tabler/icons-react";
 
-
 export const Route = createFileRoute("/admin/timetable/")({
   component: TimetableRoute,
 });
@@ -229,136 +228,136 @@ function TimetableEntryActions({ entry, days, programs, years, subjects, rooms, 
             <DialogTitle>Edit Class</DialogTitle>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid gap-2 py-2">
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                  <Controller
-                    control={form.control}
-                    name="startTime"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>Start Time</FieldLabel>
-                          <Input {...field} type="time" />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    control={form.control}
-                    name="endTime"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>End Time</FieldLabel>
-                          <Input {...field} type="time" />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                </div>
-
+            <div className="grid gap-2 py-2">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                 <Controller
                   control={form.control}
-                  name="dayOfWeek"
+                  name="startTime"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Day of Week</FieldLabel>
-                      <Select
-                        onValueChange={(val) => field.onChange(parseInt(val, 10))}
-                        defaultValue={field.value?.toString()}
-                      >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        <SelectContent>
-                          {days.map((d: string, i: number) => (
-                            <SelectItem key={i} value={i.toString()}>
-                              {d}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FieldLabel>Start Time</FieldLabel>
+                      <Input {...field} type="time" />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
                   )}
                 />
-
                 <Controller
                   control={form.control}
-                  name="subjectId"
+                  name="endTime"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Subject</FieldLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="w-full overflow-hidden [&>span]:w-full [&>span]:text-left">
-                            <SelectValue />
-                          </SelectTrigger>
-                        <SelectContent className="max-w-100">
-                          {subjects?.map((s: any) => (
-                            <SelectItem key={s.id} value={s.id}>
-                              <div className="truncate pr-4" title={`${s.code} (${s.name})`}>
-                                <span className="font-medium">{s.code}</span> ({s.name})
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                    </Field>
-                  )}
-                />
-
-                <Controller
-                  control={form.control}
-                  name="roomId"
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Room</FieldLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        <SelectContent>
-                          {rooms?.map((r: any) => (
-                            <SelectItem key={r.id} value={r.id}>
-                              {r.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                    </Field>
-                  )}
-                />
-
-                <Controller
-                  control={form.control}
-                  name="type"
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Class Type</FieldLabel>
-                        <Input {...field} placeholder="Lecture, Lab, etc" />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                    </Field>
-                  )}
-                />
-
-                <Controller
-                  control={form.control}
-                  name="teacherCodes"
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Teacher Codes</FieldLabel>
-                        <TeacherInput {...field} />
+                      <FieldLabel>End Time</FieldLabel>
+                      <Input {...field} type="time" />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
                   )}
                 />
               </div>
-              <DialogFooter>
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                  Save
-                </Button>
-              </DialogFooter>
-            </form>
+
+              <Controller
+                control={form.control}
+                name="dayOfWeek"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Day of Week</FieldLabel>
+                    <Select
+                      onValueChange={(val) => field.onChange(parseInt(val, 10))}
+                      defaultValue={field.value?.toString()}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {days.map((d: string, i: number) => (
+                          <SelectItem key={i} value={i.toString()}>
+                            {d}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                control={form.control}
+                name="subjectId"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Subject</FieldLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <SelectTrigger className="w-full overflow-hidden [&>span]:w-full [&>span]:text-left">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-w-100">
+                        {subjects?.map((s: any) => (
+                          <SelectItem key={s.id} value={s.id}>
+                            <div className="truncate pr-4" title={`${s.code} (${s.name})`}>
+                              <span className="font-medium">{s.code}</span> ({s.name})
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                control={form.control}
+                name="roomId"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Room</FieldLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {rooms?.map((r: any) => (
+                          <SelectItem key={r.id} value={r.id}>
+                            {r.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                control={form.control}
+                name="type"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Class Type</FieldLabel>
+                    <Input {...field} placeholder="Lecture, Lab, etc" />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                control={form.control}
+                name="teacherCodes"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Teacher Codes</FieldLabel>
+                    <TeacherInput {...field} />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                Save
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
@@ -464,195 +463,195 @@ function TimetableRoute() {
               <DialogTitle>Schedule New Class</DialogTitle>
             </DialogHeader>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-3 gap-x-6 gap-y-4 py-4">
-                  <Controller
-                    control={form.control}
-                    name="programSemesterId"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>Program Semester</FieldLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                          <SelectContent>
-                            {programs?.map((p: any) => (
-                              <SelectItem key={p.id} value={p.id}>
-                                {p.program.code} - Sem {p.semester}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+              <div className="grid grid-cols-3 gap-x-6 gap-y-4 py-4">
+                <Controller
+                  control={form.control}
+                  name="programSemesterId"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Program Semester</FieldLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {programs?.map((p: any) => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.program.code} - Sem {p.semester}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    control={form.control}
-                    name="academicYearId"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>Academic Year</FieldLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                          <SelectContent>
-                            {years?.map((y: any) => (
-                              <SelectItem key={y.id} value={y.id}>
-                                {y.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="academicYearId"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Academic Year</FieldLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {years?.map((y: any) => (
+                            <SelectItem key={y.id} value={y.id}>
+                              {y.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    control={form.control}
-                    name="divisionId"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>Division</FieldLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                          <SelectContent>
-                            {divisions?.map((d: any) => (
-                              <SelectItem key={d.id} value={d.id}>
-                                {d.name} ({d.programSemester.program.code})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="divisionId"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Division</FieldLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {divisions?.map((d: any) => (
+                            <SelectItem key={d.id} value={d.id}>
+                              {d.name} ({d.programSemester.program.code})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    control={form.control}
-                    name="subjectId"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>Subject</FieldLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <SelectTrigger className="w-full overflow-hidden [&>span]:w-full [&>span]:text-left">
-                              <SelectValue />
-                            </SelectTrigger>
-                          <SelectContent className="max-w-100">
-                            {subjects?.map((s: any) => (
-                              <SelectItem key={s.id} value={s.id}>
-                                <div className="truncate pr-4" title={`${s.code} (${s.name})`}>
-                                  <span className="font-medium">{s.code}</span> ({s.name})
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="subjectId"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Subject</FieldLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger className="w-full overflow-hidden [&>span]:w-full [&>span]:text-left">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="max-w-100">
+                          {subjects?.map((s: any) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              <div className="truncate pr-4" title={`${s.code} (${s.name})`}>
+                                <span className="font-medium">{s.code}</span> ({s.name})
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    control={form.control}
-                    name="roomId"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>Room</FieldLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                          <SelectContent>
-                            {rooms?.map((r: any) => (
-                              <SelectItem key={r.id} value={r.id}>
-                                {r.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="roomId"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Room</FieldLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {rooms?.map((r: any) => (
+                            <SelectItem key={r.id} value={r.id}>
+                              {r.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    control={form.control}
-                    name="dayOfWeek"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>Day of Week</FieldLabel>
-                        <Select
-                          onValueChange={(val) => field.onChange(parseInt(val, 10))}
-                          defaultValue={field.value?.toString()}
-                        >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                          <SelectContent>
-                            {DAYS.map((d: string, i: number) => (
-                              <SelectItem key={i} value={i.toString()}>
-                                {d}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="dayOfWeek"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Day of Week</FieldLabel>
+                      <Select
+                        onValueChange={(val) => field.onChange(parseInt(val, 10))}
+                        defaultValue={field.value?.toString()}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DAYS.map((d: string, i: number) => (
+                            <SelectItem key={i} value={i.toString()}>
+                              {d}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    control={form.control}
-                    name="startTime"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>Start Time</FieldLabel>
-                          <Input {...field} type="time" />
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="startTime"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Start Time</FieldLabel>
+                      <Input {...field} type="time" />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    control={form.control}
-                    name="endTime"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>End Time</FieldLabel>
-                          <Input {...field} type="time" />
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="endTime"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>End Time</FieldLabel>
+                      <Input {...field} type="time" />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    control={form.control}
-                    name="type"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>Class Type</FieldLabel>
-                          <Input {...field} placeholder="Lecture" />
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="type"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Class Type</FieldLabel>
+                      <Input {...field} placeholder="Lecture" />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    control={form.control}
-                    name="teacherCodes"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>Teacher Codes</FieldLabel>
-                          <TeacherInput {...field} />
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="teacherCodes"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Teacher Codes</FieldLabel>
+                      <TeacherInput {...field} />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                </div>
-                <DialogFooter>
-                  <Button type="submit" disabled={form.formState.isSubmitting}>
-                    Schedule Class
-                  </Button>
-                </DialogFooter>
-              </form>
+                    </Field>
+                  )}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  Schedule Class
+                </Button>
+              </DialogFooter>
+            </form>
           </DialogContent>
         </Dialog>
       </div>

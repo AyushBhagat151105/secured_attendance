@@ -2,10 +2,10 @@ name: Deploy Web Application (Non-Docker Static)
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [master, main]
     paths:
-      - 'apps/web/**'
-      - 'packages/**'
+      - "apps/web/**"
+      - "packages/**"
   workflow_dispatch:
 
 jobs:

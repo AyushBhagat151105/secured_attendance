@@ -36,16 +36,23 @@ export function useSessionRoster(sessionId: string | null) {
   return useQuery({
     queryKey: manualAttendanceKeys.sessionRoster(sessionId || ""),
     enabled: !!sessionId,
-    queryFn: () =>
-      unwrapEden(apiClient.api.teacher.sessions({ id: sessionId! }).roster.get()),
+    queryFn: () => unwrapEden(apiClient.api.teacher.sessions({ id: sessionId! }).roster.get()),
   });
 }
 
 export function useFinalizeSession() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ sessionId, presentStudentIds }: { sessionId: string; presentStudentIds: string[] }) =>
-      unwrapEden(apiClient.api.teacher.sessions({ id: sessionId }).finalize.post({ presentStudentIds })),
+    mutationFn: ({
+      sessionId,
+      presentStudentIds,
+    }: {
+      sessionId: string;
+      presentStudentIds: string[];
+    }) =>
+      unwrapEden(
+        apiClient.api.teacher.sessions({ id: sessionId }).finalize.post({ presentStudentIds }),
+      ),
     onSuccess: (res: any, vars) => {
       toast.success(`Attendance finalized (${res.totalPresent} present)`);
       qc.invalidateQueries({ queryKey: teacherKeys.schedule });

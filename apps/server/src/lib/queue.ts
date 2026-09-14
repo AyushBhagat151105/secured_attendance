@@ -50,7 +50,11 @@ export const auditWorker = new Worker(
       });
       logger.info("Audit event logged", { eventType: job.data.eventType, jobId: job.id });
     } catch (e) {
-      logger.error("Failed to write audit log", { eventType: job.data.eventType, jobId: job.id, error: e });
+      logger.error("Failed to write audit log", {
+        eventType: job.data.eventType,
+        jobId: job.id,
+        error: e,
+      });
       throw e;
     }
   },
@@ -64,4 +68,3 @@ auditWorker.on("completed", (job: Job) => {
 auditWorker.on("failed", (job: Job | undefined, err: Error) => {
   logger.error("Audit job failed", { jobId: job?.id, error: err.message });
 });
-

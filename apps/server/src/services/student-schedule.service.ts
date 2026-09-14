@@ -63,9 +63,7 @@ export class StudentScheduleService {
         },
       });
 
-      void attendanceRedis
-        .setex(cacheKey, 120, JSON.stringify(timetableEntries))
-        .catch(() => {});
+      void attendanceRedis.setex(cacheKey, 120, JSON.stringify(timetableEntries)).catch(() => {});
     }
 
     // We also want to see if any of these subjects have an active session right now
@@ -140,9 +138,7 @@ export class StudentScheduleService {
       });
 
       const slotSessionIds = slotSessions.map((s) => s.id);
-      const attendance = todaysAttendances.find((a) =>
-        slotSessionIds.includes(a.sessionId),
-      );
+      const attendance = todaysAttendances.find((a) => slotSessionIds.includes(a.sessionId));
 
       let attendanceStatus = undefined;
       if (attendance) {

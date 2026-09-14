@@ -75,11 +75,7 @@ export function Card({
 
   if (onPress) {
     return (
-      <TouchableOpacity
-        activeOpacity={0.85}
-        onPress={onPress}
-        style={[cardStyle, style]}
-      >
+      <TouchableOpacity activeOpacity={0.85} onPress={onPress} style={[cardStyle, style]}>
         {children}
       </TouchableOpacity>
     );

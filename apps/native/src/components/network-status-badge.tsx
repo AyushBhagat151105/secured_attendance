@@ -21,21 +21,11 @@ export function NetworkStatusBadge({ compact = false }: { compact?: boolean }) {
         color={isOnline ? "#059669" : "#dc2626"}
       />
       {!compact && (
-        <Text
-          style={[
-            styles.text,
-            isOnline ? styles.textOnline : styles.textOffline,
-          ]}
-        >
+        <Text style={[styles.text, isOnline ? styles.textOnline : styles.textOffline]}>
           {isOnline ? "Online" : "Offline"}
         </Text>
       )}
-      <View
-        style={[
-          styles.dot,
-          isOnline ? styles.dotOnline : styles.dotOffline,
-        ]}
-      />
+      <View style={[styles.dot, isOnline ? styles.dotOnline : styles.dotOffline]} />
     </TouchableOpacity>
   );
 }

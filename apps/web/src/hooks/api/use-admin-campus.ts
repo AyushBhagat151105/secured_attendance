@@ -84,8 +84,7 @@ export const useUpdateRoom = () => {
 export const useDeleteRoom = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      unwrapEden(apiClient.api.admin.campus.rooms({ id }).delete()),
+    mutationFn: (id: string) => unwrapEden(apiClient.api.admin.campus.rooms({ id }).delete()),
     onSuccess: () => {
       toast.success("Room deleted");
       queryClient.invalidateQueries({ queryKey: roomKeys.all });

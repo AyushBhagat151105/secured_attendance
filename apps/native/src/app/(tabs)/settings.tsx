@@ -1,11 +1,4 @@
-import {
-  Text,
-  View,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from "react-native";
+import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -100,7 +93,15 @@ export default function SettingsScreen() {
             style={styles.row}
           >
             <View style={styles.rowLeft}>
-              <View style={[styles.iconCircle, { backgroundColor: PALETTE.matchaCream, borderColor: isDark ? colors.border : PALETTE.inkBlack }]}>
+              <View
+                style={[
+                  styles.iconCircle,
+                  {
+                    backgroundColor: PALETTE.matchaCream,
+                    borderColor: isDark ? colors.border : PALETTE.inkBlack,
+                  },
+                ]}
+              >
                 <Ionicons name="lock-closed-sharp" size={18} color={PALETTE.pureBlack} />
               </View>
               <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>Update Password</Text>
@@ -116,10 +117,20 @@ export default function SettingsScreen() {
             style={styles.row}
           >
             <View style={styles.rowLeft}>
-              <View style={[styles.iconCircle, { backgroundColor: PALETTE.bubblegumPink, borderColor: isDark ? colors.border : PALETTE.inkBlack }]}>
+              <View
+                style={[
+                  styles.iconCircle,
+                  {
+                    backgroundColor: PALETTE.bubblegumPink,
+                    borderColor: isDark ? colors.border : PALETTE.inkBlack,
+                  },
+                ]}
+              >
                 <Ionicons name="phone-portrait-sharp" size={18} color={PALETTE.pureBlack} />
               </View>
-              <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>Hardware Binding Details</Text>
+              <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>
+                Hardware Binding Details
+              </Text>
             </View>
             <Ionicons name="chevron-forward-sharp" size={18} color={colors.textMuted} />
           </TouchableOpacity>
@@ -130,7 +141,15 @@ export default function SettingsScreen() {
         <Card variant="bone" style={styles.groupedCard}>
           <View style={styles.row}>
             <View style={styles.rowLeft}>
-              <View style={[styles.iconCircle, { backgroundColor: PALETTE.butteryYellow, borderColor: isDark ? colors.border : PALETTE.inkBlack }]}>
+              <View
+                style={[
+                  styles.iconCircle,
+                  {
+                    backgroundColor: PALETTE.butteryYellow,
+                    borderColor: isDark ? colors.border : PALETTE.inkBlack,
+                  },
+                ]}
+              >
                 <Ionicons name="cloud-offline-sharp" size={18} color={PALETTE.pureBlack} />
               </View>
               <View>
@@ -198,7 +217,9 @@ export default function SettingsScreen() {
                       color={isDark ? PALETTE.boneWhite : PALETTE.pureBlack}
                     />
                   </View>
-                  <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>Server Gateway (Dev Only)</Text>
+                  <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>
+                    Server Gateway (Dev Only)
+                  </Text>
                 </View>
                 <Text
                   numberOfLines={1}

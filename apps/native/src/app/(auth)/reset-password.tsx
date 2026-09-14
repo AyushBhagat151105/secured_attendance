@@ -72,8 +72,15 @@ export default function ResetPasswordScreen() {
               try {
                 await apiClient.patch("/api/auth-custom/complete-onboarding");
               } catch (patchErr: unknown) {
-                const errObj = patchErr as { response?: { data?: { message?: string } }; message?: string };
-                setError(errObj.response?.data?.message || errObj.message || "Failed to finalize account status");
+                const errObj = patchErr as {
+                  response?: { data?: { message?: string } };
+                  message?: string;
+                };
+                setError(
+                  errObj.response?.data?.message ||
+                    errObj.message ||
+                    "Failed to finalize account status",
+                );
                 return;
               }
             }
