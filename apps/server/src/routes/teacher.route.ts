@@ -1,6 +1,7 @@
 import { Elysia, status, t } from "elysia";
 import { requireRole } from "../middlewares/guards";
 import { TeacherService } from "../services/teacher.service";
+import { TeacherRosterService } from "../services/teacher-roster.service";
 import { teacherReportModule } from "../services/teacher-report.service";
 import { CreateSessionBody } from "../models/teacher.model";
 import { auth } from "@secured_attendance/auth";
@@ -55,7 +56,7 @@ export const teacherModule = new Elysia({ prefix: "/api/teacher" })
       const session = await auth.api.getSession({ headers: request.headers });
       if (!session) return status(401, { message: "Unauthorized" });
 
-      return TeacherService.getTimetableRoster(session.user.id, params.id);
+      return TeacherRosterService.getTimetableRoster(session.user.id, params.id);
     },
     {
       params: t.Object({
@@ -70,7 +71,7 @@ export const teacherModule = new Elysia({ prefix: "/api/teacher" })
       const session = await auth.api.getSession({ headers: request.headers });
       if (!session) return status(401, { message: "Unauthorized" });
 
-      return TeacherService.submitManualAttendance(session.user.id, body);
+      return TeacherRosterService.submitManualAttendance(session.user.id, body);
     },
     {
       body: t.Object({
@@ -87,7 +88,7 @@ export const teacherModule = new Elysia({ prefix: "/api/teacher" })
       const session = await auth.api.getSession({ headers: request.headers });
       if (!session) return status(401, { message: "Unauthorized" });
 
-      return TeacherService.getSessionRoster(session.user.id, params.id);
+      return TeacherRosterService.getSessionRoster(session.user.id, params.id);
     },
     {
       params: t.Object({
@@ -102,7 +103,7 @@ export const teacherModule = new Elysia({ prefix: "/api/teacher" })
       const session = await auth.api.getSession({ headers: request.headers });
       if (!session) return status(401, { message: "Unauthorized" });
 
-      return TeacherService.finalizeSessionAttendance(
+      return TeacherRosterService.finalizeSessionAttendance(
         session.user.id,
         params.id,
         body.presentStudentIds,
