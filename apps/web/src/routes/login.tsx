@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   IconShieldCheck,
@@ -8,6 +8,7 @@ import {
   IconBrandGithub,
   IconBrandInstagram,
   IconBrandLinkedin,
+  IconArrowRight,
 } from "@tabler/icons-react";
 
 import SignInForm from "@/components/sign-in-form";
@@ -174,6 +175,20 @@ function RouteComponent() {
             ) : (
               <SignUpForm onSwitchToSignIn={() => setShowSignIn(true)} />
             )}
+
+            {/* Direct link for students to download mobile app */}
+            <div className="mt-6 p-3 rounded-xl bg-card border border-border text-center space-y-1 shadow-xs">
+              <p className="text-xs text-muted-foreground">
+                Are you a student marking attendance?
+              </p>
+              <Link
+                to="/download"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline"
+              >
+                <span>Download Student Android APK</span>
+                <IconArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
           </div>
 
           {/* Mobile Developer Credit Footer */}

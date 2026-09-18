@@ -84,4 +84,14 @@ describe("Application Updates System", () => {
     expect(bundleResponse.status).toBe(200);
     expect(bundleResponse.headers.get("content-type")).toBe("application/javascript");
   });
+
+  it("GET /download/:file serves APK binary file with proper download headers", async () => {
+    const response = await app.handle(
+      new Request("http://localhost/download/secured-attendance.apk", { method: "GET" }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("application/vnd.android.package-archive");
+    expect(response.headers.get("content-disposition")).toContain("secured-attendance.apk");
+  });
 });

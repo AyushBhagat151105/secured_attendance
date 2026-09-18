@@ -48,6 +48,7 @@
     "seed:dev": "ALLOW_DEV_SEED=true bun run --filter server seed:dev",
     "test": "bun test",
     "export:updates": "bun run --filter native export:updates",
+    "build:apk": "bun run --filter native build:apk",
     "lint:eslint": "eslint .",
     "format:prettier": "prettier --write .",
     "format:prettier:check": "prettier --check .",

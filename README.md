@@ -131,6 +131,18 @@ The automated GitHub Actions CI pipeline (`.github/workflows/pr.yml`) runs on al
 
 ---
 
+## 🚀 Cloud CI/CD & Deployment Workflows
+
+| Workflow | Trigger | Description | Output Target |
+| :--- | :--- | :--- | :--- |
+| **`pr.yml`** | PR / Push to `main` | Full typecheck, 157+ test suite, and monorepo build verification | GitHub Actions Check |
+| **`deploy-server.yml`** | Push to `apps/server/**` | Builds Docker image with multi-stage build, pushes to GHCR, restarts VPS container | Hostinger VPS Docker |
+| **`deploy-web.yml`** | Push to `apps/web/**` | Builds static TanStack web app, deploys via SCP to Caddy web root | `/var/www/secured-attendance-web` |
+| **`deploy-ota.yml`** | Push to `apps/native/src/**` | Exports Hermes JS bundle & updates manifest in ~60s | `/root/.../uploads/updates` |
+| **`deploy-apk.yml`** | Tag `v*` or Manual Dispatch | Builds R8-minified `arm64-v8a` release APK in GitHub cloud runner, uploads to VPS & GitHub Releases | `/root/.../uploads/downloads/secured-attendance.apk` |
+
+---
+
 ## 🏛️ Monorepo Architecture
 
 - **`apps/server`**: High-performance backend built on [ElysiaJS](https://elysiajs.com) and Bun with scoped route plugins, BullMQ queues, and Winston auditing.

@@ -13,10 +13,18 @@ import { authModule } from "./routes/auth.route";
 import { teacherModule } from "./routes/teacher.route";
 import { studentModule } from "./routes/student.route";
 
-const getUploadsDir = () =>
-  fs.existsSync(path.resolve(process.cwd(), "uploads"))
-    ? path.resolve(process.cwd(), "uploads")
-    : path.resolve(import.meta.dir, "../uploads");
+const getUploadsDir = () => {
+  const candidates = [
+    path.resolve(process.cwd(), "apps/server/uploads"),
+    path.resolve(process.cwd(), "uploads"),
+    path.resolve(import.meta.dir, "../uploads"),
+    path.resolve(import.meta.dir, "../../uploads"),
+  ];
+  for (const dir of candidates) {
+    if (fs.existsSync(dir)) return dir;
+  }
+  return path.resolve(process.cwd(), "uploads");
+};
 
 export const app = new Elysia()
   .onError(({ code, error, set, request }) => {

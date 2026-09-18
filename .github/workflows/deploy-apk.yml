@@ -1,0 +1,131 @@
+name: Build & Deploy Native Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_to_vps:
+        description: "Deploy compiled APK to live VPS downloads directory"
+        required: true
+        type: boolean
+        default: true
+      server_url:
+        description: "Backend server URL for native app API client"
+        required: false
+        type: string
+        default: "https://attendance-api.ayushbhagat.com"
+  push:
+    tags:
+      - "v*.*.*"
+      - "v*"
+
+concurrency:
+  group: apk-build-deploy
+  cancel-in-progress: true
+
+jobs:
+  build-apk:
+    name: Build Release APK & Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun Runtime
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Setup Gradle Cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Monorepo Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: bun run db:generate
+
+      - name: Configure Native Environment
+        run: |
+          mkdir -p apps/native
+          SERVER_URL="${{ inputs.server_url || vars.EXPO_PUBLIC_SERVER_URL || 'https://attendance-api.ayushbhagat.com' }}"
+          echo "EXPO_PUBLIC_SERVER_URL=${SERVER_URL}" > apps/native/.env
+          echo "EXPO_PUBLIC_AUTH_REDIRECT_PATH=auth/callback" >> apps/native/.env
+          cat apps/native/.env
+
+      - name: Build Android Release APK (arm64-v8a + R8 Minified)
+        run: |
+          cd apps/native/android
+          # Strip any machine-specific java.home configurations so CI uses the runner's Java 17
+          sed -i '/org.gradle.java.home/d' gradle.properties || true
+          chmod +x gradlew
+          ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon
+
+      - name: Stage APK Artifact
+        run: |
+          mkdir -p release-output
+          APK_FILE=$(find apps/native/android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          if [ -z "$APK_FILE" ]; then
+            echo "::error::No APK found in build outputs directory!"
+            exit 1
+          fi
+          echo "Found compiled APK at: $APK_FILE"
+          cp "$APK_FILE" release-output/secured-attendance.apk
+          ls -lh release-output/secured-attendance.apk
+
+      - name: Upload APK to GitHub Workflow Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: secured-attendance-apk
+          path: release-output/secured-attendance.apk
+          retention-days: 30
+
+      - name: Deploy APK to VPS Downloads Directory via SCP
+        if: ${{ github.event_name == 'push' || inputs.deploy_to_vps }}
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "release-output/secured-attendance.apk"
+          target: "/root/secured_attendance/uploads/downloads"
+          strip_components: 1
+          overwrite: true
+
+      - name: Verify APK Deployment on VPS
+        if: ${{ github.event_name == 'push' || inputs.deploy_to_vps }}
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            mkdir -p /root/secured_attendance/uploads/downloads
+            ls -lh /root/secured_attendance/uploads/downloads/secured-attendance.apk
+            echo "Successfully deployed new APK to Hostinger VPS downloads directory!"
+
+      - name: Create GitHub Release with APK Asset
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-output/secured-attendance.apk
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

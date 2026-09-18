@@ -15,6 +15,7 @@ export default function Header() {
     !session ||
     router.location.pathname === "/login" ||
     router.location.pathname === "/download-app" ||
+    router.location.pathname === "/download" ||
     (session.user as { role?: string }).role === "student"
   ) {
     return null;

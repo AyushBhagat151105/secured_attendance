@@ -9,8 +9,23 @@ export default defineConfig({
   resolve: {
     dedupe: ["react", "react-dom"],
     alias: {
-      "@": path.resolve(__dirname, "./src"),
-      server: path.resolve(__dirname, "../server"),
+      "@": path.resolve(import.meta.dirname, "./src"),
+      server: path.resolve(import.meta.dirname, "../server"),
+    },
+  },
+  build: {
+    chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules/leaflet") || id.includes("node_modules/react-leaflet")) {
+            return "vendor-maps";
+          }
+          if (id.includes("node_modules/@tabler/icons-react") || id.includes("node_modules/lucide-react")) {
+            return "vendor-icons";
+          }
+        },
+      },
     },
   },
   server: {

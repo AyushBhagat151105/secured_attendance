@@ -121,6 +121,14 @@ android {
             crunchPngs enablePngCrunchInRelease.toBoolean()
         }
     }
+    splits {
+        abi {
+            reset()
+            enable (findProperty('android.enableAbiSplit') ?: 'false').toBoolean()
+            universalApk true
+            include "arm64-v8a", "armeabi-v7a"
+        }
+    }
     packagingOptions {
         jniLibs {
             def enableLegacyPackaging = findProperty('expo.useLegacyPackaging') ?: 'false'
