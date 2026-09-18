@@ -5,27 +5,17 @@ import { Platform } from "react-native";
 
 const DEVICE_ID_KEY = "sa_device_id_v2";
 
-/**
- * Safely queries native Android ID via expo-application without crashing
- * if the native module is not linked in the running binary (e.g. Expo Go or dev client).
- */
 function getNativeAndroidId(): string | null {
   if (Platform.OS !== "android") return null;
   try {
-    // Dynamic require protects against top-level module load failures
     const appModule = require("expo-application");
     if (appModule && typeof appModule.getAndroidId === "function") {
       return appModule.getAndroidId();
     }
-  } catch {
-    // Native module 'ExpoApplication' not compiled into running client binary
-  }
+  } catch {}
   return null;
 }
 
-/**
- * Safely queries iOS Identifier for Vendor via expo-application without crashing.
- */
 async function getNativeIosVendorId(): Promise<string | null> {
   if (Platform.OS !== "ios") return null;
   try {
@@ -33,9 +23,7 @@ async function getNativeIosVendorId(): Promise<string | null> {
     if (appModule && typeof appModule.getIosIdForVendorAsync === "function") {
       return await appModule.getIosIdForVendorAsync();
     }
-  } catch {
-    // Native module 'ExpoApplication' not compiled into running client binary
-  }
+  } catch {}
   return null;
 }
 
@@ -46,17 +34,13 @@ export async function getDeviceFingerprint(): Promise<{ id: string; name: string
     Device.designName ||
     (Device.brand ? `${Device.brand} Phone` : "Smart Phone");
 
-  // 1. Fast path: check SecureStore for previously resolved hardware ID
   try {
     const storedId = await SecureStore.getItemAsync(DEVICE_ID_KEY);
     if (storedId) {
       return { id: storedId, name };
     }
-  } catch {
-    // Ignore SecureStore errors and proceed to deterministic hardware derivation
-  }
+  } catch {}
 
-  // 2. Hardware OS identifier (Survives uninstalls, reinstalls, and updates on Android)
   let rawHardwareId: string | null = null;
   if (Platform.OS === "android") {
     rawHardwareId = getNativeAndroidId();
@@ -64,9 +48,6 @@ export async function getDeviceFingerprint(): Promise<{ id: string; name: string
     rawHardwareId = await getNativeIosVendorId();
   }
 
-  // 3. Combine with static hardware specs from expo-device (already linked in native binary)
-  // NOTE: Never include dynamic memory (Device.totalMemory) or installation IDs (Constants.installationId)
-  // because they fluctuate between boots/reinstalls and break cryptographic binding.
   const hardwareSignature = [
     Platform.OS,
     rawHardwareId || "no_android_id",
@@ -78,21 +59,95 @@ export async function getDeviceFingerprint(): Promise<{ id: string; name: string
     Device.osBuildFingerprint || Device.osInternalBuildId || "fallback_build",
   ].join(":");
 
-  // 4. Create deterministic SHA-256 hash
   const deviceId = await Crypto.digestStringAsync(
     Crypto.CryptoDigestAlgorithm.SHA256,
     hardwareSignature,
   );
 
-  // 5. Cache back in SecureStore for faster future lookups
   try {
     await SecureStore.setItemAsync(DEVICE_ID_KEY, deviceId);
-  } catch {
-    // Non-fatal if SecureStore is temporarily unavailable
-  }
+  } catch {}
 
   return {
     id: deviceId,
     name,
   };
+}
+
+export interface CloneDetectionResult {
+  isCloned: boolean;
+  reason: string | null;
+}
+
+const SUSPICIOUS_CLONE_SIGNATURES = [
+  "com.lbe.parallel",
+  "com.dualspace",
+  "io.va.exposed",
+  "com.excelliance.multiaccount",
+  "com.polestar.super.clone",
+  "com.gspace.android",
+  "com.cloneapp",
+  "parallel",
+  "virtual",
+  "dualspace",
+  "cloned",
+];
+
+export function detectClonedEnvironment(): CloneDetectionResult {
+  if (Platform.OS !== "android") {
+    return { isCloned: false, reason: null };
+  }
+
+  try {
+    let storagePath = "";
+    try {
+      const FileSystem = require("expo-file-system");
+      storagePath = (
+        FileSystem.documentDirectory ||
+        FileSystem.cacheDirectory ||
+        ""
+      ).toLowerCase();
+    } catch {}
+
+    if (storagePath) {
+      for (const sig of SUSPICIOUS_CLONE_SIGNATURES) {
+        if (storagePath.includes(sig)) {
+          return {
+            isCloned: true,
+            reason: `Virtual container signature detected in storage path: ${sig}`,
+          };
+        }
+      }
+
+      const multiUserMatch = storagePath.match(/\/data\/user\/([1-9][0-9]*)\//);
+      if (multiUserMatch) {
+        return {
+          isCloned: true,
+          reason: `Secondary work/cloned user profile detected (User ID: ${multiUserMatch[1]})`,
+        };
+      }
+    }
+  } catch {}
+
+  try {
+    const appModule = require("expo-application");
+    if (appModule && typeof appModule.applicationId === "string") {
+      const appId = appModule.applicationId.toLowerCase();
+      const isOfficial =
+        appId === "com.ayush_bhagat_151105.xnative" ||
+        appId === "host.exp.exponent" ||
+        appId.includes("expo");
+
+      if (!isOfficial) {
+        if (appId.includes("clone") || appId.includes("dual") || appId.includes("parallel")) {
+          return {
+            isCloned: true,
+            reason: `Cloned package identity detected: ${appId}`,
+          };
+        }
+      }
+    }
+  } catch {}
+
+  return { isCloned: false, reason: null };
 }

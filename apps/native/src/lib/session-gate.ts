@@ -10,6 +10,7 @@ export type SessionGateStatus =
   | "PASSWORD_CHANGE_REQUIRED"
   | "DEVICE_BINDING_REQUIRED"
   | "DEVICE_MISMATCH"
+  | "CLONED_ENVIRONMENT"
   | "AUTHORIZED";
 
 export interface SessionGateResult {
@@ -19,6 +20,8 @@ export interface SessionGateResult {
   currentDeviceId: string | null;
   isOffline: boolean;
   isLoading: boolean;
+  isCloned?: boolean;
+  clonedReason?: string | null;
 }
 
 export interface ResolveGateParams {
@@ -28,6 +31,7 @@ export interface ResolveGateParams {
   effectiveSession: CachedSessionData | null;
   effectiveProfile: CachedProfileData | null;
   currentDeviceId: string | null;
+  isCloned?: boolean;
 }
 
 export function resolveSessionGateStatus(params: ResolveGateParams): SessionGateStatus {
@@ -59,6 +63,10 @@ export function resolveSessionGateStatus(params: ResolveGateParams): SessionGate
   }
 
   if (effectiveUser?.role === "student" && effectiveProfile) {
+    if (params.isCloned) {
+      return "CLONED_ENVIRONMENT";
+    }
+
     if (!effectiveProfile.deviceBound) {
       return "DEVICE_BINDING_REQUIRED";
     }

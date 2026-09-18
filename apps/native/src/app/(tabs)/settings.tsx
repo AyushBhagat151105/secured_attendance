@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { SectionHeader } from "@/components/ui/section-header";
 import { useAppTheme } from "@/contexts/app-theme-context";
 import { getPendingScansCount, syncPendingAttendance } from "@/lib/offline-sync";
+import { checkAndApplyUpdates } from "@/lib/updates";
 import { PALETTE, FONTS, RADIUS, BORDERS } from "@/lib/theme";
 import { useResponsive } from "@/hooks/use-responsive";
 
@@ -32,10 +33,20 @@ export default function SettingsScreen() {
   const [signingOut, setSigningOut] = useState(false);
   const [offlineCount, setOfflineCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
 
   useEffect(() => {
     getPendingScansCount().then(setOfflineCount);
   }, []);
+
+  const handleCheckUpdate = async () => {
+    setCheckingUpdate(true);
+    try {
+      await checkAndApplyUpdates(true);
+    } finally {
+      setCheckingUpdate(false);
+    }
+  };
 
   const handleManualSync = async () => {
     setIsSyncing(true);
@@ -218,6 +229,54 @@ export default function SettingsScreen() {
             <Badge label={`V${appVersion}`} variant="neutral" size="sm" />
           </View>
 
+          <View style={[styles.rowDivider, { backgroundColor: colors.divider }]} />
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={styles.row}
+            onPress={handleCheckUpdate}
+            disabled={checkingUpdate}
+          >
+            <View style={styles.rowLeft}>
+              <View
+                style={[
+                  styles.iconCircle,
+                  {
+                    backgroundColor: PALETTE.hiVisYellow,
+                    borderColor: isDark ? colors.border : PALETTE.inkBlack,
+                  },
+                ]}
+              >
+                <Ionicons name="cloud-download-sharp" size={18} color={PALETTE.pureBlack} />
+              </View>
+              <View>
+                <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>System Updates</Text>
+                <Text style={[styles.rowSub, { color: isDark ? "rgba(249, 245, 242, 0.85)" : colors.textMuted }]}>
+                  {checkingUpdate ? "Checking server for updates..." : "Over-The-Air & APK Auto-Update"}
+                </Text>
+              </View>
+            </View>
+            <View
+              style={[
+                styles.linkActionBadge,
+                {
+                  backgroundColor: isDark ? "rgba(244, 237, 54, 0.15)" : "rgba(26, 26, 26, 0.08)",
+                  borderColor: isDark ? "rgba(244, 237, 54, 0.4)" : "rgba(26, 26, 26, 0.2)",
+                  borderWidth: 1,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.linkActionText,
+                  { color: isDark ? PALETTE.hiVisYellow : PALETTE.pureBlack },
+                ]}
+              >
+                {checkingUpdate ? "CHECKING" : "CHECK"}
+              </Text>
+              <Ionicons name="refresh-sharp" size={13} color={isDark ? PALETTE.hiVisYellow : PALETTE.pureBlack} />
+            </View>
+          </TouchableOpacity>
+
           {/* Never show Server Gateway on production or preview builds */}
           {__DEV__ && (
             <>
@@ -285,7 +344,7 @@ export default function SettingsScreen() {
               <Text style={[styles.logoHeaderTitle, { color: colors.textPrimary }]}>
                 CHARUSAT • CMPICA
               </Text>
-              <Text style={[styles.logoHeaderSub, { color: colors.textMuted }]}>
+              <Text style={[styles.logoHeaderSub, { color: isDark ? "rgba(249, 245, 242, 0.85)" : colors.textMuted }]}>
                 Charotar University of Science & Technology
               </Text>
             </View>
@@ -308,7 +367,7 @@ export default function SettingsScreen() {
               </View>
               <View>
                 <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>University</Text>
-                <Text style={[styles.rowSub, { color: colors.textMuted }]}>
+                <Text style={[styles.rowSub, { color: isDark ? "rgba(249, 245, 242, 0.85)" : colors.textMuted }]}>
                   CHARUSAT • Changa, Gujarat 388421
                 </Text>
               </View>
@@ -332,7 +391,7 @@ export default function SettingsScreen() {
               </View>
               <View>
                 <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>Department</Text>
-                <Text style={[styles.rowSub, { color: colors.textMuted }]}>
+                <Text style={[styles.rowSub, { color: isDark ? "rgba(249, 245, 242, 0.85)" : colors.textMuted }]}>
                   CMPICA (Computer Applications)
                 </Text>
               </View>
@@ -356,7 +415,7 @@ export default function SettingsScreen() {
               </View>
               <View>
                 <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>Lead Developer</Text>
-                <Text style={[styles.rowSub, { color: colors.textMuted }]}>
+                <Text style={[styles.rowSub, { color: isDark ? PALETTE.hiVisYellow : colors.textMuted }]}>
                   Ayush Bhagat (Solo Architect)
                 </Text>
               </View>
@@ -382,23 +441,39 @@ export default function SettingsScreen() {
                 style={[
                   styles.iconCircle,
                   {
-                    backgroundColor: isDark ? PALETTE.darkNested : PALETTE.pureBlack,
-                    borderColor: isDark ? colors.border : PALETTE.inkBlack,
+                    backgroundColor: isDark ? "#24292e" : PALETTE.pureBlack,
+                    borderColor: isDark ? "rgba(255, 255, 255, 0.2)" : PALETTE.inkBlack,
                   },
                 ]}
               >
-                <Ionicons name="logo-github" size={18} color={PALETTE.boneWhite} />
+                <Ionicons name="logo-github" size={18} color={PALETTE.pureWhite} />
               </View>
               <View>
                 <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>GitHub Portfolio</Text>
-                <Text style={[styles.rowSub, { color: colors.textMuted }]}>
+                <Text style={[styles.rowSub, { color: isDark ? "rgba(249, 245, 242, 0.9)" : colors.textMuted }]}>
                   github.com/ayushbhagat151105
                 </Text>
               </View>
             </View>
-            <View style={styles.linkActionBadge}>
-              <Text style={styles.linkActionText}>VIEW</Text>
-              <Ionicons name="open-outline" size={14} color={isDark ? PALETTE.hiVisYellow : PALETTE.pureBlack} />
+            <View
+              style={[
+                styles.linkActionBadge,
+                {
+                  backgroundColor: isDark ? "rgba(244, 237, 54, 0.15)" : "rgba(26, 26, 26, 0.08)",
+                  borderColor: isDark ? "rgba(244, 237, 54, 0.4)" : "rgba(26, 26, 26, 0.2)",
+                  borderWidth: 1,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.linkActionText,
+                  { color: isDark ? PALETTE.hiVisYellow : PALETTE.pureBlack },
+                ]}
+              >
+                VIEW
+              </Text>
+              <Ionicons name="open-outline" size={13} color={isDark ? PALETTE.hiVisYellow : PALETTE.pureBlack} />
             </View>
           </TouchableOpacity>
 
@@ -429,14 +504,30 @@ export default function SettingsScreen() {
               </View>
               <View>
                 <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>Instagram</Text>
-                <Text style={[styles.rowSub, { color: colors.textMuted }]}>
+                <Text style={[styles.rowSub, { color: isDark ? "rgba(249, 245, 242, 0.9)" : colors.textMuted }]}>
                   @bhagat_ayush__
                 </Text>
               </View>
             </View>
-            <View style={styles.linkActionBadge}>
-              <Text style={styles.linkActionText}>FOLLOW</Text>
-              <Ionicons name="open-outline" size={14} color={isDark ? PALETTE.hiVisYellow : PALETTE.pureBlack} />
+            <View
+              style={[
+                styles.linkActionBadge,
+                {
+                  backgroundColor: isDark ? "rgba(244, 237, 54, 0.15)" : "rgba(26, 26, 26, 0.08)",
+                  borderColor: isDark ? "rgba(244, 237, 54, 0.4)" : "rgba(26, 26, 26, 0.2)",
+                  borderWidth: 1,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.linkActionText,
+                  { color: isDark ? PALETTE.hiVisYellow : PALETTE.pureBlack },
+                ]}
+              >
+                FOLLOW
+              </Text>
+              <Ionicons name="open-outline" size={13} color={isDark ? PALETTE.hiVisYellow : PALETTE.pureBlack} />
             </View>
           </TouchableOpacity>
 
@@ -467,14 +558,30 @@ export default function SettingsScreen() {
               </View>
               <View>
                 <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>LinkedIn Profile</Text>
-                <Text style={[styles.rowSub, { color: colors.textMuted }]}>
+                <Text style={[styles.rowSub, { color: isDark ? "rgba(249, 245, 242, 0.9)" : colors.textMuted }]}>
                   linkedin.com/in/ayush-bhagat
                 </Text>
               </View>
             </View>
-            <View style={styles.linkActionBadge}>
-              <Text style={styles.linkActionText}>CONNECT</Text>
-              <Ionicons name="open-outline" size={14} color={isDark ? PALETTE.hiVisYellow : PALETTE.pureBlack} />
+            <View
+              style={[
+                styles.linkActionBadge,
+                {
+                  backgroundColor: isDark ? "rgba(244, 237, 54, 0.15)" : "rgba(26, 26, 26, 0.08)",
+                  borderColor: isDark ? "rgba(244, 237, 54, 0.4)" : "rgba(26, 26, 26, 0.2)",
+                  borderWidth: 1,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.linkActionText,
+                  { color: isDark ? PALETTE.hiVisYellow : PALETTE.pureBlack },
+                ]}
+              >
+                CONNECT
+              </Text>
+              <Ionicons name="open-outline" size={13} color={isDark ? PALETTE.hiVisYellow : PALETTE.pureBlack} />
             </View>
           </TouchableOpacity>
         </Card>
@@ -533,17 +640,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     fontFamily: FONTS.body,
-    color: PALETTE.inkBlack,
+    color: PALETTE.boneWhite,
   },
   rowSub: {
     fontSize: 11,
     fontFamily: FONTS.mono,
-    color: "rgba(26,26,26,0.6)",
+    color: "rgba(249, 245, 242, 0.85)",
     marginTop: 2,
   },
   rowDivider: {
     height: 1,
-    backgroundColor: "rgba(26,26,26,0.1)",
+    backgroundColor: "rgba(249, 245, 242, 0.12)",
     marginHorizontal: 16,
   },
   logoBanner: {
@@ -575,7 +682,7 @@ const styles = StyleSheet.create({
   logoDivider: {
     width: 1,
     height: 24,
-    backgroundColor: "rgba(26,26,26,0.2)",
+    backgroundColor: "rgba(249, 245, 242, 0.2)",
   },
   cmpicaBox: {
     height: 38,
@@ -600,11 +707,13 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     fontFamily: FONTS.display,
     letterSpacing: 0.5,
+    color: PALETTE.boneWhite,
   },
   logoHeaderSub: {
     fontSize: 10,
     fontFamily: FONTS.mono,
     marginTop: 2,
+    color: "rgba(249, 245, 242, 0.85)",
   },
   linkActionBadge: {
     flexDirection: "row",
@@ -613,12 +722,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: RADIUS.sm,
-    backgroundColor: "rgba(0,0,0,0.06)",
+    backgroundColor: "rgba(244, 237, 54, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(244, 237, 54, 0.4)",
   },
   linkActionText: {
     fontSize: 10,
     fontWeight: "800",
     fontFamily: FONTS.mono,
     letterSpacing: 0.5,
+    color: PALETTE.hiVisYellow,
   },
 });

@@ -275,5 +275,19 @@ describe("AttendanceValidator — Pure Domain Engine", () => {
       expect(verdict.anomaliesToReport).toHaveLength(1);
       expect(verdict.anomaliesToReport[0]?.type).toBe("GEOFENCE_VIOLATION");
     });
+
+    it("rejects and reports anomaly when cloned environment is detected", () => {
+      const ctx = createValidContext({
+        isCloned: true,
+      });
+
+      const verdict = AttendanceValidator.evaluate(ctx);
+      expect(verdict.outcome).toBe("REJECTED");
+      expect(verdict.rejectionReason).toBe("CLONED_ENVIRONMENT");
+      expect(verdict.errorCode).toBe("FORBIDDEN");
+      expect(verdict.anomalyFlags).toContain("cloned_app_detected");
+      expect(verdict.anomaliesToReport).toHaveLength(1);
+      expect(verdict.anomaliesToReport[0]?.type).toBe("DEVICE_MISMATCH");
+    });
   });
 });

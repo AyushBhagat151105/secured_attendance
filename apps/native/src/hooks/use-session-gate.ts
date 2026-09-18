@@ -3,7 +3,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { useStudentProfile } from "@/hooks/api/use-profile";
-import { getDeviceFingerprint } from "@/lib/device";
+import { getDeviceFingerprint, detectClonedEnvironment } from "@/lib/device";
 import {
   getCachedSession,
   getCachedProfile,
@@ -109,6 +109,8 @@ export function useSessionGate(): SessionGateResult {
     }
   }, [isPending]);
 
+  const cloneInfo = useMemo(() => detectClonedEnvironment(), []);
+
   const status = useMemo(() => {
     return resolveSessionGateStatus({
       cacheLoaded,
@@ -117,6 +119,7 @@ export function useSessionGate(): SessionGateResult {
       effectiveSession,
       effectiveProfile,
       currentDeviceId,
+      isCloned: cloneInfo.isCloned,
     });
   }, [
     cacheLoaded,
@@ -125,6 +128,7 @@ export function useSessionGate(): SessionGateResult {
     effectiveSession,
     effectiveProfile,
     currentDeviceId,
+    cloneInfo.isCloned,
   ]);
 
   return {
@@ -134,5 +138,7 @@ export function useSessionGate(): SessionGateResult {
     currentDeviceId,
     isOffline,
     isLoading: status === "LOADING",
+    isCloned: cloneInfo.isCloned,
+    clonedReason: cloneInfo.reason,
   };
 }

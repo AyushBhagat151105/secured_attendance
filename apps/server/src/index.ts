@@ -5,12 +5,18 @@ import { env } from "@secured_attendance/env/server";
 import { Elysia } from "elysia";
 import path from "node:path";
 import fs from "node:fs";
+import { createHash } from "node:crypto";
 
 import { logger } from "./lib/logger";
 import { adminModule } from "./routes/admin.route";
 import { authModule } from "./routes/auth.route";
 import { teacherModule } from "./routes/teacher.route";
 import { studentModule } from "./routes/student.route";
+
+const getUploadsDir = () =>
+  fs.existsSync(path.resolve(process.cwd(), "uploads"))
+    ? path.resolve(process.cwd(), "uploads")
+    : path.resolve(import.meta.dir, "../uploads");
 
 export const app = new Elysia()
   .onError(({ code, error, set, request }) => {
@@ -127,24 +133,133 @@ export const app = new Elysia()
   .get("/", () => "OK")
 
   // Self-Hosted OTA Updates endpoints for mobile app
-  .get("/updates", async ({ set }) => {
-    const manifestPath = path.resolve(process.cwd(), "uploads/updates/metadata.json");
+  .get("/updates", async ({ request, set }) => {
+    const uploadsDir = getUploadsDir();
+    const manifestPath = path.resolve(uploadsDir, "updates/metadata.json");
     if (!fs.existsSync(manifestPath)) {
       set.status = 404;
       return { error: "No OTA update available" };
     }
-    set.headers["content-type"] = "application/json";
-    set.headers["expo-protocol-version"] = "0";
-    set.headers["expo-sfv-version"] = "0";
-    return Bun.file(manifestPath);
+
+    try {
+      const metadataRaw = await Bun.file(manifestPath).text();
+      const metadata = JSON.parse(metadataRaw);
+
+      const platform = request.headers.get("expo-platform") || "android";
+      const platformMetadata = metadata.fileMetadata?.[platform];
+
+      if (!platformMetadata) {
+        set.status = 404;
+        return { error: `No update bundle found for platform: ${platform}` };
+      }
+
+      const host = request.headers.get("host") || "attendance-api.ayushbhagat.com";
+      const forwardedProto = request.headers.get("x-forwarded-proto");
+      const isLocal =
+        host.startsWith("localhost") ||
+        host.startsWith("127.0.0.1") ||
+        host.startsWith("192.168.") ||
+        host.startsWith("10.");
+      const proto = forwardedProto || (isLocal ? "http" : "https");
+      const baseUrl = `${proto}://${host}`;
+
+      const hash = createHash("sha256").update(metadataRaw).digest("hex");
+      const updateId = `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}`;
+
+      const stat = fs.statSync(manifestPath);
+      const createdAt = stat.mtime.toISOString();
+      const runtimeVersion = request.headers.get("expo-runtime-version") || "1.0.1";
+
+      const mimeMap: Record<string, string> = {
+        png: "image/png",
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        gif: "image/gif",
+        webp: "image/webp",
+        ttf: "font/ttf",
+        otf: "font/otf",
+        xml: "application/xml",
+        json: "application/json",
+        js: "application/javascript",
+        hbc: "application/javascript",
+      };
+
+      const assets = (platformMetadata.assets || []).map(
+        (asset: { path: string; ext: string }) => {
+          const assetKey = path.basename(asset.path);
+          return {
+            key: assetKey,
+            contentType: mimeMap[asset.ext] || "application/octet-stream",
+            fileExtension: `.${asset.ext}`,
+            url: `${baseUrl}/updates/${asset.path}`,
+          };
+        },
+      );
+
+      const manifest = {
+        id: updateId,
+        createdAt,
+        runtimeVersion,
+        launchAsset: {
+          key: "bundle",
+          contentType: "application/javascript",
+          url: `${baseUrl}/updates/${platformMetadata.bundle}`,
+        },
+        assets,
+        metadata: {},
+        extra: {},
+      };
+
+      const protocolVersion = request.headers.get("expo-protocol-version") || "0";
+      set.headers["content-type"] = "application/json";
+      set.headers["expo-protocol-version"] = protocolVersion === "1" ? "1" : "0";
+      set.headers["expo-sfv-version"] = "0";
+      set.headers["cache-control"] = "private, max-age=0";
+      return manifest;
+    } catch {
+      set.status = 500;
+      return { error: "Failed to construct OTA update manifest" };
+    }
   })
   .get("/updates/*", async ({ params, set }) => {
     const wildcard = params["*"];
-    const filePath = path.resolve(process.cwd(), "uploads/updates", wildcard);
+    const filePath = path.resolve(getUploadsDir(), "updates", wildcard);
     if (!fs.existsSync(filePath)) {
       set.status = 404;
       return "Not found";
     }
+
+    const ext = path.extname(filePath).replace(".", "").toLowerCase();
+    if (ext === "hbc" || ext === "js") {
+      set.headers["content-type"] = "application/javascript";
+    } else if (ext === "png") {
+      set.headers["content-type"] = "image/png";
+    } else if (ext === "ttf") {
+      set.headers["content-type"] = "font/ttf";
+    } else if (ext === "xml") {
+      set.headers["content-type"] = "application/xml";
+    }
+
+    return Bun.file(filePath);
+  })
+
+  // Direct APK auto-update distribution endpoints (no Google Play Store required)
+  .get("/api/app/version", () => {
+    return {
+      version: "1.0.1",
+      minRequiredVersion: "1.0.0",
+      apkUrl: "https://attendance-api.ayushbhagat.com/download/secured-attendance.apk",
+      releaseNotes: "Automatic geofencing, hardware binding & anti-clone virtual container detection.",
+    };
+  })
+  .get("/download/:file", async ({ params, set }) => {
+    const filePath = path.resolve(getUploadsDir(), "downloads", params.file);
+    if (!fs.existsSync(filePath)) {
+      set.status = 404;
+      return "File not found";
+    }
+    set.headers["content-type"] = "application/vnd.android.package-archive";
+    set.headers["content-disposition"] = `attachment; filename="${params.file}"`;
     return Bun.file(filePath);
   });
 

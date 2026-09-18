@@ -12,6 +12,7 @@ export const ScanAttendanceBody = t.Object({
   deviceFingerprint: t.Optional(t.String()),
   isOfflineSync: t.Optional(t.Boolean()),
   scannedAt: t.Optional(t.Number()),
+  isCloned: t.Optional(t.Boolean()),
 });
 
 export type ScanAttendanceDto = typeof ScanAttendanceBody.static;

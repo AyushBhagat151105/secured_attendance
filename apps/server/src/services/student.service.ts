@@ -34,6 +34,7 @@ export class StudentService {
       deviceFingerprint,
       isOfflineSync,
       scannedAt,
+      isCloned,
     } = body;
 
     logger.info("Received QR attendance scan", { userId, sessionId, mockFlag, gpsLat, gpsLng });
@@ -114,6 +115,7 @@ export class StudentService {
       },
       isOfflineSync,
       scannedAt,
+      isCloned,
     };
 
     const verdict = AttendanceValidator.evaluate(context);

@@ -13,6 +13,7 @@ export type ScanAttendancePayload = {
   deviceFingerprint?: string;
   isOfflineSync?: boolean;
   scannedAt?: number;
+  isCloned?: boolean;
 };
 
 export class ApiError extends Error {

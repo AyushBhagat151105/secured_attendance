@@ -1,16 +1,18 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, Text } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useScanAttendance } from "@/hooks/api/use-attendance";
 import { useAttendanceStats, historyKeys } from "@/hooks/api/use-attendance-history";
-import { getDeviceFingerprint } from "@/lib/device";
+import { getDeviceFingerprint, detectClonedEnvironment } from "@/lib/device";
 import { savePendingAttendance } from "@/lib/offline-sync";
 import { useResponsive } from "@/hooks/use-responsive";
-import { PALETTE } from "@/lib/theme";
+import { PALETTE, FONTS, RADIUS, BORDERS } from "@/lib/theme";
+import { Button } from "@/components/ui/button";
 
 import { CameraPermissionCard } from "@/components/scanner/camera-permission-card";
 import { ScanTopHud } from "@/components/scanner/scan-top-hud";
@@ -21,6 +23,7 @@ import { ScanErrorModal } from "@/components/scanner/scan-error-modal";
 type ScanStatus = "idle" | "processing" | "success" | "error";
 
 export default function ScanScreen() {
+  const cloneCheck = detectClonedEnvironment();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanStatus, setScanStatus] = useState<ScanStatus>("idle");
   const [statusMessage, setStatusMessage] = useState("");
@@ -117,6 +120,7 @@ export default function ScanScreen() {
         gpsAccuracy,
         mockFlag,
         deviceFingerprint: deviceInfo.id,
+        isCloned: cloneCheck.isCloned,
       };
 
       try {
@@ -188,6 +192,35 @@ export default function ScanScreen() {
     router.replace("/(tabs)");
   };
 
+  if (cloneCheck.isCloned) {
+    return (
+      <View style={styles.blockedContainer}>
+        <View style={styles.blockedCard}>
+          <View style={styles.blockedIconCircle}>
+            <Ionicons name="shield-half-sharp" size={32} color={PALETTE.pureWhite} />
+          </View>
+          <Text style={styles.blockedTitle}>CLONED APP DETECTED</Text>
+          <Text style={styles.blockedDesc}>
+            Dual space, parallel apps, and cloned virtual sandboxes are strictly prohibited by campus anti-proxy policy.
+          </Text>
+          {cloneCheck.reason ? (
+            <Text style={styles.blockedReason}>{cloneCheck.reason}</Text>
+          ) : null}
+          <Text style={styles.blockedSub}>
+            Please launch the official Secured Attendance app from your primary device profile to mark attendance.
+          </Text>
+          <Button
+            label="RETURN TO DASHBOARD"
+            variant="primary"
+            size="md"
+            onPress={() => router.replace("/(tabs)")}
+            style={{ marginTop: 20, width: "100%" }}
+          />
+        </View>
+      </View>
+    );
+  }
+
   if (!permission) {
     return <View style={{ flex: 1, backgroundColor: PALETTE.duskViolet }} />;
   }
@@ -246,5 +279,64 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: PALETTE.pureBlack,
+  },
+  blockedContainer: {
+    flex: 1,
+    backgroundColor: PALETTE.duskViolet,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  blockedCard: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: PALETTE.boneWhite,
+    borderRadius: RADIUS.lg,
+    borderWidth: BORDERS.heavy,
+    borderColor: PALETTE.inkBlack,
+    padding: 24,
+    alignItems: "center",
+  },
+  blockedIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: RADIUS.full,
+    backgroundColor: PALETTE.firecrackerRed,
+    borderWidth: BORDERS.heavy,
+    borderColor: PALETTE.inkBlack,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  blockedTitle: {
+    fontSize: 18,
+    fontWeight: "900",
+    fontFamily: FONTS.display,
+    color: PALETTE.inkBlack,
+    letterSpacing: 0.5,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  blockedDesc: {
+    fontSize: 13,
+    fontFamily: FONTS.body,
+    color: PALETTE.inkBlack,
+    textAlign: "center",
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  blockedReason: {
+    fontSize: 11,
+    fontFamily: FONTS.mono,
+    color: PALETTE.firecrackerRed,
+    textAlign: "center",
+    marginBottom: 12,
+  },
+  blockedSub: {
+    fontSize: 11,
+    fontFamily: FONTS.mono,
+    color: "rgba(26,26,26,0.65)",
+    textAlign: "center",
+    lineHeight: 15,
   },
 });

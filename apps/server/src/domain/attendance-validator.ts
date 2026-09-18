@@ -39,11 +39,13 @@ export interface ScanContext {
   };
   isOfflineSync?: boolean;
   scannedAt?: number;
+  isCloned?: boolean;
 }
 
 export type RejectionReason =
   | "STUDENT_SUSPENDED"
   | "MOCK_LOCATION"
+  | "CLONED_ENVIRONMENT"
   | "NO_DIVISION"
   | "DEVICE_REQUIRED"
   | "DEVICE_MISMATCH"
@@ -139,6 +141,26 @@ export class AttendanceValidator {
         anomalyFlags,
         anomaliesToReport,
         auditRejectionDetails: { reason: "mock_location" },
+      };
+    }
+
+    if (context.isCloned) {
+      anomaliesToReport.push({
+        type: "DEVICE_MISMATCH",
+        severity: "HIGH",
+        details: {
+          reason: "cloned_environment_detected",
+        },
+      });
+      return {
+        outcome: "REJECTED",
+        rejectionReason: "CLONED_ENVIRONMENT",
+        errorCode: "FORBIDDEN",
+        clientMessage:
+          "Cloned application environments are prohibited. Please use the primary app on your authorized device.",
+        anomalyFlags: [...anomalyFlags, "cloned_app_detected"],
+        anomaliesToReport,
+        auditRejectionDetails: { reason: "cloned_environment_detected" },
       };
     }
 
