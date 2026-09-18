@@ -200,7 +200,7 @@ export class AdminUsersService {
         },
       });
 
-      const match = data.enrollmentNo.match(/^(\d{2})([a-z]+)(\d{3})$/i);
+      const match = data.enrollmentNo.match(/^(\d{2})([a-z]+)(\d{3,4})$/i);
       const parsedYear = match && match[1] ? 2000 + parseInt(match[1]) : new Date().getFullYear();
       const parsedRoll = match && match[3] ? match[3] : "";
 
@@ -295,6 +295,11 @@ export class AdminUsersService {
     if (!existing) {
       return status(404, { message: "User not found" });
     }
+
+    await prisma.user.update({
+      where: { id },
+      data: { banned: true, banReason: "Suspended by administrator" },
+    });
 
     if (existing.role === "student") {
       await prisma.studentProfile.updateMany({

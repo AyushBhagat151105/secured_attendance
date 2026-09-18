@@ -16,6 +16,7 @@
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "expo": "~57.0.14",
+    "expo-application": "^57.0.3",
     "expo-camera": "~56.0.8",
     "expo-constants": "~57.0.12",
     "expo-crypto": "^57.0.1",
@@ -66,7 +67,8 @@
     "android": "expo run:android --device",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "check-types": "tsc --noEmit"
   },
   "private": true
 }

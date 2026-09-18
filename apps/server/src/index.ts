@@ -12,7 +12,83 @@ import { authModule } from "./routes/auth.route";
 import { teacherModule } from "./routes/teacher.route";
 import { studentModule } from "./routes/student.route";
 
-const app = new Elysia()
+export const app = new Elysia()
+  .onError(({ code, error, set, request }) => {
+    // Schema validation errors
+    if (code === "VALIDATION") {
+      set.status = 400;
+      return {
+        success: false,
+        error: "VALIDATION_ERROR",
+        message: error.message || "Invalid request payload or parameters",
+        details: (error as { all?: unknown }).all ?? error.message,
+      };
+    }
+
+    // Not found errors
+    if (code === "NOT_FOUND") {
+      set.status = 404;
+      return {
+        success: false,
+        error: "NOT_FOUND",
+        message: "Route or resource not found",
+      };
+    }
+
+    // Parse errors (e.g. malformed JSON)
+    if (code === "PARSE") {
+      set.status = 400;
+      return {
+        success: false,
+        error: "PARSE_ERROR",
+        message: "Failed to parse JSON body",
+      };
+    }
+
+    const prismaError = error as { code?: string };
+    // Prisma unique constraint violation
+    if (prismaError?.code === "P2002") {
+      set.status = 400;
+      return {
+        success: false,
+        error: "CONFLICT",
+        message: "A record with this unique identifier already exists",
+      };
+    }
+
+    // Prisma record not found
+    if (prismaError?.code === "P2025") {
+      set.status = 404;
+      return {
+        success: false,
+        error: "NOT_FOUND",
+        message: "Requested record was not found",
+      };
+    }
+
+    // Log unexpected exceptions safely
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : typeof error === "object" && error !== null && "message" in error
+          ? String((error as any).message)
+          : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
+    logger.error("Unhandled server exception", {
+      error: errorMessage,
+      stack: errorStack,
+      url: request.url,
+      method: request.method,
+    });
+
+    set.status = 500;
+    return {
+      success: false,
+      error: "INTERNAL_SERVER_ERROR",
+      message: "An unexpected internal server error occurred",
+    };
+  })
   .onRequest(({ request }) => {
     logger.info(`Received ${request.method} ${request.url}`);
   })
@@ -74,9 +150,11 @@ const app = new Elysia()
 
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
-app.listen({ port, hostname: "0.0.0.0" }, () => {
-  console.log(`Server is running on http://0.0.0.0:${port}`);
-});
+if (process.env.NODE_ENV !== "test" && env.NODE_ENV !== "test") {
+  app.listen({ port, hostname: "0.0.0.0" }, () => {
+    logger.info(`Server is running on http://0.0.0.0:${port}`);
+  });
+}
 
 // Export the App type for Eden Treaty type inference on the frontend
 export type App = typeof app;

@@ -15,7 +15,9 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { BulkImportDropzone } from "@/features/admin/users/components/bulk-import-dropzone";
 import { BulkImportPreview } from "@/features/admin/users/components/bulk-import-preview";
-import { useBulkImportConfirm, useBulkImportPreview } from "@/hooks/api/use-admin-users";
+import { useBulkImportConfirm, useBulkImportPreview, userKeys } from "@/hooks/api/use-admin-users";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/users/import")({
@@ -52,6 +54,7 @@ function ImportPage() {
     errors: string[];
   } | null>(null);
 
+  const queryClient = useQueryClient();
   const previewMutation = useBulkImportPreview();
   const confirmMutation = useBulkImportConfirm();
 
@@ -104,6 +107,16 @@ function ImportPage() {
     setFinalResult({ created: totalCreated, skipped: totalSkipped, errors: totalErrors });
     setIsImporting(false);
     setStep("done");
+
+    // Invalidate queries once and show a single summary toast
+    queryClient.invalidateQueries({ queryKey: userKeys.all });
+    if (totalErrors.length > 0) {
+      toast.warning(
+        `Import completed with ${totalErrors.length} errors: ${totalCreated} created, ${totalSkipped} skipped`,
+      );
+    } else {
+      toast.success(`Successfully imported ${totalCreated} users`);
+    }
   }
 
   function handleReset() {

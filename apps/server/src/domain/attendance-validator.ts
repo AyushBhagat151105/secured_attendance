@@ -3,6 +3,7 @@ import { QrTokenManager } from "./qr-token-manager";
 export interface ScanContext {
   userId: string;
   studentProfileId: string;
+  studentStatus?: string;
   divisionId: string | null;
   deviceBound: boolean;
   boundDeviceId: string | null;
@@ -41,6 +42,7 @@ export interface ScanContext {
 }
 
 export type RejectionReason =
+  | "STUDENT_SUSPENDED"
   | "MOCK_LOCATION"
   | "NO_DIVISION"
   | "DEVICE_REQUIRED"
@@ -115,6 +117,17 @@ export class AttendanceValidator {
 
     if (isOfflineSync) {
       anomalyFlags.push("offline_sync");
+    }
+
+    if (context.studentStatus === "suspended") {
+      return {
+        outcome: "REJECTED",
+        rejectionReason: "STUDENT_SUSPENDED",
+        errorCode: "FORBIDDEN",
+        clientMessage: "Account is suspended. Contact administration.",
+        anomalyFlags,
+        anomaliesToReport,
+      };
     }
 
     if (mockFlag) {
@@ -210,7 +223,40 @@ export class AttendanceValidator {
       };
     }
 
-    if (!isOfflineSync && currentTime > token.expiresAt) {
+    if (isOfflineSync) {
+      if (!context.scannedAt) {
+        return {
+          outcome: "REJECTED",
+          rejectionReason: "QR_EXPIRED",
+          errorCode: "BAD_REQUEST",
+          clientMessage: "Scan timestamp is required for offline sync verification.",
+          anomalyFlags,
+          anomaliesToReport,
+        };
+      }
+
+      if (context.scannedAt > token.expiresAt + 30_000) {
+        return {
+          outcome: "REJECTED",
+          rejectionReason: "QR_EXPIRED",
+          errorCode: "BAD_REQUEST",
+          clientMessage: "QR code has expired. Please scan the current code.",
+          anomalyFlags,
+          anomaliesToReport,
+        };
+      }
+
+      if (context.scannedAt < session.createdAt.getTime() - 60_000) {
+        return {
+          outcome: "REJECTED",
+          rejectionReason: "QR_EXPIRED",
+          errorCode: "BAD_REQUEST",
+          clientMessage: "Scan timestamp precedes session creation.",
+          anomalyFlags,
+          anomaliesToReport,
+        };
+      }
+    } else if (currentTime > token.expiresAt) {
       return {
         outcome: "REJECTED",
         rejectionReason: "QR_EXPIRED",

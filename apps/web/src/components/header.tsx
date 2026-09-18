@@ -41,11 +41,22 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background">
       <div className="container flex h-14 items-center justify-between px-4 sm:px-8">
         <div className="flex items-center gap-6">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="h-8 w-8 bg-primary rounded-md flex items-center justify-center transition-transform group-hover:scale-105">
-              <IconShieldCheck className="text-primary-foreground h-5 w-5" />
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <div className="h-8 w-8 rounded-lg border border-border bg-card p-1 flex items-center justify-center transition-transform group-hover:scale-105 shadow-xs">
+              <img
+                src="/assets/cmpica-logo.webp"
+                alt="CMPICA Logo"
+                className="h-full w-full object-contain rounded"
+              />
             </div>
-            <span className="font-bold tracking-tight hidden sm:inline-block">CHARUSAT</span>
+            <div className="flex flex-col">
+              <span className="font-bold tracking-tight text-sm leading-none text-foreground">
+                CHARUSAT
+              </span>
+              <span className="text-[10px] font-semibold text-muted-foreground tracking-wider uppercase">
+                CMPICA Portal
+              </span>
+            </div>
           </Link>
 
           <nav className="flex items-center gap-1 text-sm font-medium">

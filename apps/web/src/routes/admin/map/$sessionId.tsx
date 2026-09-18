@@ -17,29 +17,45 @@ function AdminMapRoute() {
   if (!data) return null;
 
   // Calculate dynamic bounds to fit both the geofence and all student check-ins
+  const defaultCenter: [number, number] = [22.5995, 72.8205];
+  const hasGeofence =
+    typeof data?.geofence?.centerLat === "number" &&
+    !isNaN(data.geofence.centerLat) &&
+    typeof data?.geofence?.centerLng === "number" &&
+    !isNaN(data.geofence.centerLng);
+
+  const center: [number, number] = hasGeofence
+    ? [data.geofence.centerLat, data.geofence.centerLng]
+    : defaultCenter;
+
+  // Calculate dynamic bounds to fit both the geofence and all student check-ins
   let bounds: [[number, number], [number, number]] | undefined = undefined;
 
   if (data) {
-    let minLat = data.geofence.centerLat;
-    let maxLat = data.geofence.centerLat;
-    let minLng = data.geofence.centerLng;
-    let maxLng = data.geofence.centerLng;
+    let minLat = hasGeofence ? data.geofence.centerLat : undefined;
+    let maxLat = hasGeofence ? data.geofence.centerLat : undefined;
+    let minLng = hasGeofence ? data.geofence.centerLng : undefined;
+    let maxLng = hasGeofence ? data.geofence.centerLng : undefined;
 
     data.points.forEach((point: any) => {
-      if (point.lat < minLat) minLat = point.lat;
-      if (point.lat > maxLat) maxLat = point.lat;
-      if (point.lng < minLng) minLng = point.lng;
-      if (point.lng > maxLng) maxLng = point.lng;
+      if (typeof point.lat === "number" && !isNaN(point.lat) && typeof point.lng === "number" && !isNaN(point.lng)) {
+        if (minLat === undefined || point.lat < minLat) minLat = point.lat;
+        if (maxLat === undefined || point.lat > maxLat) maxLat = point.lat;
+        if (minLng === undefined || point.lng < minLng) minLng = point.lng;
+        if (maxLng === undefined || point.lng > maxLng) maxLng = point.lng;
+      }
     });
 
-    // Add padding to bounds
-    const latPadding = Math.max((maxLat - minLat) * 0.1, 0.001);
-    const lngPadding = Math.max((maxLng - minLng) * 0.1, 0.001);
+    if (minLat !== undefined && maxLat !== undefined && minLng !== undefined && maxLng !== undefined) {
+      // Add padding to bounds
+      const latPadding = Math.max((maxLat - minLat) * 0.1, 0.001);
+      const lngPadding = Math.max((maxLng - minLng) * 0.1, 0.001);
 
-    bounds = [
-      [minLat - latPadding, minLng - lngPadding],
-      [maxLat + latPadding, maxLng + lngPadding],
-    ];
+      bounds = [
+        [minLat - latPadding, minLng - lngPadding],
+        [maxLat + latPadding, maxLng + lngPadding],
+      ];
+    }
   }
 
   return (
@@ -55,48 +71,48 @@ function AdminMapRoute() {
       <Card className="flex-1 flex flex-col overflow-hidden">
         <CardContent className="p-0 flex-1 relative z-0">
           <Map
-            center={
-              !bounds
-                ? ([data.geofence.centerLat, data.geofence.centerLng] as [number, number])
-                : undefined
-            }
-            zoom={!bounds ? 18 : undefined}
+            center={center}
+            zoom={18}
             bounds={bounds}
             className="h-full w-full"
           >
             <MapTileLayer />
 
             {/* Geofence Boundary */}
-            <MapCircle
-              center={[data.geofence.centerLat, data.geofence.centerLng] as [number, number]}
-              radius={data.geofence.radiusMeters}
-              pathOptions={{ color: "indigo", fillColor: "indigo", fillOpacity: 0.1 }}
-            >
-              <MapPopup>Classroom Geofence ({data.geofence.radiusMeters}m radius)</MapPopup>
-            </MapCircle>
+            {hasGeofence && (
+              <MapCircle
+                center={center}
+                radius={data.geofence.radiusMeters || 50}
+                pathOptions={{ color: "indigo", fillColor: "indigo", fillOpacity: 0.1 }}
+              >
+                <MapPopup>Classroom Geofence ({data.geofence.radiusMeters || 50}m radius)</MapPopup>
+              </MapCircle>
+            )}
 
             {/* Student Check-ins */}
-            {data.points.map((point: any, idx: number) => (
-              <MapMarker
-                key={idx}
-                position={[point.lat, point.lng] as [number, number]}
-                icon={
-                  point.isWithinGeofence && !point.isMocked ? (
-                    <IconMapPin className="text-emerald-500 fill-emerald-500/20" size={32} />
-                  ) : (
-                    <IconMapPinOff className="text-red-500 fill-red-500/20" size={32} />
-                  )
-                }
-              >
-                <MapPopup>
-                  <strong>{point.studentName}</strong>
-                  <br />
-                  Valid: {point.isWithinGeofence ? "Yes" : "No (Outside geofence)"}
-                  <br />
-                  Mocked GPS: {point.isMocked ? "Yes (Spoofing)" : "No"}
-                </MapPopup>
-              </MapMarker>
-            ))}
+            {data.points
+              .filter((point: any) => typeof point.lat === "number" && !isNaN(point.lat) && typeof point.lng === "number" && !isNaN(point.lng))
+              .map((point: any, idx: number) => (
+                <MapMarker
+                  key={idx}
+                  position={[point.lat, point.lng] as [number, number]}
+                  icon={
+                    point.isWithinGeofence && !point.isMocked ? (
+                      <IconMapPin className="text-emerald-500 fill-emerald-500/20" size={32} />
+                    ) : (
+                      <IconMapPinOff className="text-red-500 fill-red-500/20" size={32} />
+                    )
+                  }
+                >
+                  <MapPopup>
+                    <strong>{point.studentName}</strong>
+                    <br />
+                    Valid: {point.isWithinGeofence ? "Yes" : "No (Outside geofence)"}
+                    <br />
+                    Mocked GPS: {point.isMocked ? "Yes (Spoofing)" : "No"}
+                  </MapPopup>
+                </MapMarker>
+              ))}
           </Map>
         </CardContent>
       </Card>

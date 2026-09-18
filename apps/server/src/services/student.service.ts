@@ -92,6 +92,7 @@ export class StudentService {
     const context: ScanContext = {
       userId,
       studentProfileId: profile.id,
+      studentStatus: profile.status,
       divisionId: profile.divisionId,
       deviceBound: profile.deviceBound,
       boundDeviceId: profile.deviceId,
@@ -151,16 +152,31 @@ export class StudentService {
       void checkImpossibleTravel(profile.id, userId, gpsLat, gpsLng, new Date());
     }
 
-    const attendance = await prisma.attendance.create({
-      data: {
-        studentProfileId: profile.id,
-        sessionId: session.id,
-        gpsLat,
-        gpsLng,
-        gpsWithinGeofence: true,
-        anomalyFlags: verdict.anomalyFlags,
-      },
-    });
+    let attendance;
+    try {
+      attendance = await prisma.attendance.create({
+        data: {
+          studentProfileId: profile.id,
+          sessionId: session.id,
+          gpsLat,
+          gpsLng,
+          gpsWithinGeofence: true,
+          mockLocationFlag: !!mockFlag,
+          timestamp: isOfflineSync && scannedAt ? new Date(scannedAt) : new Date(),
+          anomalyFlags: verdict.anomalyFlags,
+        },
+      });
+    } catch (err: unknown) {
+      const prismaError = err as { code?: string };
+      if (prismaError?.code === "P2002") {
+        return {
+          success: false,
+          error: "BAD_REQUEST",
+          message: "You have already marked attendance for this session",
+        };
+      }
+      throw err;
+    }
 
     logger.info("Attendance marked successfully", {
       userId,

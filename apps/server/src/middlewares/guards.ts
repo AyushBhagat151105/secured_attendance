@@ -13,22 +13,28 @@ type UserRole = "student" | "teacher" | "admin" | "super_admin";
  * Using `.derive()` is the most robust way to inject `user` and `session` into the handler
  * context with perfect type inference in Elysia.
  */
-export const authMacro = new Elysia({ name: "auth-macro" }).macro({
-  requireAuth: {
-    resolve: async ({ request, status }) => {
-      const session = await auth.api.getSession({ headers: request.headers });
-
-      if (!session) {
-        throw status(401, { message: "Unauthorized" });
-      }
-
+export const authMacro = new Elysia({ name: "auth-macro" })
+  .macro({
+    requireAuth: (enabled: boolean) => {
+      if (!enabled) return;
       return {
-        user: session.user,
-        session: session.session,
+        beforeHandle: async ({ request }) => {
+          const session = await auth.api.getSession({ headers: request.headers });
+          if (!session) {
+            return status(401, { message: "Unauthorized" });
+          }
+        },
+        resolve: async ({ request }) => {
+          const session = await auth.api.getSession({ headers: request.headers });
+          return {
+            user: session?.user,
+            session: session?.session,
+          };
+        },
       };
     },
-  },
-});
+  })
+  .as("scoped");
 
 // ─── Role Guard Plugin ────────────────────────────────────────────────────────
 
@@ -43,8 +49,8 @@ export const authMacro = new Elysia({ name: "auth-macro" }).macro({
  *   .get('/', handler)
  */
 export function requireRole(roles: UserRole[]) {
-  return new Elysia({ name: `require-role-${roles.join("-")}` }).onBeforeHandle(
-    async ({ request }) => {
+  return new Elysia({ name: `require-role-${roles.join("-")}` })
+    .onBeforeHandle(async ({ request }) => {
       const session = await auth.api.getSession({ headers: request.headers });
 
       if (!session) {
@@ -56,6 +62,6 @@ export function requireRole(roles: UserRole[]) {
       if (!role || !roles.includes(role)) {
         return status(403, { message: "Forbidden" });
       }
-    },
-  );
+    })
+    .as("scoped");
 }

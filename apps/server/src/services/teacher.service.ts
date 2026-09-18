@@ -131,7 +131,11 @@ export class TeacherService {
     }
 
     // Validate Geofence Configuration
-    if (!entry.room?.building?.gpsLat || !entry.room?.building?.radiusMeters) {
+    if (
+      entry.room?.building?.gpsLat == null ||
+      entry.room?.building?.gpsLng == null ||
+      !entry.room?.building?.radiusMeters
+    ) {
       return status(400, {
         message:
           "GEOFENCE_NOT_CONFIGURED: The geofence for this classroom has not been set up. Please contact the administrator to set the building's GPS coordinates before taking attendance.",

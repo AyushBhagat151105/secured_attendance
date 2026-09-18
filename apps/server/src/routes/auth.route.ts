@@ -8,7 +8,7 @@ export const authModule = new Elysia({ prefix: "/api/auth-custom" })
   .use(authMacro)
   .patch(
     "/complete-onboarding",
-    async ({ user, status }) => {
+    async ({ user, status }: any) => {
       try {
         await prisma.user.update({
           where: { id: user.id },

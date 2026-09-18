@@ -345,38 +345,39 @@ export class TeacherRosterService {
       .filter((a) => !targetStudentIds.has(a.studentProfileId))
       .map((a) => a.id);
 
-    if (toAdd.length > 0) {
-      await prisma.attendance.createMany({
-        data: toAdd.map((studentProfileId) => ({
-          sessionId: session.id,
-          studentProfileId,
-          gpsWithinGeofence: true,
-          anomalyFlags: ["manual_teacher_override"],
-        })),
-        skipDuplicates: true,
-      });
-    }
+    const closed = await prisma.$transaction(async (tx) => {
+      if (toAdd.length > 0) {
+        await tx.attendance.createMany({
+          data: toAdd.map((studentProfileId) => ({
+            sessionId: session.id,
+            studentProfileId,
+            gpsWithinGeofence: true,
+            anomalyFlags: ["manual_teacher_override"],
+          })),
+          skipDuplicates: true,
+        });
+      }
 
-    if (toRemove.length > 0) {
-      await prisma.attendance.deleteMany({
-        where: { id: { in: toRemove } },
-      });
-    }
+      if (toRemove.length > 0) {
+        await tx.attendance.deleteMany({
+          where: { id: { in: toRemove } },
+        });
+      }
 
-    const now = new Date();
-    const closed = await prisma.attendanceSession.update({
-      where: { id: sessionId },
-      data: {
-        status: "closed",
-        closedAt: now,
-      },
-      select: {
-        id: true,
-        status: true,
-        closedAt: true,
-        subjectId: true,
-        roomId: true,
-      },
+      return tx.attendanceSession.update({
+        where: { id: sessionId },
+        data: {
+          status: "closed",
+          closedAt: new Date(),
+        },
+        select: {
+          id: true,
+          status: true,
+          closedAt: true,
+          subjectId: true,
+          roomId: true,
+        },
+      });
     });
 
     logger.info("Session finalized with overrides", {

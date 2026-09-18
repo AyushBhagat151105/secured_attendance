@@ -145,14 +145,17 @@ export default function ScanScreen() {
           setStatusMessage(`Attendance recorded, but GPS verified outside geofence. ${pct}`);
         }
       } catch (error: unknown) {
-        const err = error as { message?: string; response?: unknown; code?: string };
+        const err = error as { message?: string; response?: unknown; code?: string; status?: number };
         const message = err.message?.toLowerCase() || "";
         const isNetworkOrTimeout =
-          !err.response ||
-          err.code === "ECONNABORTED" ||
-          message.includes("network") ||
-          message.includes("failed to fetch") ||
-          message.includes("timeout");
+          !err.status &&
+          !err.response &&
+          (err.code === "ECONNABORTED" ||
+            err.code === "ERR_NETWORK" ||
+            message.includes("network") ||
+            message.includes("failed to fetch") ||
+            message.includes("timeout") ||
+            message.includes("connection"));
 
         if (isNetworkOrTimeout) {
           await savePendingAttendance(payloadData);

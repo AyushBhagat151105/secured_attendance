@@ -21,14 +21,18 @@ export interface SessionCandidate {
   createdAt: Date;
 }
 
+const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
+
 export class ScheduleResolver {
   static getAcademicDate(date: Date = new Date()): AcademicDateInfo {
-    const istString = date.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-    const istDate = new Date(istString);
-    const dayOfWeek = istDate.getDay();
+    const istTime = new Date(date.getTime() + IST_OFFSET_MS);
+    const dayOfWeek = istTime.getUTCDay();
 
-    const todayStart = new Date(istDate);
-    todayStart.setHours(0, 0, 0, 0);
+    const year = istTime.getUTCFullYear();
+    const month = istTime.getUTCMonth();
+    const dayDate = istTime.getUTCDate();
+
+    const todayStart = new Date(Date.UTC(year, month, dayDate, 0, 0, 0, 0) - IST_OFFSET_MS);
 
     return {
       dayOfWeek,

@@ -164,6 +164,19 @@ export default function ProfileScreen() {
             }
           />
         </View>
+
+        {/* Institutional Attribution Footer */}
+        <View style={styles.profileFooter}>
+          <Text style={[styles.profileFooterInst, { color: colors.textMuted }]}>
+            CHARUSAT • CMPICA DEPARTMENT
+          </Text>
+          <Text style={[styles.profileFooterDev, { color: colors.textMuted }]}>
+            Engineered with precision by{" "}
+            <Text style={{ fontWeight: "700", color: isDark ? PALETTE.hiVisYellow : PALETTE.inkBlack }}>
+              Ayush Bhagat
+            </Text>
+          </Text>
+        </View>
       </ScrollView>
     </Container>
   );
@@ -248,5 +261,23 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: "row",
     gap: 12,
+  },
+  profileFooter: {
+    marginTop: 28,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(128, 128, 128, 0.2)",
+    alignItems: "center",
+    gap: 4,
+  },
+  profileFooterInst: {
+    fontSize: 10,
+    fontWeight: "800",
+    fontFamily: FONTS.mono,
+    letterSpacing: 0.8,
+  },
+  profileFooterDev: {
+    fontSize: 11,
+    fontFamily: FONTS.body,
   },
 });

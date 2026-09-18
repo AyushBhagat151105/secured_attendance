@@ -20,9 +20,12 @@ describe("ScheduleResolver — Deep Scheduling Domain Module", () => {
       const date = new Date("2026-09-14T10:00:00Z");
       const info = ScheduleResolver.getAcademicDate(date);
 
-      expect(info.todayStart.getHours()).toBe(0);
-      expect(info.todayStart.getMinutes()).toBe(0);
-      expect(info.todayStart.getSeconds()).toBe(0);
+      // IST midnight should be 18:30:00 UTC of previous day (12:00:00 AM IST)
+      expect(info.todayStart.toISOString()).toBe("2026-09-13T18:30:00.000Z");
+      const istTime = new Date(info.todayStart.getTime() + 19800000);
+      expect(istTime.getUTCHours()).toBe(0);
+      expect(istTime.getUTCMinutes()).toBe(0);
+      expect(istTime.getUTCSeconds()).toBe(0);
     });
   });
 

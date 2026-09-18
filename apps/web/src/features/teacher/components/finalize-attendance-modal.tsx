@@ -38,14 +38,24 @@ export function FinalizeAttendanceModal({
 
   const [presentIds, setPresentIds] = useState<Set<string>>(new Set());
   const [initialQrIds, setInitialQrIds] = useState<Set<string>>(new Set());
+  const [isDirty, setIsDirty] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMode, setFilterMode] = useState<"all" | "absent" | "present">("all");
 
   const students = useMemo(() => rosterData?.students || [], [rosterData]);
 
-  // When roster data loads from server, seed initial present set from QR scans
+  // When sheet closes, reset dirty state and selection
   useEffect(() => {
-    if (students.length > 0) {
+    if (!open) {
+      setIsDirty(false);
+      setPresentIds(new Set());
+      setInitialQrIds(new Set());
+    }
+  }, [open]);
+
+  // When roster data loads from server, seed initial present set only if teacher hasn't made manual adjustments
+  useEffect(() => {
+    if (open && students.length > 0 && !isDirty) {
       const scanned = new Set<string>();
       const currentPresent = new Set<string>();
 
@@ -61,9 +71,10 @@ export function FinalizeAttendanceModal({
       setInitialQrIds(scanned);
       setPresentIds(currentPresent);
     }
-  }, [students]);
+  }, [open, students, isDirty]);
 
   const toggleStudent = (id: string) => {
+    setIsDirty(true);
     setPresentIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -76,6 +87,7 @@ export function FinalizeAttendanceModal({
   };
 
   const markAllPresent = () => {
+    setIsDirty(true);
     setPresentIds(new Set(students.map((s: any) => s.id)));
   };
 

@@ -155,7 +155,7 @@ export const adminReportModule = new Elysia({ prefix: "/reports" })
         s.id,
         new Date(s.startTime).toLocaleDateString(),
         `"${s.subject.name}"`, // Quote to handle commas in subject names
-        `"${s.teacherProfile.user.name}"`,
+        `"${s.teacherProfile?.user?.name ?? "Unassigned"}"`,
         expectedCount.toString(),
         presentCount.toString(),
         `${percentage}%`,

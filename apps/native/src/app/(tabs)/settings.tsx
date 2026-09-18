@@ -1,4 +1,13 @@
-import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
+import {
+  Text,
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  Image,
+  Linking,
+} from "react-native";
 import { useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -69,6 +78,19 @@ export default function SettingsScreen() {
 
   const appVersion = Constants.expoConfig?.version ?? "1.0.0";
   const serverUrl = SERVER_URL;
+
+  const handleOpenLink = async (url: string, label: string) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        await Linking.openURL(url);
+      }
+    } catch {
+      Alert.alert("Link Error", `Could not open ${label} (${url})`);
+    }
+  };
 
   return (
     <Container scroll={false} padded={false}>
@@ -237,6 +259,226 @@ export default function SettingsScreen() {
           )}
         </Card>
 
+        {/* Institution & Developer Credits Section */}
+        <SectionHeader title="INSTITUTION & DEVELOPER CREDITS" style={{ marginTop: 20 }} />
+        <Card variant="bone" style={styles.groupedCard}>
+          {/* Official Campus & Department Logos Showcase */}
+          <View style={styles.logoBanner}>
+            <View style={styles.logoBadgeContainer}>
+              <View style={styles.charusatBox}>
+                <Image
+                  source={require("@/../assets/images/charusat-logo.png")}
+                  style={styles.charusatLogo}
+                  resizeMode="contain"
+                />
+              </View>
+              <View style={styles.logoDivider} />
+              <View style={styles.cmpicaBox}>
+                <Image
+                  source={require("@/../assets/images/cmpica-logo.webp")}
+                  style={styles.cmpicaLogo}
+                  resizeMode="contain"
+                />
+              </View>
+            </View>
+            <View style={styles.logoHeaderTextContainer}>
+              <Text style={[styles.logoHeaderTitle, { color: colors.textPrimary }]}>
+                CHARUSAT • CMPICA
+              </Text>
+              <Text style={[styles.logoHeaderSub, { color: colors.textMuted }]}>
+                Charotar University of Science & Technology
+              </Text>
+            </View>
+          </View>
+
+          <View style={[styles.rowDivider, { backgroundColor: colors.divider }]} />
+
+          <View style={styles.row}>
+            <View style={styles.rowLeft}>
+              <View
+                style={[
+                  styles.iconCircle,
+                  {
+                    backgroundColor: PALETTE.matchaCream,
+                    borderColor: isDark ? colors.border : PALETTE.inkBlack,
+                  },
+                ]}
+              >
+                <Ionicons name="school-sharp" size={18} color={PALETTE.pureBlack} />
+              </View>
+              <View>
+                <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>University</Text>
+                <Text style={[styles.rowSub, { color: colors.textMuted }]}>
+                  CHARUSAT • Changa, Gujarat 388421
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={[styles.rowDivider, { backgroundColor: colors.divider }]} />
+
+          <View style={styles.row}>
+            <View style={styles.rowLeft}>
+              <View
+                style={[
+                  styles.iconCircle,
+                  {
+                    backgroundColor: PALETTE.bubblegumPink,
+                    borderColor: isDark ? colors.border : PALETTE.inkBlack,
+                  },
+                ]}
+              >
+                <Ionicons name="business-sharp" size={18} color={PALETTE.pureBlack} />
+              </View>
+              <View>
+                <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>Department</Text>
+                <Text style={[styles.rowSub, { color: colors.textMuted }]}>
+                  CMPICA (Computer Applications)
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={[styles.rowDivider, { backgroundColor: colors.divider }]} />
+
+          <View style={styles.row}>
+            <View style={styles.rowLeft}>
+              <View
+                style={[
+                  styles.iconCircle,
+                  {
+                    backgroundColor: PALETTE.hiVisYellow,
+                    borderColor: isDark ? colors.border : PALETTE.inkBlack,
+                  },
+                ]}
+              >
+                <Ionicons name="code-slash-sharp" size={18} color={PALETTE.pureBlack} />
+              </View>
+              <View>
+                <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>Lead Developer</Text>
+                <Text style={[styles.rowSub, { color: colors.textMuted }]}>
+                  Ayush Bhagat (Solo Architect)
+                </Text>
+              </View>
+            </View>
+            <Badge label="CREATOR" variant="live" size="sm" />
+          </View>
+
+          <View style={[styles.rowDivider, { backgroundColor: colors.divider }]} />
+
+          {/* Interactive GitHub Link */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={styles.row}
+            onPress={() =>
+              handleOpenLink(
+                "https://github.com/ayushbhagat151105",
+                "GitHub Portfolio"
+              )
+            }
+          >
+            <View style={styles.rowLeft}>
+              <View
+                style={[
+                  styles.iconCircle,
+                  {
+                    backgroundColor: isDark ? PALETTE.darkNested : PALETTE.pureBlack,
+                    borderColor: isDark ? colors.border : PALETTE.inkBlack,
+                  },
+                ]}
+              >
+                <Ionicons name="logo-github" size={18} color={PALETTE.boneWhite} />
+              </View>
+              <View>
+                <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>GitHub Portfolio</Text>
+                <Text style={[styles.rowSub, { color: colors.textMuted }]}>
+                  github.com/ayushbhagat151105
+                </Text>
+              </View>
+            </View>
+            <View style={styles.linkActionBadge}>
+              <Text style={styles.linkActionText}>VIEW</Text>
+              <Ionicons name="open-outline" size={14} color={isDark ? PALETTE.hiVisYellow : PALETTE.pureBlack} />
+            </View>
+          </TouchableOpacity>
+
+          <View style={[styles.rowDivider, { backgroundColor: colors.divider }]} />
+
+          {/* Interactive Instagram Link */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={styles.row}
+            onPress={() =>
+              handleOpenLink(
+                "https://www.instagram.com/bhagat_ayush__/",
+                "Instagram Profile"
+              )
+            }
+          >
+            <View style={styles.rowLeft}>
+              <View
+                style={[
+                  styles.iconCircle,
+                  {
+                    backgroundColor: "#E1306C",
+                    borderColor: isDark ? colors.border : PALETTE.inkBlack,
+                  },
+                ]}
+              >
+                <Ionicons name="logo-instagram" size={18} color={PALETTE.pureWhite} />
+              </View>
+              <View>
+                <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>Instagram</Text>
+                <Text style={[styles.rowSub, { color: colors.textMuted }]}>
+                  @bhagat_ayush__
+                </Text>
+              </View>
+            </View>
+            <View style={styles.linkActionBadge}>
+              <Text style={styles.linkActionText}>FOLLOW</Text>
+              <Ionicons name="open-outline" size={14} color={isDark ? PALETTE.hiVisYellow : PALETTE.pureBlack} />
+            </View>
+          </TouchableOpacity>
+
+          <View style={[styles.rowDivider, { backgroundColor: colors.divider }]} />
+
+          {/* Interactive LinkedIn Link */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={styles.row}
+            onPress={() =>
+              handleOpenLink(
+                "https://www.linkedin.com/in/ayush-bhagat-99b7b82b3/",
+                "LinkedIn Profile"
+              )
+            }
+          >
+            <View style={styles.rowLeft}>
+              <View
+                style={[
+                  styles.iconCircle,
+                  {
+                    backgroundColor: "#0A66C2",
+                    borderColor: isDark ? colors.border : PALETTE.inkBlack,
+                  },
+                ]}
+              >
+                <Ionicons name="logo-linkedin" size={18} color={PALETTE.pureWhite} />
+              </View>
+              <View>
+                <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>LinkedIn Profile</Text>
+                <Text style={[styles.rowSub, { color: colors.textMuted }]}>
+                  linkedin.com/in/ayush-bhagat
+                </Text>
+              </View>
+            </View>
+            <View style={styles.linkActionBadge}>
+              <Text style={styles.linkActionText}>CONNECT</Text>
+              <Ionicons name="open-outline" size={14} color={isDark ? PALETTE.hiVisYellow : PALETTE.pureBlack} />
+            </View>
+          </TouchableOpacity>
+        </Card>
+
         {/* Sign Out Button */}
         <Button
           label="SIGN OUT"
@@ -303,5 +545,80 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "rgba(26,26,26,0.1)",
     marginHorizontal: 16,
+  },
+  logoBanner: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    alignItems: "center",
+    gap: 8,
+  },
+  logoBadgeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  charusatBox: {
+    height: 38,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: PALETTE.pureWhite,
+    borderRadius: RADIUS.sm,
+    borderWidth: BORDERS.default,
+    borderColor: PALETTE.inkBlack,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  charusatLogo: {
+    height: 22,
+    width: 80,
+  },
+  logoDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: "rgba(26,26,26,0.2)",
+  },
+  cmpicaBox: {
+    height: 38,
+    width: 38,
+    padding: 3,
+    backgroundColor: PALETTE.pureWhite,
+    borderRadius: RADIUS.sm,
+    borderWidth: BORDERS.default,
+    borderColor: PALETTE.inkBlack,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cmpicaLogo: {
+    height: "100%",
+    width: "100%",
+  },
+  logoHeaderTextContainer: {
+    alignItems: "center",
+  },
+  logoHeaderTitle: {
+    fontSize: 13,
+    fontWeight: "900",
+    fontFamily: FONTS.display,
+    letterSpacing: 0.5,
+  },
+  logoHeaderSub: {
+    fontSize: 10,
+    fontFamily: FONTS.mono,
+    marginTop: 2,
+  },
+  linkActionBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: RADIUS.sm,
+    backgroundColor: "rgba(0,0,0,0.06)",
+  },
+  linkActionText: {
+    fontSize: 10,
+    fontWeight: "800",
+    fontFamily: FONTS.mono,
+    letterSpacing: 0.5,
   },
 });

@@ -123,14 +123,9 @@ export const useBulkImportPreview = () => {
 };
 
 export const useBulkImportConfirm = () => {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: any) =>
       unwrapEden(apiClient.api.admin.users["bulk-import"].confirm.post(body)),
-    onSuccess: () => {
-      toast.success("Users imported successfully");
-      queryClient.invalidateQueries({ queryKey: userKeys.all });
-    },
     onError: (err) => toast.error(err.message),
   });
 };

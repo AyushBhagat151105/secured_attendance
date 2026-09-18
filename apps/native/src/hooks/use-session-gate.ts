@@ -93,21 +93,21 @@ export function useSessionGate(): SessionGateResult {
     }
   }, [profile]);
 
-  useEffect(() => {
-    if (sessionPending) {
-      const timer = setTimeout(() => {
-        setTimeoutReached(true);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [sessionPending]);
-
   const effectiveSession = session || cachedSession;
   const effectiveUser = (session?.user || cachedSession?.user) as CachedUser | null;
   const effectiveProfile = profile || cachedProfile;
 
   const isPending = sessionPending || (effectiveUser?.role === "student" && profilePending);
   const isOffline = !session && !!cachedSession;
+
+  useEffect(() => {
+    if (isPending) {
+      const timer = setTimeout(() => {
+        setTimeoutReached(true);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isPending]);
 
   const status = useMemo(() => {
     return resolveSessionGateStatus({

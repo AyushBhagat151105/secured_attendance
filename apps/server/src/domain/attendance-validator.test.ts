@@ -51,6 +51,8 @@ function createValidContext(overrides?: Partial<ScanContext>): ScanContext {
       accuracy: 10,
     },
     isOfflineSync: false,
+    scannedAt: Date.now(),
+    studentStatus: "active",
   };
 
   return {
@@ -139,6 +141,42 @@ describe("AttendanceValidator — Pure Domain Engine", () => {
 
       expect(verdict.outcome).toBe("ACCEPTED");
       expect(verdict.anomalyFlags).toContain("offline_sync");
+    });
+
+    it("rejects offline sync if scannedAt is missing", () => {
+      const ctx = createValidContext({ isOfflineSync: true, scannedAt: undefined });
+      ctx.session.status = "closed";
+      ctx.session.createdAt = new Date(Date.now() - 3600000);
+      const verdict = AttendanceValidator.evaluate(ctx);
+
+      expect(verdict.outcome).toBe("REJECTED");
+      expect(verdict.rejectionReason).toBe("QR_EXPIRED");
+      expect(verdict.clientMessage).toContain("Scan timestamp is required");
+    });
+
+    it("rejects offline sync if QR code was expired at the time of scan", () => {
+      const pastTime = Date.now() - 100000;
+      const ctx = createValidContext({
+        isOfflineSync: true,
+        scannedAt: pastTime,
+      });
+      ctx.token.expiresAt = pastTime - 40000; // expired 40s before scan (outside 30s clock skew)
+      ctx.session.status = "closed";
+      ctx.session.createdAt = new Date(pastTime - 60000);
+      const verdict = AttendanceValidator.evaluate(ctx);
+
+      expect(verdict.outcome).toBe("REJECTED");
+      expect(verdict.rejectionReason).toBe("QR_EXPIRED");
+    });
+
+    it("rejects when student is suspended", () => {
+      const ctx = createValidContext({ studentStatus: "suspended" });
+      const verdict = AttendanceValidator.evaluate(ctx);
+
+      expect(verdict.outcome).toBe("REJECTED");
+      expect(verdict.rejectionReason).toBe("STUDENT_SUSPENDED");
+      expect(verdict.errorCode).toBe("FORBIDDEN");
+      expect(verdict.clientMessage).toContain("suspended");
     });
 
     it("rejects offline sync if session was created over 24 hours ago", () => {

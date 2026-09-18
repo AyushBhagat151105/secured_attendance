@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Text, View, StyleSheet, TextInput, TouchableOpacity } from "react-native";
+import { Text, View, StyleSheet, TextInput, TouchableOpacity, Image } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -132,13 +132,26 @@ export default function SignInScreen() {
       <View style={styles.contentWrapper}>
         {/* Brand Header */}
         <View style={styles.brandHeader}>
-          <View style={styles.brandIconBox}>
-            <Ionicons name="shield-checkmark-sharp" size={32} color={PALETTE.pureBlack} />
+          <View style={styles.brandLogoRow}>
+            <View style={styles.charusatBox}>
+              <Image
+                source={require("@/../assets/images/charusat-logo.png")}
+                style={styles.charusatLogo}
+                resizeMode="contain"
+              />
+            </View>
+            <View style={styles.cmpicaBox}>
+              <Image
+                source={require("@/../assets/images/cmpica-logo.webp")}
+                style={styles.cmpicaLogo}
+                resizeMode="contain"
+              />
+            </View>
           </View>
           <Text maxFontSizeMultiplier={1.2} style={styles.brandTitle}>
             SECURED ATTENDANCE
           </Text>
-          <Text style={styles.brandSubtitle}>STUDENT ACCESS PORTAL</Text>
+          <Text style={styles.brandSubtitle}>CMPICA • CHARUSAT CAMPUS PORTAL</Text>
         </View>
 
         {/* Login Card */}
@@ -250,6 +263,14 @@ export default function SignInScreen() {
           <Ionicons name="lock-closed-sharp" size={12} color="rgba(249, 245, 242, 0.7)" />
           <Text style={styles.securityFooterText}>PROXY PREVENTION ACTIVE • HARDWARE BOUND</Text>
         </View>
+
+        {/* Institutional & Developer Attribution */}
+        <View style={styles.attributionCard}>
+          <Text style={styles.attributionInst}>CHARUSAT • CMPICA DEPARTMENT</Text>
+          <Text style={styles.attributionDev}>
+            Engineered with precision by <Text style={styles.attributionName}>Ayush Bhagat</Text>
+          </Text>
+        </View>
       </View>
     </Container>
   );
@@ -263,18 +284,43 @@ const styles = StyleSheet.create({
   },
   brandHeader: {
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 20,
   },
-  brandIconBox: {
-    width: 60,
-    height: 60,
-    borderRadius: RADIUS.md,
-    backgroundColor: PALETTE.hiVisYellow,
-    borderWidth: BORDERS.heavy,
-    borderColor: PALETTE.pureBlack,
+  brandLogoRow: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: 10,
+    marginBottom: 14,
+  },
+  charusatBox: {
+    height: 40,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    backgroundColor: PALETTE.pureWhite,
+    borderRadius: RADIUS.sm,
+    borderWidth: BORDERS.default,
+    borderColor: PALETTE.inkBlack,
     justifyContent: "center",
-    marginBottom: 12,
+    alignItems: "center",
+  },
+  charusatLogo: {
+    height: 24,
+    width: 84,
+  },
+  cmpicaBox: {
+    height: 40,
+    width: 40,
+    padding: 3,
+    backgroundColor: PALETTE.pureWhite,
+    borderRadius: RADIUS.sm,
+    borderWidth: BORDERS.default,
+    borderColor: PALETTE.inkBlack,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cmpicaLogo: {
+    height: "100%",
+    width: "100%",
   },
   brandTitle: {
     fontSize: 22,
@@ -355,7 +401,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    marginTop: 24,
+    marginTop: 20,
   },
   securityFooterText: {
     fontSize: 10,
@@ -363,5 +409,30 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     color: "rgba(249, 245, 242, 0.75)",
     letterSpacing: 0.5,
+  },
+  attributionCard: {
+    alignItems: "center",
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(249, 245, 242, 0.15)",
+    gap: 2,
+  },
+  attributionInst: {
+    fontSize: 10,
+    fontWeight: "800",
+    fontFamily: FONTS.mono,
+    color: "rgba(249, 245, 242, 0.6)",
+    letterSpacing: 0.8,
+  },
+  attributionDev: {
+    fontSize: 11,
+    fontFamily: FONTS.body,
+    color: "rgba(249, 245, 242, 0.85)",
+  },
+  attributionName: {
+    fontWeight: "800",
+    fontFamily: FONTS.display,
+    color: PALETTE.hiVisYellow,
   },
 });

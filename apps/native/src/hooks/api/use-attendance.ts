@@ -15,6 +15,20 @@ export type ScanAttendancePayload = {
   scannedAt?: number;
 };
 
+export class ApiError extends Error {
+  status?: number;
+  code?: string;
+  response?: unknown;
+
+  constructor(message: string, status?: number, code?: string, response?: unknown) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+    this.response = response;
+  }
+}
+
 export function useScanAttendance() {
   const qc = useQueryClient();
 
@@ -23,8 +37,23 @@ export function useScanAttendance() {
       try {
         const res = await apiClient.post("/api/student/attendance/scan", payload);
         return res.data;
-      } catch (err: any) {
-        throw new Error(err.response?.data?.message || err.message || "Failed to scan attendance");
+      } catch (err: unknown) {
+        const axiosErr = err as {
+          response?: { status?: number; data?: { message?: string; error?: string } };
+          code?: string;
+          message?: string;
+        };
+        const message =
+          axiosErr.response?.data?.message ||
+          axiosErr.response?.data?.error ||
+          axiosErr.message ||
+          "Failed to scan attendance";
+        throw new ApiError(
+          message,
+          axiosErr.response?.status,
+          axiosErr.code,
+          axiosErr.response,
+        );
       }
     },
     onSuccess: () => {

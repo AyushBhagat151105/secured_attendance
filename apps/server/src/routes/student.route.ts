@@ -17,7 +17,7 @@ export const studentModule = new Elysia({ prefix: "/api/student" })
 
   .get(
     "/profile",
-    async ({ user }) => {
+    async ({ user }: any) => {
       return StudentService.getProfile(user.id);
     },
     { requireAuth: true, response: StudentProfileResponse },
@@ -25,7 +25,7 @@ export const studentModule = new Elysia({ prefix: "/api/student" })
 
   .get(
     "/schedule/today",
-    async ({ user }) => {
+    async ({ user }: any) => {
       return StudentScheduleService.getTodaySchedule(user.id);
     },
     { requireAuth: true, response: ScheduleResponse },
@@ -33,7 +33,7 @@ export const studentModule = new Elysia({ prefix: "/api/student" })
 
   .get(
     "/attendance/my",
-    async ({ user, query }) => {
+    async ({ user, query }: any) => {
       const page = query.page ? parseInt(query.page) : 1;
       const limit = query.limit ? parseInt(query.limit) : 20;
       return StudentHistoryService.getHistory(user.id, page, limit);
@@ -47,7 +47,7 @@ export const studentModule = new Elysia({ prefix: "/api/student" })
 
   .get(
     "/attendance/stats",
-    async ({ user }) => {
+    async ({ user }: any) => {
       return StudentHistoryService.getStats(user.id);
     },
     { requireAuth: true, response: AttendanceStats },
@@ -55,7 +55,7 @@ export const studentModule = new Elysia({ prefix: "/api/student" })
 
   .post(
     "/attendance/scan",
-    async ({ user, body, status, server }) => {
+    async ({ user, body, status, server }: any) => {
       const result = await StudentService.submitAttendance(user.id, body, server);
       if (!result.success) {
         switch (result.error) {
