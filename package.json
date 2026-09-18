@@ -46,7 +46,7 @@
     "db:down": "turbo -F @secured_attendance/db db:down",
     "db:seed": "bun run --filter server db:seed",
     "seed:dev": "ALLOW_DEV_SEED=true bun run --filter server seed:dev",
-    "test": "bun test",
+    "test": "bun test --path-ignore-patterns \"**/dist/**\"",
     "export:updates": "bun run --filter native export:updates",
     "build:apk": "bun run --filter native build:apk",
     "lint:eslint": "eslint .",

@@ -3,3 +3,4 @@ linker = "hoisted"
 
 [test]
 preload = ["./apps/server/src/e2e/test-env.ts"]
+pathIgnorePatterns = ["**/dist/**"]
