@@ -23,7 +23,7 @@ services:
       - DEFAULT_TEACHER_PASSWORD=${DEFAULT_TEACHER_PASSWORD:-Charusat@123}
       - DEFAULT_STUDENT_PASSWORD=${DEFAULT_STUDENT_PASSWORD:-Charusat@123}
     volumes:
-      - ./uploads/updates:/app/apps/server/uploads/updates
+      - ./uploads:/app/apps/server/uploads
     depends_on:
       - redis
     networks:

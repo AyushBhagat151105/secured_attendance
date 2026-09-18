@@ -146,6 +146,7 @@ export const app = new Elysia()
     const manifestPath = path.resolve(uploadsDir, "updates/metadata.json");
     if (!fs.existsSync(manifestPath)) {
       set.status = 404;
+      set.headers["cache-control"] = "no-store, no-cache, must-revalidate";
       return { error: "No OTA update available" };
     }
 
@@ -234,6 +235,7 @@ export const app = new Elysia()
     const filePath = path.resolve(getUploadsDir(), "updates", wildcard);
     if (!fs.existsSync(filePath)) {
       set.status = 404;
+      set.headers["cache-control"] = "no-store, no-cache, must-revalidate";
       return "Not found";
     }
 
@@ -264,10 +266,12 @@ export const app = new Elysia()
     const filePath = path.resolve(getUploadsDir(), "downloads", params.file);
     if (!fs.existsSync(filePath)) {
       set.status = 404;
+      set.headers["cache-control"] = "no-store, no-cache, must-revalidate";
       return "File not found";
     }
     set.headers["content-type"] = "application/vnd.android.package-archive";
     set.headers["content-disposition"] = `attachment; filename="${params.file}"`;
+    set.headers["cache-control"] = "public, max-age=3600";
     return Bun.file(filePath);
   });
 

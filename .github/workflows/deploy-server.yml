@@ -8,6 +8,8 @@ on:
     paths:
       - "apps/server/**"
       - "packages/**"
+      - "docker-compose.prod.yml"
+      - ".github/workflows/deploy-server.yml"
   workflow_dispatch:
 
 env:
@@ -64,6 +66,9 @@ jobs:
 
             # Authenticate Docker on VPS to pull GHCR packages
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # Ensure upload directories exist on host
+            mkdir -p /root/secured_attendance/uploads/updates /root/secured_attendance/uploads/downloads
 
             # Pull pre-built image and restart containers
             docker compose -f docker-compose.prod.yml pull server
