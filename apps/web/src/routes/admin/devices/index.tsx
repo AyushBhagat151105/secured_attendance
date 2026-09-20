@@ -62,6 +62,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 
+const REQUESTS_PAGE_SIZE = 20;
+const INVENTORY_PAGE_SIZE = 20;
+
 export const Route = createFileRoute("/admin/devices/")({
   component: DevicesPage,
 });
@@ -72,6 +75,7 @@ function DevicesPage() {
   // Re-bind Requests State
   const [requestStatus, setRequestStatus] = useState<string>("PENDING");
   const [requestSearch, setRequestSearch] = useState<string>("");
+  const [requestPage, setRequestPage] = useState<number>(1);
   const {
     data: requestsData,
     isLoading: isRequestsLoading,
@@ -80,8 +84,12 @@ function DevicesPage() {
   } = useRebindRequests({
     status: requestStatus,
     search: requestSearch,
-    limit: 50,
+    page: requestPage,
+    limit: REQUESTS_PAGE_SIZE,
   });
+
+  const requestTotal = requestsData?.total ?? 0;
+  const requestTotalPages = Math.max(1, Math.ceil(requestTotal / REQUESTS_PAGE_SIZE));
 
   const approveMutation = useApproveRebindRequest();
   const rejectMutation = useRejectRebindRequest();
@@ -93,6 +101,7 @@ function DevicesPage() {
   // Inventory State
   const [inventoryStatus, setInventoryStatus] = useState<"all" | "bound" | "unbound">("all");
   const [inventorySearch, setInventorySearch] = useState<string>("");
+  const [inventoryPage, setInventoryPage] = useState<number>(1);
   const {
     data: inventoryData,
     isLoading: isInventoryLoading,
@@ -101,8 +110,12 @@ function DevicesPage() {
   } = useDeviceInventory({
     boundStatus: inventoryStatus,
     search: inventorySearch,
-    limit: 50,
+    page: inventoryPage,
+    limit: INVENTORY_PAGE_SIZE,
   });
+
+  const inventoryTotal = inventoryData?.total ?? 0;
+  const inventoryTotalPages = Math.max(1, Math.ceil(inventoryTotal / INVENTORY_PAGE_SIZE));
 
   const resetSingleMutation = useResetStudentDevice();
   const batchResetMutation = useBatchRebind();
@@ -116,14 +129,20 @@ function DevicesPage() {
   const boundCount = inventoryData?.counts?.bound ?? 0;
   const unboundCount = inventoryData?.counts?.unbound ?? 0;
 
+  const currentPageBound = inventoryData?.items?.filter((i: any) => i.deviceBound) ?? [];
+  const isAllCurrentPageSelected =
+    currentPageBound.length > 0 &&
+    currentPageBound.every((i: any) => selectedStudentIds.includes(i.id));
+
   const handleSelectAll = (checked: boolean) => {
     if (checked && inventoryData?.items) {
       const boundIds = inventoryData.items
         .filter((item: any) => item.deviceBound)
         .map((item: any) => item.id);
-      setSelectedStudentIds(boundIds);
-    } else {
-      setSelectedStudentIds([]);
+      setSelectedStudentIds((prev) => Array.from(new Set([...prev, ...boundIds])));
+    } else if (inventoryData?.items) {
+      const currentPageIds = new Set(inventoryData.items.map((i: any) => i.id));
+      setSelectedStudentIds((prev) => prev.filter((id) => !currentPageIds.has(id)));
     }
   };
 
@@ -251,7 +270,10 @@ function DevicesPage() {
                     {["PENDING", "APPROVED", "REJECTED", "ALL"].map((s) => (
                       <button
                         key={s}
-                        onClick={() => setRequestStatus(s)}
+                        onClick={() => {
+                          setRequestStatus(s);
+                          setRequestPage(1);
+                        }}
                         className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
                           requestStatus === s
                             ? "bg-background text-foreground shadow-xs"
@@ -268,7 +290,10 @@ function DevicesPage() {
                     <Input
                       placeholder="Search student..."
                       value={requestSearch}
-                      onChange={(e) => setRequestSearch(e.target.value)}
+                      onChange={(e) => {
+                        setRequestSearch(e.target.value);
+                        setRequestPage(1);
+                      }}
                       className="pl-8 h-9 text-xs"
                     />
                   </div>
@@ -295,7 +320,8 @@ function DevicesPage() {
                   <Spinner />
                 </div>
               ) : (
-                <div className="rounded-lg border overflow-x-auto touch-pan-x">
+                <>
+                  <div className="rounded-lg border overflow-x-auto touch-pan-x">
                   <Table className="min-w-[700px] sm:min-w-full">
                     <TableHeader>
                       <TableRow>
@@ -417,7 +443,40 @@ function DevicesPage() {
                     </TableBody>
                   </Table>
                 </div>
-              )}
+
+                {/* Requests Pagination */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm text-muted-foreground pt-4 mt-2 border-t">
+                  <span>
+                    {requestTotal > 0
+                      ? `${(requestPage - 1) * REQUESTS_PAGE_SIZE + 1}–${Math.min(requestPage * REQUESTS_PAGE_SIZE, requestTotal)} of ${requestTotal} requests`
+                      : "0 requests"}
+                  </span>
+                  <div className="flex items-center justify-between sm:justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => setRequestPage((p) => Math.max(1, p - 1))}
+                      disabled={requestPage <= 1 || isRequestsFetching}
+                    >
+                      Previous
+                    </Button>
+                    <span className="px-2 text-xs font-medium">
+                      Page {requestPage} of {requestTotalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => setRequestPage((p) => Math.min(requestTotalPages, p + 1))}
+                      disabled={requestPage >= requestTotalPages || isRequestsFetching}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -439,7 +498,10 @@ function DevicesPage() {
                     {(["all", "bound", "unbound"] as const).map((s) => (
                       <button
                         key={s}
-                        onClick={() => setInventoryStatus(s)}
+                        onClick={() => {
+                          setInventoryStatus(s);
+                          setInventoryPage(1);
+                        }}
                         className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
                           inventoryStatus === s
                             ? "bg-background text-foreground shadow-xs"
@@ -456,7 +518,10 @@ function DevicesPage() {
                     <Input
                       placeholder="Search student or device..."
                       value={inventorySearch}
-                      onChange={(e) => setInventorySearch(e.target.value)}
+                      onChange={(e) => {
+                        setInventorySearch(e.target.value);
+                        setInventoryPage(1);
+                      }}
                       className="pl-8 h-9 text-xs"
                     />
                   </div>
@@ -495,18 +560,14 @@ function DevicesPage() {
                   <Spinner />
                 </div>
               ) : (
-                <div className="rounded-lg border overflow-x-auto touch-pan-x">
+                <>
+                  <div className="rounded-lg border overflow-x-auto touch-pan-x">
                   <Table className="min-w-[700px] sm:min-w-full">
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-10">
                           <Checkbox
-                            checked={
-                              selectedStudentIds.length > 0 &&
-                              inventoryData?.items?.some((i: any) => i.deviceBound) &&
-                              selectedStudentIds.length ===
-                                inventoryData.items.filter((i: any) => i.deviceBound).length
-                            }
+                            checked={isAllCurrentPageSelected}
                             onCheckedChange={handleSelectAll}
                           />
                         </TableHead>
@@ -609,7 +670,40 @@ function DevicesPage() {
                     </TableBody>
                   </Table>
                 </div>
-              )}
+
+                {/* Inventory Pagination */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm text-muted-foreground pt-4 mt-2 border-t">
+                  <span>
+                    {inventoryTotal > 0
+                      ? `${(inventoryPage - 1) * INVENTORY_PAGE_SIZE + 1}–${Math.min(inventoryPage * INVENTORY_PAGE_SIZE, inventoryTotal)} of ${inventoryTotal} students`
+                      : "0 students"}
+                  </span>
+                  <div className="flex items-center justify-between sm:justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => setInventoryPage((p) => Math.max(1, p - 1))}
+                      disabled={inventoryPage <= 1 || isInventoryFetching}
+                    >
+                      Previous
+                    </Button>
+                    <span className="px-2 text-xs font-medium">
+                      Page {inventoryPage} of {inventoryTotalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => setInventoryPage((p) => Math.min(inventoryTotalPages, p + 1))}
+                      disabled={inventoryPage >= inventoryTotalPages || isInventoryFetching}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
             </CardContent>
           </Card>
         </TabsContent>

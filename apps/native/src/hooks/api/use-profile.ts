@@ -22,6 +22,7 @@ export function useStudentProfile() {
       }
     },
     enabled: !!user && user.role === "student",
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 15_000, // 15 seconds fresh
+    refetchInterval: 30_000, // 30s background heartbeat refetch
   });
 }

@@ -1,8 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { AppState, type AppStateStatus } from "react-native";
 import * as SplashScreen from "expo-splash-screen";
 import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
-import { useStudentProfile } from "@/hooks/api/use-profile";
+import { useStudentProfile, profileKeys } from "@/hooks/api/use-profile";
+import { useStudentRealtime } from "@/hooks/use-student-realtime";
 import { getDeviceFingerprint, detectClonedEnvironment } from "@/lib/device";
 import {
   getCachedSession,
@@ -96,6 +98,29 @@ export function useSessionGate(): SessionGateResult {
   const effectiveSession = session || cachedSession;
   const effectiveUser = (session?.user || cachedSession?.user) as CachedUser | null;
   const effectiveProfile = profile || cachedProfile;
+
+  const handleDeviceUnbound = useCallback(() => {
+    setCachedProfile((prev) =>
+      prev ? { ...prev, deviceBound: false, deviceId: undefined } : null,
+    );
+  }, []);
+
+  // Connect real-time WebSocket for student instant device synchronization
+  useStudentRealtime(effectiveUser?.role === "student" ? effectiveUser.id : null, {
+    onDeviceUnbound: handleDeviceUnbound,
+  });
+
+  // Re-verify profile whenever app returns from background
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextAppState: AppStateStatus) => {
+      if (nextAppState === "active" && effectiveUser?.role === "student") {
+        queryClient.invalidateQueries({ queryKey: profileKeys.student() });
+      }
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, [queryClient, effectiveUser?.role]);
 
   const isPending = sessionPending || (effectiveUser?.role === "student" && profilePending);
   const isOffline = !session && !!cachedSession;

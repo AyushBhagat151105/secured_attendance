@@ -230,5 +230,30 @@ describe("E2E Security & Guards: Role Access Control & Device Binding (In-Memory
       const profile = inMemoryStore.studentProfiles.get(profileId);
       expect(profile.deviceBound).toBe(false);
     });
+
+    it("15. Device inventory supports pagination and filters", async () => {
+      const res = await dispatchAppRequest("/api/admin/devices/inventory?page=1&limit=10", {
+        asUser: FIXTURES.adminUser,
+      });
+      expect(res.status).toBe(200);
+      expect(res.data.page).toBe(1);
+      expect(res.data.limit).toBe(10);
+      expect(res.data.counts).toBeDefined();
+      expect(Array.isArray(res.data.items)).toBe(true);
+    });
+
+    it("16. Device rebind-requests support pagination and status filtering", async () => {
+      const res = await dispatchAppRequest(
+        "/api/admin/devices/rebind-requests?page=1&limit=5&status=ALL",
+        {
+          asUser: FIXTURES.adminUser,
+        },
+      );
+      expect(res.status).toBe(200);
+      expect(res.data.page).toBe(1);
+      expect(res.data.limit).toBe(5);
+      expect(res.data.counts).toBeDefined();
+      expect(Array.isArray(res.data.items)).toBe(true);
+    });
   });
 });

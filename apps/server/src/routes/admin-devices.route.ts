@@ -33,8 +33,8 @@ export const adminDevicesModule = new Elysia({ prefix: "/devices" })
   // POST /api/admin/devices/rebind-requests/:id/approve
   .post(
     "/rebind-requests/:id/approve",
-    async ({ params, user, status }: any) => {
-      const result = await AdminDevicesService.approveRebindRequest(params.id, user.id);
+    async ({ params, user, status, server }: any) => {
+      const result = await AdminDevicesService.approveRebindRequest(params.id, user.id, server);
       if (!result.success) {
         switch (result.error) {
           case "NOT_FOUND":
@@ -54,11 +54,12 @@ export const adminDevicesModule = new Elysia({ prefix: "/devices" })
   // POST /api/admin/devices/rebind-requests/:id/reject
   .post(
     "/rebind-requests/:id/reject",
-    async ({ params, body, user, status }: any) => {
+    async ({ params, body, user, status, server }: any) => {
       const result = await AdminDevicesService.rejectRebindRequest(
         params.id,
         user.id,
         body?.note,
+        server,
       );
       if (!result.success) {
         switch (result.error) {
@@ -108,10 +109,11 @@ export const adminDevicesModule = new Elysia({ prefix: "/devices" })
   // POST /api/admin/devices/batch-rebind
   .post(
     "/batch-rebind",
-    async ({ body, user, status }: any) => {
+    async ({ body, user, status, server }: any) => {
       const result = await AdminDevicesService.batchResetDevices(
         body.studentProfileIds,
         user.id,
+        server,
       );
       if (!result.success) {
         return status(400, { message: result.message });
@@ -129,10 +131,11 @@ export const adminDevicesModule = new Elysia({ prefix: "/devices" })
   // POST /api/admin/devices/:studentProfileId/rebind
   .post(
     "/:studentProfileId/rebind",
-    async ({ params, user, status }: any) => {
+    async ({ params, user, status, server }: any) => {
       const result = await AdminDevicesService.resetStudentDevice(
         params.studentProfileId,
         user.id,
+        server,
       );
       if (!result.success) {
         return status(404, { message: result.message });

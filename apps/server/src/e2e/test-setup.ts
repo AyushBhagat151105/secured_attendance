@@ -441,6 +441,36 @@ export function setupInMemoryHarness(): void {
     return updated;
   }) as any;
 
+  prisma.studentProfile.findMany = (async (args: any) => {
+    const unique = new Map<string, any>();
+    for (const p of inMemoryStore.studentProfiles.values()) {
+      unique.set(p.id, p);
+    }
+    let list = Array.from(unique.values());
+    if (args?.where?.deviceBound !== undefined) {
+      list = list.filter((p) => p.deviceBound === args.where.deviceBound);
+    }
+    if (args?.skip) {
+      list = list.slice(args.skip);
+    }
+    if (args?.take) {
+      list = list.slice(0, args.take);
+    }
+    return list;
+  }) as any;
+
+  prisma.studentProfile.count = (async (args: any) => {
+    const unique = new Map<string, any>();
+    for (const p of inMemoryStore.studentProfiles.values()) {
+      unique.set(p.id, p);
+    }
+    let list = Array.from(unique.values());
+    if (args?.where?.deviceBound !== undefined) {
+      list = list.filter((p) => p.deviceBound === args.where.deviceBound);
+    }
+    return list.length;
+  }) as any;
+
   // 5. Mock Prisma Teacher Profile
   prisma.teacherProfile.findUnique = (async (args: any) => {
     if (args?.where?.userId) {

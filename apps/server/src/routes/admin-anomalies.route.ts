@@ -2,6 +2,7 @@ import { Elysia, t, status } from "elysia";
 import { requireRole, authMacro } from "../middlewares/guards";
 import prisma from "@secured_attendance/db";
 import { queueAuditLog } from "../lib/audit";
+import { logger } from "../lib/logger";
 
 export const adminAnomaliesModule = new Elysia({ prefix: "/anomalies" })
   .use(requireRole(["admin", "super_admin"]))
@@ -94,7 +95,7 @@ export const adminAnomaliesModule = new Elysia({ prefix: "/anomalies" })
   )
   .post(
     "/:id/rebind-and-resolve",
-    async ({ params, user }: any) => {
+    async ({ params, user, server }: any) => {
       const anomaly = await prisma.anomalyAlert.findUnique({
         where: { id: params.id },
       });
@@ -120,6 +121,22 @@ export const adminAnomaliesModule = new Elysia({ prefix: "/anomalies" })
           data: { status: "RESOLVED" },
         });
       });
+
+      if (server && anomaly.userId) {
+        try {
+          server.publish(
+            `student-${anomaly.userId}`,
+            JSON.stringify({
+              type: "DEVICE_UNBOUND",
+              reason: "anomaly_resolve",
+              anomalyId: anomaly.id,
+              timestamp: Date.now(),
+            }),
+          );
+        } catch (e) {
+          logger.error("Failed to publish DEVICE_UNBOUND from anomaly resolve", { error: e });
+        }
+      }
 
       if (anomaly.userId) {
         void queueAuditLog({
