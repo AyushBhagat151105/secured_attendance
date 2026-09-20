@@ -46,6 +46,7 @@ export interface MockDataStore {
   attendanceSessions: Map<string, any>;
   attendances: Map<string, any>;
   qrTokens: Map<string, any>;
+  rebindRequests: Map<string, any>;
   auditLogs: any[];
   anomalies: any[];
 }
@@ -62,6 +63,7 @@ export const inMemoryStore: MockDataStore = {
   attendanceSessions: new Map(),
   attendances: new Map(),
   qrTokens: new Map(),
+  rebindRequests: new Map(),
   auditLogs: [],
   anomalies: [],
 };
@@ -245,6 +247,7 @@ export function resetInMemoryDb(): void {
   inMemoryStore.attendanceSessions.clear();
   inMemoryStore.attendances.clear();
   inMemoryStore.qrTokens.clear();
+  inMemoryStore.rebindRequests.clear();
   inMemoryStore.auditLogs = [];
   inMemoryStore.anomalies = [];
   inMemoryQrStorage.clear();
@@ -587,12 +590,97 @@ export function setupInMemoryHarness(): void {
       inMemoryStore.anomalies.push(rec);
       return rec;
     },
+    update: async (args: any) => {
+      const existing = inMemoryStore.anomalies.find((a) => a.id === args.where.id);
+      if (existing) Object.assign(existing, args.data);
+      return existing;
+    },
+    updateMany: async (args: any) => {
+      let count = 0;
+      for (const a of inMemoryStore.anomalies) {
+        if (args?.where?.userId && a.userId !== args.where.userId) continue;
+        if (args?.where?.type && a.type !== args.where.type) continue;
+        if (args?.where?.status && a.status !== args.where.status) continue;
+        Object.assign(a, args.data);
+        count++;
+      }
+      return { count };
+    },
+    findUnique: async (args: any) => {
+      return inMemoryStore.anomalies.find((a) => a.id === args.where.id) || null;
+    },
+    findMany: async (args: any) => {
+      let list = inMemoryStore.anomalies;
+      if (args?.where?.userId) list = list.filter((a) => a.userId === args.where.userId);
+      if (args?.where?.status) list = list.filter((a) => a.status === args.where.status);
+      return list;
+    },
   };
   (prisma as any).attendanceAnomaly = (prisma as any).anomalyAlert;
   (prisma as any).auditLog = {
     create: async (args: any) => {
       inMemoryStore.auditLogs.push(args.data);
       return args.data;
+    },
+  };
+
+  // 11. Mock Device Re-bind Requests
+  (prisma as any).deviceRebindRequest = {
+    create: async (args: any) => {
+      const id = `rebind-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+      const rec = {
+        id,
+        ...args.data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      inMemoryStore.rebindRequests.set(id, rec);
+      return rec;
+    },
+    findFirst: async (args: any) => {
+      for (const req of inMemoryStore.rebindRequests.values()) {
+        if (args?.where?.studentProfileId && req.studentProfileId !== args.where.studentProfileId)
+          continue;
+        if (args?.where?.status && req.status !== args.where.status) continue;
+        return req;
+      }
+      return null;
+    },
+    findUnique: async (args: any) => {
+      const req = inMemoryStore.rebindRequests.get(args.where.id);
+      if (!req) return null;
+      if (args.include?.studentProfile) {
+        const studentProfile = inMemoryStore.studentProfiles.get(req.studentProfileId);
+        return { ...req, studentProfile };
+      }
+      return req;
+    },
+    findMany: async (args: any) => {
+      let list = Array.from(inMemoryStore.rebindRequests.values());
+      if (args?.where?.status) {
+        list = list.filter((r) => r.status === args.where.status);
+      }
+      if (args?.include?.studentProfile) {
+        list = list.map((r) => ({
+          ...r,
+          studentProfile: inMemoryStore.studentProfiles.get(r.studentProfileId),
+        }));
+      }
+      return list;
+    },
+    update: async (args: any) => {
+      const existing = inMemoryStore.rebindRequests.get(args.where.id);
+      if (!existing) throw new Error("Record not found");
+      const updated = { ...existing, ...args.data, updatedAt: new Date() };
+      inMemoryStore.rebindRequests.set(args.where.id, updated);
+      return updated;
+    },
+    count: async (args: any) => {
+      let list = Array.from(inMemoryStore.rebindRequests.values());
+      if (args?.where?.status) {
+        list = list.filter((r) => r.status === args.where.status);
+      }
+      return list.length;
     },
   };
 }

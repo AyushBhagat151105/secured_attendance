@@ -91,5 +91,144 @@ describe("E2E Security & Guards: Role Access Control & Device Binding (In-Memory
       expect(updatedProfile.deviceBound).toBe(false);
       expect(updatedProfile.deviceId).toBeNull();
     });
+
+    it("10. Student can submit a device re-bind request with reason and hardware details", async () => {
+      const student = FIXTURES.studentValid;
+      const res = await dispatchAppRequest("/api/student/device/rebind-request", {
+        method: "POST",
+        asUser: student.user,
+        body: {
+          requestedDeviceId: "device-hw-pixel-8-new",
+          requestedDeviceModel: "Google Pixel 8",
+          requestedDeviceOs: "Android 15",
+          reason: "Upgraded to a new phone",
+        },
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.data.success).toBe(true);
+      expect(res.data.request.status).toBe("PENDING");
+      expect(res.data.request.requestedDeviceModel).toBe("Google Pixel 8");
+
+      // Verify status endpoint reflects pending request
+      const statusRes = await dispatchAppRequest("/api/student/device/rebind-request/status", {
+        asUser: student.user,
+      });
+      expect(statusRes.status).toBe(200);
+      expect(statusRes.data.hasPending).toBe(true);
+      expect(statusRes.data.request.requestedDeviceId).toBe("device-hw-pixel-8-new");
+    });
+
+    it("11. Student cannot submit a duplicate re-bind request while one is pending", async () => {
+      const student = FIXTURES.studentValid;
+      // First request
+      await dispatchAppRequest("/api/student/device/rebind-request", {
+        method: "POST",
+        asUser: student.user,
+        body: {
+          requestedDeviceId: "device-hw-pixel-8-new",
+          requestedDeviceModel: "Google Pixel 8",
+          reason: "Upgraded phone",
+        },
+      });
+
+      // Second request should be rejected
+      const duplicateRes = await dispatchAppRequest("/api/student/device/rebind-request", {
+        method: "POST",
+        asUser: student.user,
+        body: {
+          requestedDeviceId: "device-hw-pixel-8-new",
+          requestedDeviceModel: "Google Pixel 8",
+          reason: "Upgraded phone again",
+        },
+      });
+
+      expect(duplicateRes.status).toBe(400);
+      expect(duplicateRes.data.message).toContain("already pending");
+    });
+
+    it("12. Admin can list, approve re-bind requests, and unbind student phone", async () => {
+      const student = FIXTURES.studentValid;
+      // Student requests rebind
+      const reqRes = await dispatchAppRequest("/api/student/device/rebind-request", {
+        method: "POST",
+        asUser: student.user,
+        body: {
+          requestedDeviceId: "device-hw-s24-ultra",
+          requestedDeviceModel: "Samsung Galaxy S24 Ultra",
+          reason: "Screen cracked, got replacement",
+        },
+      });
+      const requestId = reqRes.data.request.id;
+
+      // Admin lists requests
+      const listRes = await dispatchAppRequest("/api/admin/devices/rebind-requests", {
+        asUser: FIXTURES.adminUser,
+      });
+      expect(listRes.status).toBe(200);
+      expect(listRes.data.items.length).toBeGreaterThan(0);
+
+      // Admin approves request
+      const approveRes = await dispatchAppRequest(
+        `/api/admin/devices/rebind-requests/${requestId}/approve`,
+        {
+          method: "POST",
+          asUser: FIXTURES.adminUser,
+        },
+      );
+      expect(approveRes.status).toBe(200);
+      expect(approveRes.data.success).toBe(true);
+
+      // Verify student profile is now unbound
+      const profile = inMemoryStore.studentProfiles.get(student.user.id);
+      expect(profile.deviceBound).toBe(false);
+      expect(profile.deviceId).toBeNull();
+    });
+
+    it("13. Admin can reject re-bind request with reason note", async () => {
+      const student = FIXTURES.studentValid;
+      const reqRes = await dispatchAppRequest("/api/student/device/rebind-request", {
+        method: "POST",
+        asUser: student.user,
+        body: {
+          requestedDeviceId: "device-hw-suspicious",
+          requestedDeviceModel: "Unknown Phone",
+          reason: "Testing",
+        },
+      });
+      const requestId = reqRes.data.request.id;
+
+      const rejectRes = await dispatchAppRequest(
+        `/api/admin/devices/rebind-requests/${requestId}/reject`,
+        {
+          method: "POST",
+          asUser: FIXTURES.adminUser,
+          body: { note: "Please visit CMPICA administrative office in person" },
+        },
+      );
+      expect(rejectRes.status).toBe(200);
+      expect(rejectRes.data.success).toBe(true);
+      expect(rejectRes.data.request.status).toBe("REJECTED");
+      expect(rejectRes.data.request.reviewNote).toContain("CMPICA administrative office");
+
+      // Verify student device is NOT unbound
+      const profile = inMemoryStore.studentProfiles.get(student.user.id);
+      expect(profile.deviceBound).toBe(true);
+    });
+
+    it("14. Admin can reset student device from device inventory", async () => {
+      const student = FIXTURES.studentValid;
+      const profileId = student.profile.id;
+
+      const res = await dispatchAppRequest(`/api/admin/devices/${profileId}/rebind`, {
+        method: "POST",
+        asUser: FIXTURES.adminUser,
+      });
+      expect(res.status).toBe(200);
+      expect(res.data.success).toBe(true);
+
+      const profile = inMemoryStore.studentProfiles.get(profileId);
+      expect(profile.deviceBound).toBe(false);
+    });
   });
 });

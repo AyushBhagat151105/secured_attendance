@@ -29,6 +29,7 @@ import { Route as AdminAcademicProgramsRouteImport } from './routes/admin/academ
 import { Route as AdminAcademicSubjectsRouteImport } from './routes/admin/academic/subjects'
 import { Route as AdminAcademicYearsRouteImport } from './routes/admin/academic/years'
 import { Route as AdminCampusIndexRouteImport } from './routes/admin/campus/index'
+import { Route as AdminDevicesIndexRouteImport } from './routes/admin/devices/index'
 import { Route as AdminMapSessionIdRouteImport } from './routes/admin/map/$sessionId'
 import { Route as AdminTimetableIndexRouteImport } from './routes/admin/timetable/index'
 import { Route as AdminTimetableImportRouteImport } from './routes/admin/timetable/import'
@@ -138,6 +139,11 @@ const AdminCampusIndexRoute = AdminCampusIndexRouteImport.update({
   path: '/campus/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminDevicesIndexRoute = AdminDevicesIndexRouteImport.update({
+  id: '/devices/',
+  path: '/devices/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminMapSessionIdRoute = AdminMapSessionIdRouteImport.update({
   id: '/map/$sessionId',
   path: '/map/$sessionId',
@@ -206,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/reports/map/$sessionId': typeof ReportsMapSessionIdRoute
   '/reports/session/$sessionId': typeof ReportsSessionSessionIdRoute
   '/admin/campus/': typeof AdminCampusIndexRoute
+  '/admin/devices/': typeof AdminDevicesIndexRoute
   '/admin/timetable/': typeof AdminTimetableIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
 }
@@ -235,6 +242,7 @@ export interface FileRoutesByTo {
   '/reports/map/$sessionId': typeof ReportsMapSessionIdRoute
   '/reports/session/$sessionId': typeof ReportsSessionSessionIdRoute
   '/admin/campus': typeof AdminCampusIndexRoute
+  '/admin/devices': typeof AdminDevicesIndexRoute
   '/admin/timetable': typeof AdminTimetableIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
 }
@@ -266,6 +274,7 @@ export interface FileRoutesById {
   '/reports/map/$sessionId': typeof ReportsMapSessionIdRoute
   '/reports/session/$sessionId': typeof ReportsSessionSessionIdRoute
   '/admin/campus/': typeof AdminCampusIndexRoute
+  '/admin/devices/': typeof AdminDevicesIndexRoute
   '/admin/timetable/': typeof AdminTimetableIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
 }
@@ -298,6 +307,7 @@ export interface FileRouteTypes {
     | '/reports/map/$sessionId'
     | '/reports/session/$sessionId'
     | '/admin/campus/'
+    | '/admin/devices/'
     | '/admin/timetable/'
     | '/admin/users/'
   fileRoutesByTo: FileRoutesByTo
@@ -327,6 +337,7 @@ export interface FileRouteTypes {
     | '/reports/map/$sessionId'
     | '/reports/session/$sessionId'
     | '/admin/campus'
+    | '/admin/devices'
     | '/admin/timetable'
     | '/admin/users'
   id:
@@ -357,6 +368,7 @@ export interface FileRouteTypes {
     | '/reports/map/$sessionId'
     | '/reports/session/$sessionId'
     | '/admin/campus/'
+    | '/admin/devices/'
     | '/admin/timetable/'
     | '/admin/users/'
   fileRoutesById: FileRoutesById
@@ -517,6 +529,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCampusIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/devices/': {
+      id: '/admin/devices/'
+      path: '/devices'
+      fullPath: '/admin/devices/'
+      preLoaderRoute: typeof AdminDevicesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/map/$sessionId': {
       id: '/admin/map/$sessionId'
       path: '/map/$sessionId'
@@ -592,6 +611,7 @@ interface AdminRouteChildren {
   AdminUsersUserIdRoute: typeof AdminUsersUserIdRoute
   AdminUsersImportRoute: typeof AdminUsersImportRoute
   AdminCampusIndexRoute: typeof AdminCampusIndexRoute
+  AdminDevicesIndexRoute: typeof AdminDevicesIndexRoute
   AdminTimetableIndexRoute: typeof AdminTimetableIndexRoute
   AdminUsersIndexRoute: typeof AdminUsersIndexRoute
 }
@@ -612,6 +632,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminUsersUserIdRoute: AdminUsersUserIdRoute,
   AdminUsersImportRoute: AdminUsersImportRoute,
   AdminCampusIndexRoute: AdminCampusIndexRoute,
+  AdminDevicesIndexRoute: AdminDevicesIndexRoute,
   AdminTimetableIndexRoute: AdminTimetableIndexRoute,
   AdminUsersIndexRoute: AdminUsersIndexRoute,
 }

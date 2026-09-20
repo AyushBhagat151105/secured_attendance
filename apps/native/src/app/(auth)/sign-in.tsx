@@ -95,24 +95,21 @@ export default function SignInScreen() {
               await saveCachedProfile(p);
             }
 
-            // 2. Hardware ID check: verify this device matches the bound phone
-            if (p?.deviceBound && p?.deviceId && p.deviceId !== device.id) {
-              await clearAllCachedAuth();
-              await authClient.signOut();
-              setError(
-                `Account locked: Your profile is bound to ${p.deviceModel || "another phone"}. You cannot log in from this device. Contact your admin to rebind.`,
-              );
-              return;
-            }
-
-            // 3. Invalidate queries so tabs load fresh data
+            // 2. Invalidate queries so screens load fresh data
             await queryClient.invalidateQueries();
 
-            // 4. Navigate immediately to target screen
+            // 3. Navigate immediately to target screen
             const user = sessionRes?.data?.user as
               { role?: string; requiresPasswordChange?: boolean } | undefined;
             if (user?.requiresPasswordChange) {
               router.replace("/(auth)/reset-password");
+            } else if (
+              user?.role === "student" &&
+              p?.deviceBound &&
+              p?.deviceId &&
+              p.deviceId !== device.id
+            ) {
+              router.replace("/(auth)/device-mismatch");
             } else if (user?.role === "student" && p && !p.deviceBound) {
               router.replace("/(auth)/device-binding");
             } else {

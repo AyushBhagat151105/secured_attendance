@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAdminAnomalies, useResolveAnomaly } from "@/hooks/api/use-admin-audit";
+import { useRebindAndResolveAnomaly } from "@/hooks/api/use-admin-devices";
 import {
   Table,
   TableBody,
@@ -21,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { IconAlertTriangle, IconCheck, IconX } from "@tabler/icons-react";
+import { IconAlertTriangle, IconCheck, IconX, IconRotate } from "@tabler/icons-react";
 import { AnomalyDetailCell } from "./-anomaly-detail-cell";
 
 export const Route = createFileRoute("/admin/anomalies")({
@@ -68,6 +69,7 @@ function AdminAnomaliesPage() {
 
   const { data, isLoading, isError } = useAdminAnomalies(filters);
   const resolveMutation = useResolveAnomaly();
+  const rebindAndResolveMutation = useRebindAndResolveAnomaly();
 
   // API returns { anomalies: [...], total: number } (paginated shape)
   const anomalyList = Array.isArray(data)
@@ -239,16 +241,31 @@ function AdminAnomaliesPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           {anomaly.status === "OPEN" && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 gap-1"
-                              onClick={() => resolveMutation.mutate(anomaly.id)}
-                              disabled={resolveMutation.isPending}
-                            >
-                              <IconCheck className="h-3.5 w-3.5" />
-                              Resolve
-                            </Button>
+                            <div className="flex items-center justify-end gap-1.5">
+                              {anomaly.type === "DEVICE_MISMATCH" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 gap-1 text-xs text-amber-600 border-amber-500/30 hover:bg-amber-500/10"
+                                  onClick={() => rebindAndResolveMutation.mutate(anomaly.id)}
+                                  disabled={rebindAndResolveMutation.isPending}
+                                  title="Reset student device binding and mark anomaly as resolved"
+                                >
+                                  <IconRotate className="h-3.5 w-3.5" />
+                                  Reset Device & Resolve
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 gap-1"
+                                onClick={() => resolveMutation.mutate(anomaly.id)}
+                                disabled={resolveMutation.isPending}
+                              >
+                                <IconCheck className="h-3.5 w-3.5" />
+                                Resolve
+                              </Button>
+                            </div>
                           )}
                         </TableCell>
                       </TableRow>

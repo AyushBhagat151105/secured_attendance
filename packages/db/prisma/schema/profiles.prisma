@@ -23,9 +23,33 @@ model StudentProfile {
   updatedAt     DateTime @updatedAt
 
   attendances   Attendance[]
+  rebindRequests DeviceRebindRequest[]
 
   @@index([divisionId])
   @@map("student_profile")
+}
+
+model DeviceRebindRequest {
+  id                   String         @id @default(uuid())
+  studentProfileId     String
+  studentProfile       StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  currentDeviceId      String?
+  currentDeviceModel   String?
+  requestedDeviceId    String
+  requestedDeviceModel String
+  requestedDeviceOs    String?
+  reason               String
+  status               String         @default("PENDING") // PENDING, APPROVED, REJECTED
+  reviewedBy           String?
+  reviewedAt           DateTime?
+  reviewNote           String?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  @@index([studentProfileId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("device_rebind_request")
 }
 
 model TeacherProfile {
