@@ -14,16 +14,21 @@ import { teacherModule } from "./routes/teacher.route";
 import { studentModule } from "./routes/student.route";
 
 const getUploadsDir = () => {
+  if (process.env.UPLOADS_DIR && fs.existsSync(process.env.UPLOADS_DIR)) {
+    return process.env.UPLOADS_DIR;
+  }
   const candidates = [
     path.resolve(process.cwd(), "apps/server/uploads"),
     path.resolve(process.cwd(), "uploads"),
     path.resolve(import.meta.dir, "../uploads"),
     path.resolve(import.meta.dir, "../../uploads"),
+    "/app/apps/server/uploads",
+    "/app/uploads",
   ];
   for (const dir of candidates) {
     if (fs.existsSync(dir)) return dir;
   }
-  return path.resolve(process.cwd(), "uploads");
+  return process.env.UPLOADS_DIR || path.resolve(process.cwd(), "uploads");
 };
 
 export const app = new Elysia()
@@ -142,9 +147,24 @@ export const app = new Elysia()
 
   // Self-Hosted OTA Updates endpoints for mobile app
   .get("/updates", async ({ request, set }) => {
-    const uploadsDir = getUploadsDir();
-    const manifestPath = path.resolve(uploadsDir, "updates/metadata.json");
-    if (!fs.existsSync(manifestPath)) {
+    const candidateDirs = [
+      path.resolve(getUploadsDir(), "updates"),
+      path.resolve(process.cwd(), "uploads/updates"),
+      path.resolve(process.cwd(), "apps/server/uploads/updates"),
+      "/app/apps/server/uploads/updates",
+      "/app/uploads/updates",
+    ];
+
+    let manifestPath: string | null = null;
+    for (const dir of candidateDirs) {
+      const candidate = path.resolve(dir, "metadata.json");
+      if (fs.existsSync(candidate)) {
+        manifestPath = candidate;
+        break;
+      }
+    }
+
+    if (!manifestPath) {
       set.status = 404;
       set.headers["cache-control"] = "no-store, no-cache, must-revalidate";
       return { error: "No OTA update available" };
@@ -232,8 +252,26 @@ export const app = new Elysia()
   })
   .get("/updates/*", async ({ params, set }) => {
     const wildcard = params["*"];
-    const filePath = path.resolve(getUploadsDir(), "updates", wildcard);
-    if (!fs.existsSync(filePath)) {
+    const safeSubPath = path.normalize(wildcard).replace(/^(\.\.[\/\\])+/, "");
+
+    const candidateDirs = [
+      path.resolve(getUploadsDir(), "updates"),
+      path.resolve(process.cwd(), "uploads/updates"),
+      path.resolve(process.cwd(), "apps/server/uploads/updates"),
+      "/app/apps/server/uploads/updates",
+      "/app/uploads/updates",
+    ];
+
+    let filePath: string | null = null;
+    for (const dir of candidateDirs) {
+      const candidate = path.resolve(dir, safeSubPath);
+      if (fs.existsSync(candidate)) {
+        filePath = candidate;
+        break;
+      }
+    }
+
+    if (!filePath) {
       set.status = 404;
       set.headers["cache-control"] = "no-store, no-cache, must-revalidate";
       return "Not found";
@@ -263,14 +301,32 @@ export const app = new Elysia()
     };
   })
   .get("/download/:file", async ({ params, set }) => {
-    const filePath = path.resolve(getUploadsDir(), "downloads", params.file);
-    if (!fs.existsSync(filePath)) {
+    const filename = path.basename(params.file);
+
+    const candidateDirs = [
+      path.resolve(getUploadsDir(), "downloads"),
+      path.resolve(process.cwd(), "uploads/downloads"),
+      path.resolve(process.cwd(), "apps/server/uploads/downloads"),
+      "/app/apps/server/uploads/downloads",
+      "/app/uploads/downloads",
+    ];
+
+    let filePath: string | null = null;
+    for (const dir of candidateDirs) {
+      const candidate = path.resolve(dir, filename);
+      if (fs.existsSync(candidate)) {
+        filePath = candidate;
+        break;
+      }
+    }
+
+    if (!filePath) {
       set.status = 404;
       set.headers["cache-control"] = "no-store, no-cache, must-revalidate";
       return "File not found";
     }
     set.headers["content-type"] = "application/vnd.android.package-archive";
-    set.headers["content-disposition"] = `attachment; filename="${params.file}"`;
+    set.headers["content-disposition"] = `attachment; filename="${filename}"`;
     set.headers["cache-control"] = "public, max-age=3600";
     return Bun.file(filePath);
   });

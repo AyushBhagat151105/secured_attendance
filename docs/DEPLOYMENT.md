@@ -123,7 +123,7 @@ All builds and deployments are automated through GitHub Actions workflows locate
 
 | Workflow File | Trigger | Responsibility & Target |
 | :--- | :--- | :--- |
-| **`pr.yml`** | Push/PR to `main` | Runs `bun run check-types`, all 86 unit and E2E tests, and verifies production compilation. |
+| **`pr.yml`** | Push/PR to `main` | Runs `bun run check-types`, all 87 unit and E2E tests, and verifies production compilation. |
 | **`deploy-server.yml`** | Push touching `apps/server/**`, `packages/**`, or `docker-compose.prod.yml` | Builds multi-stage Docker image, pushes to GitHub Container Registry (`ghcr.io`), logs into VPS via SSH, pulls new image, and restarts container. |
 | **`deploy-web.yml`** | Push touching `apps/web/**` | Runs `vite build`, transfers static HTML/JS/CSS to `/var/www/secured-attendance-web` via SCP. |
 | **`deploy-ota.yml`** | Push touching `apps/native/src/**` | Exports Hermes JS bundle using Expo CLI, updates `metadata.json`, and syncs files to `/root/.../uploads/updates` via SCP in under 60 seconds. |

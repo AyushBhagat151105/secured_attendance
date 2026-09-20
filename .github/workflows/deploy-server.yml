@@ -59,10 +59,10 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /root/secured_attendance
-            # Ensure the remote URL is set to SSH to use Deploy Keys if configured
-            git remote set-url origin git@github.com:${{ github.repository }}.git 2>/dev/null || true
+            # Ensure the remote URL uses HTTPS so git pull never fails on missing deploy keys
+            git remote set-url origin https://github.com/${{ github.repository }}.git 2>/dev/null || true
             # Pull latest git commit
-            GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git pull origin master || GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git pull origin main || true
+            git pull origin main || git pull origin master || true
 
             # Authenticate Docker on VPS to pull GHCR packages
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -74,10 +74,22 @@ jobs:
             docker compose -f docker-compose.prod.yml pull server
             docker compose -f docker-compose.prod.yml up -d
 
+            # Ensure downloads directory exists inside container and sync APK if present on host
+            docker exec secured_attendance-server mkdir -p /app/apps/server/uploads/downloads 2>/dev/null || true
+            if [ -f /root/secured_attendance/uploads/downloads/secured-attendance.apk ]; then
+              docker cp /root/secured_attendance/uploads/downloads/secured-attendance.apk secured_attendance-server:/app/apps/server/uploads/downloads/secured-attendance.apk 2>/dev/null || true
+            fi
+
             # Run Prisma db push against NeonDB inside server container
             docker compose -f docker-compose.prod.yml exec -T server bun run --cwd /app/packages/db db:push || true
             docker compose -f docker-compose.prod.yml exec -T server bun run --cwd /app/packages/db db:generate || true
 
             # Clean up credentials
             docker logout ghcr.io
+
+            # Verify local endpoints
+            sleep 2
+            curl -I http://127.0.0.1:3006/api/app/version || true
+            curl -I http://127.0.0.1:3006/download/secured-attendance.apk || true
+
             echo "Successfully deployed Secured Attendance backend server!"
