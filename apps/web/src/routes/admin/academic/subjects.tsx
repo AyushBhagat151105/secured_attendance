@@ -1,13 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import {
+  IconBook,
+  IconDots,
+  IconPencil,
+  IconPlus,
+  IconTrash,
+} from "@tabler/icons-react";
 import {
   createSubjectSchema,
   updateSubjectSchema,
   type CreateSubjectSchema,
 } from "@secured_attendance/validators";
 
-import { useSubjects } from "@/hooks/api/use-admin-academic";
+import {
+  useSubjects,
+  useCreateSubject,
+  useUpdateSubject,
+  useDeleteSubject,
+  usePrograms,
+} from "@/hooks/api/use-admin-academic";
+import { AdminPageHeader, TableSkeletonRows } from "@/components/admin";
 import {
   Table,
   TableBody,
@@ -16,10 +31,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { Spinner } from "@/components/ui/spinner";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -38,14 +51,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
-import { useState } from "react";
-import {
-  useCreateSubject,
-  useUpdateSubject,
-  useDeleteSubject,
-  usePrograms,
-} from "@/hooks/api/use-admin-academic";
-import { MoreHorizontal, Pencil, Trash } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -102,7 +107,7 @@ function SubjectRowActions({ subject }: { subject: any }) {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
             <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
+            <IconDots className="size-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -110,17 +115,22 @@ function SubjectRowActions({ subject }: { subject: any }) {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() => {
-              form.reset();
+              form.reset({
+                name: subject.name,
+                code: subject.code,
+                shortName: subject.shortName || "",
+                programId: subject.programId,
+              });
               setShowEdit(true);
             }}
           >
-            <Pencil className="mr-2 h-4 w-4" /> Edit
+            <IconPencil className="mr-2 size-4" /> Edit Subject
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => setShowDelete(true)}
             className="text-destructive focus:text-destructive"
           >
-            <Trash className="mr-2 h-4 w-4" /> Delete
+            <IconTrash className="mr-2 size-4" /> Delete Subject
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -129,7 +139,7 @@ function SubjectRowActions({ subject }: { subject: any }) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Subject</DialogTitle>
-            <DialogDescription>Update the details of {subject.name}.</DialogDescription>
+            <DialogDescription>Update details for {subject.name}.</DialogDescription>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <Controller
@@ -159,7 +169,7 @@ function SubjectRowActions({ subject }: { subject: any }) {
               name="shortName"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Short Name</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>Short Name (Optional)</FieldLabel>
                   <Input {...field} id={field.name} aria-invalid={fieldState.invalid} />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -201,8 +211,8 @@ function SubjectRowActions({ subject }: { subject: any }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the <strong>{subject.name}</strong> subject. This action
-              cannot be undone.
+              This will permanently delete the <strong>{subject.name}</strong> ({subject.code})
+              subject. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -242,14 +252,23 @@ function SubjectsRoute() {
   };
 
   return (
-    <div className="flex-1 space-y-4 min-w-0">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h2 className="text-xl sm:text-3xl font-bold tracking-tight">Subjects</h2>
-        <div className="flex items-center space-x-2">
+    <div className="space-y-6 min-w-0 pb-10">
+      <AdminPageHeader
+        title="Subjects"
+        subtitle="Manage institutional course catalog and academic program mappings."
+        icon={<IconBook className="size-6 text-primary" />}
+        badge={
+          subjects?.length ? (
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+              {subjects.length} Courses
+            </span>
+          ) : undefined
+        }
+        actions={
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto">
-                <Plus className="mr-2 h-4 w-4" /> Add Subject
+              <Button className="gap-1.5 text-xs sm:text-sm h-9 w-full sm:w-auto shadow-xs">
+                <IconPlus className="size-4" /> Add Subject
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -336,55 +355,60 @@ function SubjectsRoute() {
               </form>
             </DialogContent>
           </Dialog>
-        </div>
-      </div>
-      <Card>
-        <CardHeader className="p-4 sm:p-6">
-          <CardTitle>Subjects List</CardTitle>
-          <CardDescription>Manage subjects across programs.</CardDescription>
-        </CardHeader>
-        <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-          {isLoadingSubjects ? (
-            <div className="flex justify-center p-8">
-              <Spinner />
-            </div>
-          ) : (
-            <div className="rounded-lg border overflow-x-auto touch-pan-x">
-              <Table className="min-w-[500px] sm:min-w-full">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Short Name</TableHead>
-                    <TableHead>Program</TableHead>
-                    <TableHead className="w-12.5"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+        }
+      />
+
+      <div className="rounded-xl border border-border/70 bg-card overflow-hidden shadow-xs">
+        <div className="overflow-x-auto touch-pan-x">
+          <Table className="min-w-[500px] sm:min-w-full">
+            <TableHeader className="bg-muted/40">
+              <TableRow>
+                <TableHead className="text-xs font-semibold">Code</TableHead>
+                <TableHead className="text-xs font-semibold">Name</TableHead>
+                <TableHead className="text-xs font-semibold">Short Name</TableHead>
+                <TableHead className="text-xs font-semibold">Program</TableHead>
+                <TableHead className="w-12 text-right text-xs font-semibold"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoadingSubjects ? (
+                <TableSkeletonRows rows={6} columns={5} hasAvatar={false} hasActions={true} />
+              ) : (
+                <>
                   {subjects?.map((subject) => (
                     <TableRow key={subject.id}>
-                      <TableCell className="font-medium">{subject.code}</TableCell>
-                      <TableCell>{subject.name}</TableCell>
-                      <TableCell>{subject.shortName || "-"}</TableCell>
-                      <TableCell>{subject.program?.code || "-"}</TableCell>
+                      <TableCell className="font-semibold text-foreground">
+                        <Badge variant="secondary" className="font-mono text-xs">
+                          {subject.code}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-medium text-sm">{subject.name}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {subject.shortName || "—"}
+                      </TableCell>
                       <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {subject.program?.code || "—"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
                         <SubjectRowActions subject={subject} />
                       </TableCell>
                     </TableRow>
                   ))}
                   {(!subjects || subjects.length === 0) && (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center">
+                      <TableCell colSpan={5} className="h-28 text-center text-muted-foreground text-sm">
                         No subjects found.
                       </TableCell>
                     </TableRow>
                   )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                </>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
     </div>
   );
 }

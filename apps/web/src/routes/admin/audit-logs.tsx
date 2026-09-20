@@ -8,33 +8,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { IconHistory, IconX } from "@tabler/icons-react";
+import { IconHistory, IconSearch, IconX } from "@tabler/icons-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { AdminPageHeader, TableSkeletonRows } from "@/components/admin";
 
 export const Route = createFileRoute("/admin/audit-logs")({
   component: AdminAuditLogsPage,
 });
-
-function TableSkeleton() {
-  return (
-    <>
-      {Array.from({ length: 8 }).map((_, i) => (
-        <TableRow key={i}>
-          {Array.from({ length: 6 }).map((__, j) => (
-            <TableCell key={j}>
-              <Skeleton className="h-4 w-full" />
-            </TableCell>
-          ))}
-        </TableRow>
-      ))}
-    </>
-  );
-}
 
 function AdminAuditLogsPage() {
   const [page, setPage] = useState(0);
@@ -68,138 +52,157 @@ function AdminAuditLogsPage() {
   };
 
   return (
-    <div className="space-y-6 min-w-0">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight flex items-center gap-2">
-          <IconHistory className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
-          System Audit Logs
-        </h1>
-        <p className="text-muted-foreground text-xs sm:text-sm mt-1">
-          A tamper-evident trail of all administrative and system events.
-        </p>
-      </div>
+    <div className="space-y-6 min-w-0 pb-10">
+      <AdminPageHeader
+        title="System Audit Logs"
+        subtitle="Immutable, tamper-evident audit trail capturing administrative actions, device bindings, and security events."
+        icon={<IconHistory className="size-6 text-primary" />}
+        badge={
+          data?.total !== undefined ? (
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+              {data.total} Logged Events
+            </span>
+          ) : undefined
+        }
+      />
 
-      <Card>
-        <CardHeader className="p-4 sm:p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle className="text-base">Event Log</CardTitle>
-              <CardDescription>
-                {data
-                  ? `Showing ${data.logs.length} of ${data.total} events`
-                  : isLoading
-                    ? "Loading events…"
-                    : "No events found"}
-              </CardDescription>
-            </div>
-            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2">
-              <Input
-                placeholder="Event type…"
-                value={eventType}
-                onChange={(e) => handleEventTypeChange(e.target.value)}
-                className="h-8 w-full sm:w-40 text-sm"
-              />
-              <Input
-                placeholder="Actor ID or name…"
-                value={actor}
-                onChange={(e) => handleActorChange(e.target.value)}
-                className="h-8 w-full sm:w-44 text-sm"
-              />
-              {hasFilters && (
-                <Button variant="ghost" size="sm" className="h-8 gap-1 w-full sm:w-auto" onClick={clearFilters}>
-                  <IconX className="h-3.5 w-3.5" />
-                  Clear
-                </Button>
-              )}
-            </div>
+      {/* Filter and Search Bar */}
+      <Card className="p-3 sm:p-4 border-border/70 shadow-xs bg-card">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+          <div className="relative flex-1">
+            <IconSearch className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Search event type (e.g. user.create, device.bind)..."
+              value={eventType}
+              onChange={(e) => handleEventTypeChange(e.target.value)}
+              className="pl-8.5 h-9 text-xs sm:text-sm"
+            />
           </div>
-        </CardHeader>
-        <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-          {isError ? (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6 text-center text-sm text-destructive">
-              Failed to load audit logs. Please try refreshing the page.
-            </div>
-          ) : (
-            <>
-              <div className="rounded-lg border overflow-x-auto touch-pan-x">
-                <Table className="min-w-[640px] sm:min-w-full">
-                  <TableHeader>
+
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Actor ID or name..."
+              value={actor}
+              onChange={(e) => handleActorChange(e.target.value)}
+              className="h-9 w-full sm:w-48 text-xs sm:text-sm"
+            />
+
+            {hasFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 gap-1 text-xs"
+                onClick={clearFilters}
+              >
+                <IconX className="size-3.5" />
+                Clear
+              </Button>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      {isError ? (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-center text-sm text-destructive">
+          Failed to load audit logs. Please try refreshing the page.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-border/70 bg-card overflow-hidden shadow-xs">
+            <div className="overflow-x-auto touch-pan-x">
+              <Table className="min-w-[680px] sm:min-w-full">
+                <TableHeader className="bg-muted/40">
+                  <TableRow>
+                    <TableHead className="text-xs font-semibold">Timestamp</TableHead>
+                    <TableHead className="text-xs font-semibold">Event Type</TableHead>
+                    <TableHead className="text-xs font-semibold">Actor</TableHead>
+                    <TableHead className="text-xs font-semibold">Target</TableHead>
+                    <TableHead className="text-xs font-semibold">IP / Network</TableHead>
+                    <TableHead className="text-xs font-semibold">Details</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableSkeletonRows rows={8} columns={6} hasAvatar={false} hasActions={false} />
+                  ) : data?.logs.length === 0 ? (
                     <TableRow>
-                      <TableHead>Time</TableHead>
-                      <TableHead>Event Type</TableHead>
-                      <TableHead>Actor</TableHead>
-                      <TableHead>Target</TableHead>
-                      <TableHead>IP / User Agent</TableHead>
-                      <TableHead>Details</TableHead>
+                      <TableCell colSpan={6} className="h-28 text-center text-muted-foreground text-sm">
+                        {hasFilters ? "No logs match the current filters." : "No audit events recorded."}
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoading ? (
-                      <TableSkeleton />
-                    ) : data?.logs.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                          {hasFilters ? "No logs match the current filters." : "No logs found."}
+                  ) : (
+                    data?.logs.map((log: any) => (
+                      <TableRow key={log.id}>
+                        <TableCell className="text-xs whitespace-nowrap text-muted-foreground font-mono">
+                          {new Date(log.timestamp).toLocaleString("en-IN", {
+                            dateStyle: "short",
+                            timeStyle: "medium",
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="text-xs font-mono">
+                            {log.eventType}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm font-medium text-foreground">{log.actor ?? "System"}</div>
+                          {log.actorRole && (
+                            <div className="text-xs text-muted-foreground capitalize">{log.actorRole}</div>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs font-mono text-muted-foreground">
+                          {log.targetId ? (
+                            <span className="bg-muted/50 px-1.5 py-0.5 rounded border border-border/50">
+                              {log.targetId}
+                            </span>
+                          ) : (
+                            "—"
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-xs font-mono text-foreground">{log.ipAddress ?? "—"}</div>
+                          <div className="text-[10px] text-muted-foreground max-w-48 truncate" title={log.userAgent}>
+                            {log.userAgent}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground max-w-56 truncate font-mono">
+                          {log.details ? JSON.stringify(log.details) : "—"}
                         </TableCell>
                       </TableRow>
-                    ) : (
-                      data?.logs.map((log: any) => (
-                        <TableRow key={log.id}>
-                          <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
-                            {new Date(log.timestamp).toLocaleString()}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary" className="text-xs font-mono">
-                              {log.eventType}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm font-medium">{log.actor ?? "System"}</div>
-                            {log.actorRole && (
-                              <div className="text-xs text-muted-foreground">{log.actorRole}</div>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-xs font-mono text-muted-foreground">
-                            {log.targetId ?? "—"}
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-xs">{log.ipAddress ?? "—"}</div>
-                            <div className="text-[10px] text-muted-foreground max-w-37.5 truncate">
-                              {log.userAgent}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-xs text-muted-foreground max-w-50 truncate">
-                            {log.details ? JSON.stringify(log.details) : "—"}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
 
-              <div className="flex items-center justify-end space-x-2 mt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  disabled={page === 0 || isLoading}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => p + 1)}
-                  disabled={!data || data.logs.length < pageSize || isLoading}
-                >
-                  Next
-                </Button>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+          <div className="flex items-center justify-between px-1">
+            <span className="text-xs text-muted-foreground">
+              {data ? `Showing page ${page + 1} (${data.logs.length} of ${data.total} records)` : ""}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0 || isLoading}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => setPage((p) => p + 1)}
+                disabled={!data || data.logs.length < pageSize || isLoading}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

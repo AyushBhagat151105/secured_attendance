@@ -89,6 +89,7 @@ export const authModule = new Elysia({ prefix: "/api/auth-custom" })
             deviceBound: true,
             deviceBoundAt: new Date(),
             biometricEnabled: body.biometricEnabled ?? false,
+            status: "active",
           },
         });
 

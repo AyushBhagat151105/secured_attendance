@@ -12,9 +12,8 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -22,7 +21,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { IconAlertTriangle, IconCheck, IconX, IconRotate } from "@tabler/icons-react";
+import {
+  IconAlertTriangle,
+  IconCheck,
+  IconX,
+  IconRotate,
+  IconSearch,
+} from "@tabler/icons-react";
+import { AdminPageHeader, TableSkeletonRows } from "@/components/admin";
 import { AnomalyDetailCell } from "./-anomaly-detail-cell";
 
 export const Route = createFileRoute("/admin/anomalies")({
@@ -30,32 +36,16 @@ export const Route = createFileRoute("/admin/anomalies")({
 });
 
 const STATUS_OPTIONS = [
-  { value: "ALL", label: "All statuses" },
-  { value: "OPEN", label: "Open" },
+  { value: "ALL", label: "All Statuses" },
+  { value: "OPEN", label: "Open Alerts" },
   { value: "RESOLVED", label: "Resolved" },
 ];
 
 const TYPE_OPTIONS = [
-  { value: "ALL", label: "All types" },
+  { value: "ALL", label: "All Anomaly Types" },
   { value: "IMPOSSIBLE_TRAVEL", label: "Impossible Travel" },
   { value: "DEVICE_MISMATCH", label: "Device Mismatch" },
 ];
-
-function TableSkeleton() {
-  return (
-    <>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <TableRow key={i}>
-          {Array.from({ length: 7 }).map((__, j) => (
-            <TableCell key={j}>
-              <Skeleton className="h-4 w-full" />
-            </TableCell>
-          ))}
-        </TableRow>
-      ))}
-    </>
-  );
-}
 
 function AdminAnomaliesPage() {
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -97,186 +87,201 @@ function AdminAnomaliesPage() {
       )
     : anomalyList;
 
-  return (
-    <div className="space-y-6 min-w-0">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight flex items-center gap-2">
-          <IconAlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-destructive shrink-0" />
-          Anomaly Detection Alerts
-        </h1>
-        <p className="text-muted-foreground text-xs sm:text-sm mt-1">
-          Review impossible travel and device mismatch alerts flagged by the system.
-        </p>
-      </div>
+  const openCount = anomalyList.filter((a: any) => a.status === "OPEN").length;
 
-      <Card>
-        <CardHeader className="p-4 sm:p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle className="text-base">Recent Anomalies</CardTitle>
-              <CardDescription>
-                {isLoading
-                  ? "Loading..."
-                  : `${filtered.length} anomal${filtered.length === 1 ? "y" : "ies"} found`}
-              </CardDescription>
-            </div>
-            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2">
-              <Input
-                placeholder="Search name or email…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="h-8 w-full sm:w-48 text-sm"
-              />
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-8 w-full sm:w-36 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="h-8 w-full sm:w-40 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TYPE_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {hasFilters && (
-                <Button variant="ghost" size="sm" className="h-8 gap-1 w-full sm:w-auto" onClick={clearFilters}>
-                  <IconX className="h-3.5 w-3.5" />
-                  Clear
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-          {isError ? (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6 text-center text-sm text-destructive">
-              Failed to load anomalies. Please try refreshing the page.
-            </div>
+  return (
+    <div className="space-y-6 min-w-0 pb-10">
+      <AdminPageHeader
+        title="Security & Anomaly Alerts"
+        subtitle="Review impossible travel flags, hardware device mismatches, and geofence perimeter violations."
+        icon={<IconAlertTriangle className="size-6 text-rose-500" />}
+        badge={
+          openCount > 0 ? (
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+              {openCount} Open Alerts
+            </span>
           ) : (
-            <div className="rounded-lg border overflow-x-auto touch-pan-x">
-              <Table className="min-w-[640px] sm:min-w-full">
-                <TableHeader>
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+              All Clear
+            </span>
+          )
+        }
+      />
+
+      {/* Filter and Search Bar */}
+      <Card className="p-3 sm:p-4 border-border/70 shadow-xs bg-card">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+          <div className="relative flex-1">
+            <IconSearch className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Search user name or email..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8.5 h-9 text-xs sm:text-sm"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-36 h-9 text-xs">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-full sm:w-44 h-9 text-xs">
+                <SelectValue placeholder="All Types" />
+              </SelectTrigger>
+              <SelectContent>
+                {TYPE_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {hasFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 gap-1 text-xs w-full sm:w-auto"
+                onClick={clearFilters}
+              >
+                <IconX className="size-3.5" />
+                Clear
+              </Button>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      {isError ? (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-center text-sm text-destructive">
+          Failed to load anomalies. Please try refreshing the page.
+        </div>
+      ) : (
+        <div className="rounded-xl border border-border/70 bg-card overflow-hidden shadow-xs">
+          <div className="overflow-x-auto touch-pan-x">
+            <Table className="min-w-[640px] sm:min-w-full">
+              <TableHeader className="bg-muted/40">
+                <TableRow>
+                  <TableHead className="text-xs font-semibold">Time</TableHead>
+                  <TableHead className="text-xs font-semibold">User</TableHead>
+                  <TableHead className="text-xs font-semibold">Anomaly Type</TableHead>
+                  <TableHead className="text-xs font-semibold">Severity</TableHead>
+                  <TableHead className="text-xs font-semibold">Details</TableHead>
+                  <TableHead className="text-xs font-semibold">Status</TableHead>
+                  <TableHead className="w-40 text-right text-xs font-semibold">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableSkeletonRows rows={6} columns={7} hasAvatar={true} hasActions={true} />
+                ) : filtered.length === 0 ? (
                   <TableRow>
-                    <TableHead>Time</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Severity</TableHead>
-                    <TableHead>Details</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
+                    <TableCell colSpan={7} className="h-28 text-center text-muted-foreground text-sm">
+                      {hasFilters
+                        ? "No anomalies match the current filters."
+                        : "No security anomalies detected. System running normally."}
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableSkeleton />
-                  ) : filtered.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                        {hasFilters
-                          ? "No anomalies match the current filters."
-                          : "No anomalies detected!"}
+                ) : (
+                  filtered.map((anomaly: any) => (
+                    <TableRow key={anomaly.id}>
+                      <TableCell className="text-xs whitespace-nowrap text-muted-foreground font-mono">
+                        {new Date(anomaly.createdAt).toLocaleString("en-IN", {
+                          dateStyle: "short",
+                          timeStyle: "short",
+                        })}
                       </TableCell>
-                    </TableRow>
-                  ) : (
-                    filtered.map((anomaly: any) => (
-                      <TableRow key={anomaly.id}>
-                        <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
-                          {new Date(anomaly.createdAt).toLocaleString()}
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium text-sm">{anomaly.user.name}</div>
-                          <div className="text-xs text-muted-foreground">{anomaly.user.email}</div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="text-xs font-mono">
-                            {anomaly.type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
+                      <TableCell>
+                        <div className="font-medium text-sm text-foreground">{anomaly.user.name}</div>
+                        <div className="text-xs text-muted-foreground">{anomaly.user.email}</div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs font-mono">
+                          {anomaly.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            anomaly.severity === "HIGH"
+                              ? "destructive"
+                              : anomaly.severity === "MEDIUM"
+                                ? "default"
+                                : "secondary"
+                          }
+                          className="text-xs font-semibold"
+                        >
+                          {anomaly.severity}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="max-w-64">
+                        <AnomalyDetailCell type={anomaly.type} details={anomaly.details} />
+                      </TableCell>
+                      <TableCell>
+                        {anomaly.status === "OPEN" ? (
                           <Badge
-                            variant={
-                              anomaly.severity === "HIGH"
-                                ? "destructive"
-                                : anomaly.severity === "MEDIUM"
-                                  ? "default"
-                                  : "secondary"
-                            }
-                            className="text-xs"
+                            variant="outline"
+                            className="text-xs text-rose-600 dark:text-rose-400 border-rose-500/30 bg-rose-500/10 font-semibold"
                           >
-                            {anomaly.severity}
+                            OPEN
                           </Badge>
-                        </TableCell>
-                        <TableCell className="max-w-56">
-                          <AnomalyDetailCell type={anomaly.type} details={anomaly.details} />
-                        </TableCell>
-                        <TableCell>
-                          {anomaly.status === "OPEN" ? (
-                            <Badge
-                              variant="outline"
-                              className="text-xs text-orange-500 border-orange-200 bg-orange-500/10"
-                            >
-                              OPEN
-                            </Badge>
-                          ) : (
-                            <Badge
-                              variant="outline"
-                              className="text-xs text-emerald-500 border-emerald-200 bg-emerald-500/10"
-                            >
-                              RESOLVED
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {anomaly.status === "OPEN" && (
-                            <div className="flex items-center justify-end gap-1.5">
-                              {anomaly.type === "DEVICE_MISMATCH" && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-8 gap-1 text-xs text-amber-600 border-amber-500/30 hover:bg-amber-500/10"
-                                  onClick={() => rebindAndResolveMutation.mutate(anomaly.id)}
-                                  disabled={rebindAndResolveMutation.isPending}
-                                  title="Reset student device binding and mark anomaly as resolved"
-                                >
-                                  <IconRotate className="h-3.5 w-3.5" />
-                                  Reset Device & Resolve
-                                </Button>
-                              )}
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10 font-semibold"
+                          >
+                            RESOLVED
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {anomaly.status === "OPEN" && (
+                          <div className="flex items-center justify-end gap-1.5">
+                            {anomaly.type === "DEVICE_MISMATCH" && (
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-8 gap-1"
-                                onClick={() => resolveMutation.mutate(anomaly.id)}
-                                disabled={resolveMutation.isPending}
+                                className="h-8 gap-1 text-xs text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
+                                onClick={() => rebindAndResolveMutation.mutate(anomaly.id)}
+                                disabled={rebindAndResolveMutation.isPending}
+                                title="Reset student device binding and mark anomaly as resolved"
                               >
-                                <IconCheck className="h-3.5 w-3.5" />
-                                Resolve
+                                <IconRotate className="size-3.5" />
+                                Reset & Resolve
                               </Button>
-                            </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 gap-1 text-xs"
+                              onClick={() => resolveMutation.mutate(anomaly.id)}
+                              disabled={resolveMutation.isPending}
+                            >
+                              <IconCheck className="size-3.5" />
+                              Resolve
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

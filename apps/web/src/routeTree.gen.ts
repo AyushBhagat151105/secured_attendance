@@ -31,6 +31,7 @@ import { Route as AdminAcademicYearsRouteImport } from './routes/admin/academic/
 import { Route as AdminCampusIndexRouteImport } from './routes/admin/campus/index'
 import { Route as AdminDevicesIndexRouteImport } from './routes/admin/devices/index'
 import { Route as AdminMapSessionIdRouteImport } from './routes/admin/map/$sessionId'
+import { Route as AdminStudentsIndexRouteImport } from './routes/admin/students/index'
 import { Route as AdminTimetableIndexRouteImport } from './routes/admin/timetable/index'
 import { Route as AdminTimetableImportRouteImport } from './routes/admin/timetable/import'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
@@ -149,6 +150,11 @@ const AdminMapSessionIdRoute = AdminMapSessionIdRouteImport.update({
   path: '/map/$sessionId',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminStudentsIndexRoute = AdminStudentsIndexRouteImport.update({
+  id: '/students/',
+  path: '/students/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminTimetableIndexRoute = AdminTimetableIndexRouteImport.update({
   id: '/timetable/',
   path: '/timetable/',
@@ -213,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/reports/session/$sessionId': typeof ReportsSessionSessionIdRoute
   '/admin/campus/': typeof AdminCampusIndexRoute
   '/admin/devices/': typeof AdminDevicesIndexRoute
+  '/admin/students/': typeof AdminStudentsIndexRoute
   '/admin/timetable/': typeof AdminTimetableIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
 }
@@ -243,6 +250,7 @@ export interface FileRoutesByTo {
   '/reports/session/$sessionId': typeof ReportsSessionSessionIdRoute
   '/admin/campus': typeof AdminCampusIndexRoute
   '/admin/devices': typeof AdminDevicesIndexRoute
+  '/admin/students': typeof AdminStudentsIndexRoute
   '/admin/timetable': typeof AdminTimetableIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
 }
@@ -275,6 +283,7 @@ export interface FileRoutesById {
   '/reports/session/$sessionId': typeof ReportsSessionSessionIdRoute
   '/admin/campus/': typeof AdminCampusIndexRoute
   '/admin/devices/': typeof AdminDevicesIndexRoute
+  '/admin/students/': typeof AdminStudentsIndexRoute
   '/admin/timetable/': typeof AdminTimetableIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
 }
@@ -308,6 +317,7 @@ export interface FileRouteTypes {
     | '/reports/session/$sessionId'
     | '/admin/campus/'
     | '/admin/devices/'
+    | '/admin/students/'
     | '/admin/timetable/'
     | '/admin/users/'
   fileRoutesByTo: FileRoutesByTo
@@ -338,6 +348,7 @@ export interface FileRouteTypes {
     | '/reports/session/$sessionId'
     | '/admin/campus'
     | '/admin/devices'
+    | '/admin/students'
     | '/admin/timetable'
     | '/admin/users'
   id:
@@ -369,6 +380,7 @@ export interface FileRouteTypes {
     | '/reports/session/$sessionId'
     | '/admin/campus/'
     | '/admin/devices/'
+    | '/admin/students/'
     | '/admin/timetable/'
     | '/admin/users/'
   fileRoutesById: FileRoutesById
@@ -543,6 +555,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMapSessionIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/students/': {
+      id: '/admin/students/'
+      path: '/students'
+      fullPath: '/admin/students/'
+      preLoaderRoute: typeof AdminStudentsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/timetable/': {
       id: '/admin/timetable/'
       path: '/timetable'
@@ -612,6 +631,7 @@ interface AdminRouteChildren {
   AdminUsersImportRoute: typeof AdminUsersImportRoute
   AdminCampusIndexRoute: typeof AdminCampusIndexRoute
   AdminDevicesIndexRoute: typeof AdminDevicesIndexRoute
+  AdminStudentsIndexRoute: typeof AdminStudentsIndexRoute
   AdminTimetableIndexRoute: typeof AdminTimetableIndexRoute
   AdminUsersIndexRoute: typeof AdminUsersIndexRoute
 }
@@ -633,6 +653,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminUsersImportRoute: AdminUsersImportRoute,
   AdminCampusIndexRoute: AdminCampusIndexRoute,
   AdminDevicesIndexRoute: AdminDevicesIndexRoute,
+  AdminStudentsIndexRoute: AdminStudentsIndexRoute,
   AdminTimetableIndexRoute: AdminTimetableIndexRoute,
   AdminUsersIndexRoute: AdminUsersIndexRoute,
 }

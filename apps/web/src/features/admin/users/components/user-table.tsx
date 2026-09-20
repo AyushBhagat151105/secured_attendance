@@ -1,10 +1,11 @@
-﻿import { flexRender } from "@tanstack/react-table";
+import { flexRender } from "@tanstack/react-table";
 import {
   getCoreRowModel,
   useLegacyTable,
   type LegacyColumnDef,
 } from "@tanstack/react-table/legacy";
 import { useState } from "react";
+import { IconPlus, IconSearch } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -24,8 +24,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUsers } from "@/hooks/api/use-admin-users";
+import { TableSkeletonRows } from "@/components/admin";
 import type { UserListParams, UserRole, UserStatus } from "@/services/admin/users.service";
 import { CreateUserDialog } from "./create-user-dialog";
 import {
@@ -38,12 +39,23 @@ import {
 
 const PAGE_SIZE = 20;
 
-export function UserTable() {
+interface UserTableProps {
+  createOpen?: boolean;
+  setCreateOpen?: (open: boolean) => void;
+}
+
+export function UserTable({
+  createOpen: externalCreateOpen,
+  setCreateOpen: externalSetCreateOpen,
+}: UserTableProps = {}) {
   const [activeTab, setActiveTab] = useState<"all" | "student" | "teacher" | "admin">("student");
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<UserStatus | "">("");
-  const [createOpen, setCreateOpen] = useState(false);
+  const [internalCreateOpen, setInternalCreateOpen] = useState(false);
+
+  const isCreateOpen = externalCreateOpen !== undefined ? externalCreateOpen : internalCreateOpen;
+  const setCreateOpen = externalSetCreateOpen !== undefined ? externalSetCreateOpen : setInternalCreateOpen;
 
   const params: UserListParams = {
     page,
@@ -87,22 +99,29 @@ export function UserTable() {
             <TabsTrigger value="all" className="text-xs sm:text-sm">All Users</TabsTrigger>
           </TabsList>
         </Tabs>
-        <Button onClick={() => setCreateOpen(true)} className="gap-2 shrink-0 w-full sm:w-auto">
-          + New User
+        <Button
+          onClick={() => setCreateOpen(true)}
+          className="gap-1.5 shrink-0 w-full sm:w-auto h-9 text-xs sm:text-sm shadow-xs"
+        >
+          <IconPlus className="size-4" />
+          New User
         </Button>
       </div>
 
       <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
         <div className="flex flex-col sm:flex-row flex-1 items-stretch sm:items-center gap-2">
-          <Input
-            placeholder="Search by name or email..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="w-full sm:max-w-xs"
-          />
+          <div className="relative w-full sm:max-w-xs">
+            <IconSearch className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name or email..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="pl-8.5 h-9 text-xs sm:text-sm w-full"
+            />
+          </div>
           <Select
             value={status || "all"}
             onValueChange={(v) => {
@@ -110,7 +129,7 @@ export function UserTable() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="w-full sm:w-36">
+            <SelectTrigger className="w-full sm:w-36 h-9 text-xs sm:text-sm">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -124,68 +143,67 @@ export function UserTable() {
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border overflow-x-auto touch-pan-x">
-        <Table className="min-w-[620px] sm:min-w-full">
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 8 }).map((_, i) => (
-                <TableRow key={i}>
-                  {activeColumns.map((_, j) => (
-                    <TableCell key={j}>
-                      <Skeleton className="h-5 w-full" />
-                    </TableCell>
+      <div className="rounded-xl border border-border/70 bg-card overflow-hidden shadow-xs">
+        <div className="overflow-x-auto touch-pan-x">
+          <Table className="min-w-[620px] sm:min-w-full">
+            <TableHeader className="bg-muted/40">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} className="text-xs font-semibold">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))
-            ) : isError ? (
-              <TableRow>
-                <TableCell
-                  colSpan={activeColumns.length}
-                  className="py-10 text-center text-muted-foreground"
-                >
-                  Failed to load users. Please try again.
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={activeColumns.length}
-                  className="py-10 text-center text-muted-foreground"
-                >
-                  No users found.{" "}
-                  {search || status ? "Try clearing your filters." : "Create your first user."}
-                </TableCell>
-              </TableRow>
-            ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
+              ))}
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableSkeletonRows
+                  rows={8}
+                  columns={activeColumns.length}
+                  hasAvatar={true}
+                  hasActions={true}
+                />
+              ) : isError ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={activeColumns.length}
+                    className="py-12 text-center text-muted-foreground text-sm"
+                  >
+                    Failed to load users. Please try again.
+                  </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : table.getRowModel().rows.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={activeColumns.length}
+                    className="py-12 text-center text-muted-foreground text-sm"
+                  >
+                    No users found.{" "}
+                    {search || status ? "Try clearing your filters." : "Create your first user."}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm text-muted-foreground">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm text-muted-foreground px-1">
         <span>
           {data
             ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, data.pagination.total)} of ${data.pagination.total} users`
@@ -197,24 +215,29 @@ export function UserTable() {
             size="sm"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1 || isLoading}
+            className="h-8 text-xs"
           >
             Previous
           </Button>
-          <span className="px-2 text-xs">
-            Page {page} of {totalPages}
+          <span className="text-xs font-medium text-foreground px-1">
+            Page {page} of {Math.max(1, totalPages)}
           </span>
           <Button
             variant="outline"
             size="sm"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages || isLoading}
+            className="h-8 text-xs"
           >
             Next
           </Button>
         </div>
       </div>
 
-      <CreateUserDialog open={createOpen} onOpenChange={setCreateOpen} />
+      {/* Internal dialog if not managed externally */}
+      {externalCreateOpen === undefined && (
+        <CreateUserDialog open={internalCreateOpen} onOpenChange={setInternalCreateOpen} />
+      )}
     </div>
   );
 }

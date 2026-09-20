@@ -3,6 +3,14 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import {
+  IconCalendar,
+  IconCheck,
+  IconDots,
+  IconPencil,
+  IconPlus,
+  IconTrash,
+} from "@tabler/icons-react";
+import {
   createAcademicYearSchema,
   updateAcademicYearSchema,
   type CreateAcademicYearSchema,
@@ -14,6 +22,7 @@ import {
   useUpdateAcademicYear,
   useDeleteAcademicYear,
 } from "@/hooks/api/use-admin-academic";
+import { AdminPageHeader, TableSkeletonRows } from "@/components/admin";
 import {
   Table,
   TableBody,
@@ -22,10 +31,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Spinner } from "@/components/ui/spinner";
 import {
   Dialog,
   DialogContent,
@@ -56,7 +63,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MoreHorizontal, Pencil, Trash, Plus, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/admin/academic/years")({
   component: AcademicYearsRoute,
@@ -108,17 +114,12 @@ function AcademicYearRowActions({ year }: { year: any }) {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
             <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
+            <IconDots className="size-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {!year.isCurrent && (
-            <DropdownMenuItem onClick={handleSetCurrent}>
-              <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-500" /> Set as Current
-            </DropdownMenuItem>
-          )}
           <DropdownMenuItem
             onClick={() => {
               form.reset({
@@ -132,13 +133,19 @@ function AcademicYearRowActions({ year }: { year: any }) {
               setShowEdit(true);
             }}
           >
-            <Pencil className="mr-2 h-4 w-4" /> Edit
+            <IconPencil className="mr-2 size-4" /> Edit Dates
           </DropdownMenuItem>
+          {!year.isCurrent && (
+            <DropdownMenuItem onClick={handleSetCurrent}>
+              <IconCheck className="mr-2 size-4 text-emerald-500" /> Set as Current Active
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() => setShowDelete(true)}
             className="text-destructive focus:text-destructive"
           >
-            <Trash className="mr-2 h-4 w-4" /> Delete
+            <IconTrash className="mr-2 size-4" /> Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -147,7 +154,9 @@ function AcademicYearRowActions({ year }: { year: any }) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Academic Year</DialogTitle>
-            <DialogDescription>Update details for {year.name}.</DialogDescription>
+            <DialogDescription>
+              Update the active timeline and status for {year.name}.
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <Controller
@@ -277,19 +286,23 @@ function AcademicYearsRoute() {
   };
 
   return (
-    <div className="flex-1 space-y-4 min-w-0">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h2 className="text-xl sm:text-3xl font-bold tracking-tight">Academic Years</h2>
-          <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">
-            Manage institutional academic cycles and designate active years
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
+    <div className="space-y-6 min-w-0 pb-10">
+      <AdminPageHeader
+        title="Academic Years"
+        subtitle="Manage institutional academic cycles and designate the active enrollment period."
+        icon={<IconCalendar className="size-6 text-primary" />}
+        badge={
+          years?.length ? (
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+              {years.length} Cycles
+            </span>
+          ) : undefined
+        }
+        actions={
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto">
-                <Plus className="mr-2 h-4 w-4" /> Add Academic Year
+              <Button className="gap-1.5 text-xs sm:text-sm h-9 w-full sm:w-auto shadow-xs">
+                <IconPlus className="size-4" /> Add Academic Year
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -377,39 +390,30 @@ function AcademicYearsRoute() {
               </form>
             </DialogContent>
           </Dialog>
-        </div>
-      </div>
+        }
+      />
 
-      <Card>
-        <CardHeader className="p-4 sm:p-6">
-          <CardTitle>Academic Years</CardTitle>
-          <CardDescription>
-            All configured academic cycles. The active year is automatically assigned to newly
-            imported batches.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-          {isLoading ? (
-            <div className="flex justify-center p-8">
-              <Spinner />
-            </div>
-          ) : (
-            <div className="rounded-lg border overflow-x-auto touch-pan-x">
-              <Table className="min-w-[550px] sm:min-w-full">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Academic Year</TableHead>
-                    <TableHead>Start Date</TableHead>
-                    <TableHead>End Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-12.5"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+      <div className="rounded-xl border border-border/70 bg-card overflow-hidden shadow-xs">
+        <div className="overflow-x-auto touch-pan-x">
+          <Table className="min-w-[550px] sm:min-w-full">
+            <TableHeader className="bg-muted/40">
+              <TableRow>
+                <TableHead className="text-xs font-semibold">Academic Year</TableHead>
+                <TableHead className="text-xs font-semibold">Start Date</TableHead>
+                <TableHead className="text-xs font-semibold">End Date</TableHead>
+                <TableHead className="text-xs font-semibold">Status</TableHead>
+                <TableHead className="w-12 text-right text-xs font-semibold"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableSkeletonRows rows={6} columns={5} hasAvatar={false} hasActions={true} />
+              ) : (
+                <>
                   {years?.map((year: any) => (
                     <TableRow key={year.id}>
-                      <TableCell className="font-semibold">{year.name}</TableCell>
-                      <TableCell>
+                      <TableCell className="font-semibold text-foreground">{year.name}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
                         {year.startDate
                           ? new Date(year.startDate).toLocaleDateString("en-IN", {
                               day: "numeric",
@@ -418,7 +422,7 @@ function AcademicYearsRoute() {
                             })
                           : "—"}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
                         {year.endDate
                           ? new Date(year.endDate).toLocaleDateString("en-IN", {
                               day: "numeric",
@@ -429,33 +433,33 @@ function AcademicYearsRoute() {
                       </TableCell>
                       <TableCell>
                         {year.isCurrent ? (
-                          <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white gap-1">
-                            <CheckCircle2 className="h-3 w-3" /> Current
+                          <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 gap-1 text-xs">
+                            <IconCheck className="size-3" /> Current
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-muted-foreground">
+                          <Badge variant="outline" className="text-muted-foreground text-xs">
                             Inactive
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-right">
                         <AcademicYearRowActions year={year} />
                       </TableCell>
                     </TableRow>
                   ))}
                   {(!years || years.length === 0) && (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                        No academic years configured.
+                      <TableCell colSpan={5} className="h-28 text-center text-muted-foreground text-sm">
+                        No academic years configured yet.
                       </TableCell>
                     </TableRow>
                   )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                </>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
     </div>
   );
 }

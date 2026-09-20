@@ -40,6 +40,10 @@ const data = {
       icon: <IconUsers />,
       items: [
         {
+          title: "Students",
+          url: "/admin/students",
+        },
+        {
           title: "Users",
           url: "/admin/users",
         },
