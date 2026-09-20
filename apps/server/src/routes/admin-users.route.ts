@@ -1,5 +1,5 @@
 import { Elysia } from "elysia";
-import { requireRole } from "../middlewares/guards";
+import { requireRole, authMacro } from "../middlewares/guards";
 import {
   UpdateUserBody,
   UserIdParam,
@@ -7,12 +7,17 @@ import {
   CreateTeacherBody,
   CreateStudentBody,
   CreateAdminBody,
+  AdminChangePasswordBody,
+  BulkDeleteUsersBody,
+  BulkStatusUsersBody,
+  BulkDivisionStudentsBody,
 } from "../models/admin-users.model";
 import { AdminUsersService } from "../services/admin-users.service";
 import { logger } from "../lib/logger";
 
 export const adminUsersModule = new Elysia({ prefix: "/users" })
   .use(requireRole(["admin", "super_admin"]))
+  .use(authMacro)
 
   .get(
     "/",
@@ -27,7 +32,44 @@ export const adminUsersModule = new Elysia({ prefix: "/users" })
     { query: UsersListQuery },
   )
 
+  .post("/bulk-delete", async ({ body, user }: any) => AdminUsersService.bulkDelete(body.userIds, user), {
+    body: BulkDeleteUsersBody,
+  })
+
+  .post(
+    "/bulk-status",
+    async ({ body, user }: any) => AdminUsersService.bulkStatus(body.userIds, body.status, user),
+    {
+      body: BulkStatusUsersBody,
+    },
+  )
+
+  .post(
+    "/bulk-division",
+    async ({ body, user }: any) =>
+      AdminUsersService.bulkDivision(body.userIds, body.divisionId, user),
+    {
+      body: BulkDivisionStudentsBody,
+    },
+  )
+
   .get("/:id", async ({ params: { id } }) => AdminUsersService.getUser(id), { params: UserIdParam })
+
+  .get(
+    "/:id/student-detail",
+    async ({ params: { id } }) => AdminUsersService.getStudentDetail(id),
+    { params: UserIdParam },
+  )
+
+  .post(
+    "/:id/change-password",
+    async ({ params: { id }, body, user }: any) =>
+      AdminUsersService.changePassword(id, body, user),
+    {
+      params: UserIdParam,
+      body: AdminChangePasswordBody,
+    },
+  )
 
   .post("/teacher", async ({ body }) => AdminUsersService.createTeacher(body), {
     body: CreateTeacherBody,

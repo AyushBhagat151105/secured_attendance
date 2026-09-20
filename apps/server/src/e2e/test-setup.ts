@@ -353,6 +353,11 @@ export function setupInMemoryHarness(): void {
     };
   }) as any;
 
+  // Mock auth.api.setUserPassword
+  auth.api.setUserPassword = (async (_args: any) => {
+    return { status: true };
+  }) as any;
+
   // 3. Mock Prisma User queries
   prisma.user.findFirst = (async (args: any) => {
     for (const u of inMemoryStore.users.values()) {
@@ -363,27 +368,83 @@ export function setupInMemoryHarness(): void {
   }) as any;
 
   prisma.user.findUnique = (async (args: any) => {
-    return inMemoryStore.users.get(args?.where?.id) || null;
+    const u = inMemoryStore.users.get(args?.where?.id) || null;
+    if (!u) return null;
+    const studentProfile = inMemoryStore.studentProfiles.get(u.id) || null;
+    const teacherProfile = inMemoryStore.teacherProfiles.get(u.id) || null;
+    return {
+      ...u,
+      studentProfile,
+      teacherProfile,
+    };
   }) as any;
 
-  prisma.user.findMany = (async (_args: any) => {
-    return Array.from(inMemoryStore.users.values()).map((u) => ({
+  prisma.user.findMany = (async (args: any) => {
+    let list = Array.from(inMemoryStore.users.values()).map((u) => ({
       ...u,
       createdAt: new Date(),
       studentProfile: inMemoryStore.studentProfiles.get(u.id) || null,
       teacherProfile: inMemoryStore.teacherProfiles.get(u.id) || null,
     }));
+
+    if (args?.where?.role) {
+      list = list.filter((u) => u.role === args.where.role);
+    }
+    if (args?.where?.studentProfile?.status) {
+      list = list.filter((u) => u.studentProfile?.status === args.where.studentProfile.status);
+    }
+    if (args?.where?.studentProfile?.divisionId) {
+      list = list.filter((u) => u.studentProfile?.divisionId === args.where.studentProfile.divisionId);
+    }
+    if (args?.where?.OR && Array.isArray(args.where.OR)) {
+      list = list.filter((u) => {
+        return args.where.OR.some((cond: any) => {
+          if (cond.name?.contains) {
+            return u.name.toLowerCase().includes(cond.name.contains.toLowerCase());
+          }
+          if (cond.email?.contains) {
+            return u.email.toLowerCase().includes(cond.email.contains.toLowerCase());
+          }
+          if (cond.studentProfile?.enrollmentNo?.contains) {
+            return u.studentProfile?.enrollmentNo
+              ?.toLowerCase()
+              .includes(cond.studentProfile.enrollmentNo.contains.toLowerCase());
+          }
+          if (cond.studentProfile?.rollNumber?.contains) {
+            return u.studentProfile?.rollNumber
+              ?.toLowerCase()
+              .includes(cond.studentProfile.rollNumber.contains.toLowerCase());
+          }
+          return false;
+        });
+      });
+    }
+
+    return list;
   }) as any;
 
-  prisma.user.count = (async () => {
-    return inMemoryStore.users.size;
+  prisma.user.count = (async (args: any) => {
+    const list = await (prisma.user.findMany as any)(args);
+    return list.length;
   }) as any;
 
   prisma.user.delete = (async (args: any) => {
     const existing = inMemoryStore.users.get(args.where.id);
     if (!existing) throw new Error("Record not found");
     inMemoryStore.users.delete(args.where.id);
+    inMemoryStore.studentProfiles.delete(args.where.id);
     return existing;
+  }) as any;
+
+  prisma.user.deleteMany = (async (args: any) => {
+    let count = 0;
+    if (args?.where?.id?.in) {
+      for (const id of args.where.id.in) {
+        if (inMemoryStore.users.delete(id)) count++;
+        inMemoryStore.studentProfiles.delete(id);
+      }
+    }
+    return { count };
   }) as any;
 
   prisma.user.update = (async (args: any) => {
@@ -392,6 +453,20 @@ export function setupInMemoryHarness(): void {
     const updated = { ...existing, ...args.data };
     inMemoryStore.users.set(args.where.id, updated);
     return updated;
+  }) as any;
+
+  prisma.user.updateMany = (async (args: any) => {
+    let count = 0;
+    if (args?.where?.id?.in) {
+      for (const id of args.where.id.in) {
+        const u = inMemoryStore.users.get(id);
+        if (u) {
+          Object.assign(u, args.data);
+          count++;
+        }
+      }
+    }
+    return { count };
   }) as any;
 
   // 4. Mock Prisma Student Profile
@@ -411,10 +486,20 @@ export function setupInMemoryHarness(): void {
   prisma.studentProfile.updateMany = (async (args: any) => {
     let count = 0;
     if (args?.where?.userId) {
-      const p = inMemoryStore.studentProfiles.get(args.where.userId);
-      if (p) {
-        Object.assign(p, args.data);
-        count++;
+      if (typeof args.where.userId === "string") {
+        const p = inMemoryStore.studentProfiles.get(args.where.userId);
+        if (p) {
+          Object.assign(p, args.data);
+          count++;
+        }
+      } else if (args.where.userId?.in && Array.isArray(args.where.userId.in)) {
+        for (const uid of args.where.userId.in) {
+          const p = inMemoryStore.studentProfiles.get(uid);
+          if (p) {
+            Object.assign(p, args.data);
+            count++;
+          }
+        }
       }
     }
     return { count };
@@ -487,6 +572,16 @@ export function setupInMemoryHarness(): void {
     return inMemoryStore.timetableEntries.get(args?.where?.id) || null;
   }) as any;
 
+  // Mock Prisma Division
+  (prisma as any).division = {
+    findUnique: async (args: any) => {
+      return inMemoryStore.divisions.get(args?.where?.id) || null;
+    },
+    findMany: async () => {
+      return Array.from(inMemoryStore.divisions.values());
+    },
+  };
+
   // 7. Mock Prisma Attendance Session
   prisma.attendanceSession.findFirst = (async (args: any) => {
     for (const sess of inMemoryStore.attendanceSessions.values()) {
@@ -499,6 +594,18 @@ export function setupInMemoryHarness(): void {
 
   prisma.attendanceSession.findUnique = (async (args: any) => {
     return inMemoryStore.attendanceSessions.get(args?.where?.id) || null;
+  }) as any;
+
+  prisma.attendanceSession.findMany = (async (args: any) => {
+    let list = Array.from(inMemoryStore.attendanceSessions.values());
+    if (args?.where?.status) {
+      list = list.filter((s) => s.status === args.where.status);
+    }
+    if (args?.where?.sessionDivisions?.some?.divisionId) {
+      const targetDiv = args.where.sessionDivisions.some.divisionId;
+      list = list.filter((s) => s.sessionDivisions?.some((sd: any) => sd.divisionId === targetDiv));
+    }
+    return list;
   }) as any;
 
   prisma.attendanceSession.create = (async (args: any) => {

@@ -62,6 +62,30 @@ export const UsersListQuery = t.Object({
   status: t.Optional(
     t.Union([t.Literal("active"), t.Literal("suspended"), t.Literal("pending"), t.Literal("")]),
   ),
+  programCode: t.Optional(t.String()),
+  programId: t.Optional(t.String()),
+  academicYearId: t.Optional(t.String()),
+  semester: t.Optional(t.Numeric()),
+  divisionId: t.Optional(t.String()),
+});
+
+export const BulkDeleteUsersBody = t.Object({
+  userIds: t.Array(t.String(), { minItems: 1 }),
+});
+
+export const BulkStatusUsersBody = t.Object({
+  userIds: t.Array(t.String(), { minItems: 1 }),
+  status: t.Union([t.Literal("active"), t.Literal("suspended"), t.Literal("pending")]),
+});
+
+export const BulkDivisionStudentsBody = t.Object({
+  userIds: t.Array(t.String(), { minItems: 1 }),
+  divisionId: t.String(),
+});
+
+export const AdminChangePasswordBody = t.Object({
+  newPassword: t.String({ minLength: 8 }),
+  requiresPasswordChange: t.Optional(t.Boolean()),
 });
 
 export const UserIdParam = t.Object({ id: t.String() });
@@ -73,3 +97,7 @@ export type CreateAdminType = typeof CreateAdminBody.static;
 export type UpdateUserType = typeof UpdateUserBody.static;
 export type UsersListQueryType = typeof UsersListQuery.static;
 export type UserIdParamType = typeof UserIdParam.static;
+export type BulkDeleteUsersType = typeof BulkDeleteUsersBody.static;
+export type BulkStatusUsersType = typeof BulkStatusUsersBody.static;
+export type BulkDivisionStudentsType = typeof BulkDivisionStudentsBody.static;
+export type AdminChangePasswordType = typeof AdminChangePasswordBody.static;

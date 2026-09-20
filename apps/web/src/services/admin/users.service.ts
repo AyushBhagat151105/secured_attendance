@@ -11,6 +11,11 @@ export interface UserListParams {
   role?: UserRole | "";
   search?: string;
   status?: UserStatus | "";
+  programCode?: string;
+  programId?: string;
+  academicYearId?: string;
+  semester?: number;
+  divisionId?: string;
 }
 
 export interface CreateUserInput {
@@ -54,6 +59,11 @@ class AdminUsersService {
         role: params.role,
         search: params.search,
         status: params.status,
+        programCode: params.programCode,
+        programId: params.programId,
+        academicYearId: params.academicYearId,
+        semester: params.semester,
+        divisionId: params.divisionId,
       },
     });
 
@@ -121,6 +131,62 @@ class AdminUsersService {
     const { data, error } = await apiClient.api.admin.users["bulk-import"].confirm.post(input);
 
     if (error) throw new Error(error.value?.message ?? "Failed to create users");
+    return data;
+  }
+
+  /**
+   * Get detailed student profile, academic hierarchy, and attendance scores/history.
+   */
+  async getStudentDetail(id: string) {
+    const { data, error } = await apiClient.api.admin.users({ id })["student-detail"].get();
+
+    if (error) throw new Error(error.value?.message ?? "Failed to fetch student details");
+    return data;
+  }
+
+  /**
+   * Admin changes a user's password directly.
+   */
+  async changePassword(id: string, newPassword: string, requiresPasswordChange = true) {
+    const { data, error } = await apiClient.api.admin.users({ id })["change-password"].post({
+      newPassword,
+      requiresPasswordChange,
+    });
+
+    if (error) throw new Error(error.value?.message ?? "Failed to change password");
+    return data;
+  }
+
+  /**
+   * Bulk delete selected users.
+   */
+  async bulkDelete(userIds: string[]) {
+    const { data, error } = await apiClient.api.admin.users["bulk-delete"].post({ userIds });
+
+    if (error) throw new Error(error.value?.message ?? "Failed to delete users");
+    return data;
+  }
+
+  /**
+   * Bulk update status for selected users.
+   */
+  async bulkStatus(userIds: string[], status: UserStatus) {
+    const { data, error } = await apiClient.api.admin.users["bulk-status"].post({ userIds, status });
+
+    if (error) throw new Error(error.value?.message ?? "Failed to update status");
+    return data;
+  }
+
+  /**
+   * Bulk assign division to selected students.
+   */
+  async bulkDivision(userIds: string[], divisionId: string) {
+    const { data, error } = await apiClient.api.admin.users["bulk-division"].post({
+      userIds,
+      divisionId,
+    });
+
+    if (error) throw new Error(error.value?.message ?? "Failed to assign division");
     return data;
   }
 }

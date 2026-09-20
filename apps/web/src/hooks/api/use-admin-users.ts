@@ -104,6 +104,76 @@ export const useDeleteUser = () => {
   });
 };
 
+export const useStudentDetail = (id: string) =>
+  useQuery({
+    queryKey: [...userKeys.detail(id), "student-detail"],
+    staleTime: 1000 * 60 * 2,
+    queryFn: () => unwrapEden(apiClient.api.admin.users({ id })["student-detail"].get()),
+    enabled: !!id,
+  });
+
+export const useAdminChangePassword = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      body,
+    }: {
+      id: string;
+      body: { newPassword: string; requiresPasswordChange?: boolean };
+    }) => unwrapEden(apiClient.api.admin.users({ id })["change-password"].post(body)),
+    onSuccess: () => {
+      toast.success("Password updated successfully");
+      queryClient.invalidateQueries({ queryKey: userKeys.all });
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to update password"),
+  });
+};
+
+export const useBulkDeleteUsers = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userIds: string[]) =>
+      unwrapEden(apiClient.api.admin.users["bulk-delete"].post({ userIds })),
+    onSuccess: (_, userIds) => {
+      toast.success(`Deleted ${userIds.length} users`);
+      queryClient.invalidateQueries({ queryKey: userKeys.all });
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to delete users"),
+  });
+};
+
+export const useBulkStatusUsers = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      userIds,
+      status,
+    }: {
+      userIds: string[];
+      status: "active" | "suspended" | "pending";
+    }) => unwrapEden(apiClient.api.admin.users["bulk-status"].post({ userIds, status })),
+    onSuccess: (_, { userIds, status }) => {
+      toast.success(`Updated ${userIds.length} users to ${status}`);
+      queryClient.invalidateQueries({ queryKey: userKeys.all });
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to update status"),
+  });
+};
+
+export const useBulkDivisionStudents = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userIds, divisionId }: { userIds: string[]; divisionId: string }) =>
+      unwrapEden(apiClient.api.admin.users["bulk-division"].post({ userIds, divisionId })),
+    onSuccess: (_, { userIds }) => {
+      toast.success(`Assigned ${userIds.length} students to division`);
+      queryClient.invalidateQueries({ queryKey: userKeys.all });
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to assign division"),
+  });
+};
+
 export const useRebindDevice = () => {
   return useMutation({
     mutationFn: (userId: string) =>
