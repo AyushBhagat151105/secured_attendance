@@ -1,0 +1,67 @@
+name: 💡 Feature Request
+description: Propose a new feature, architecture enhancement, or UX improvement
+title: "[Feature]: "
+labels: ["enhancement", "proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea or architectural improvement for the **CHARUSAT Secured Attendance System**? Submit your proposal here for review by the maintainers and development club leads.
+
+  - type: dropdown
+    id: workspace
+    attributes:
+      label: Target Workspace / Subsystem
+      description: Which part of the ecosystem does this proposal affect?
+      options:
+        - "apps/server (Backend API, services, background workers)"
+        - "apps/web (TanStack Router dashboard, teacher/admin UI)"
+        - "apps/native (Expo React Native student app, HUD, scanner)"
+        - "packages/db (Prisma schemas, multi-database routing)"
+        - "Security Pipeline (Anti-proxy, hardware binding, geofencing)"
+        - "Infrastructure & CI/CD (Docker, GitHub Actions, monitoring)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement / Motivation
+      description: Is your feature request related to a problem or institutional workflow need?
+      placeholder: "Currently, teachers in CMPICA need to manually export CSV records each Friday..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Solution & Architecture
+      description: Describe your proposed solution in detail. Include APIs, data models, or UX flows if applicable.
+      placeholder: "Introduce an automated BullMQ cron worker that computes weekly attendance analytics..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: anti_proxy_impact
+    attributes:
+      label: Anti-Proxy & Security Considerations
+      description: How does this proposal uphold zero-trust attendance validation and student privacy?
+      placeholder: "Does this require new permissions? How does it interact with the rotating token nonce?"
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any alternative designs, libraries, or approaches you investigated?
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contributor_interest
+    attributes:
+      label: Contribution
+      options:
+        - label: "I am willing to submit a Pull Request to implement this feature"
+          required: false

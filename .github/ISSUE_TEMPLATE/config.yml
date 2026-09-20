@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Questions & Community Discussions
+    url: https://github.com/ayushbhagat151105/secured_attendance/discussions
+    about: Ask general questions, seek setup help, or discuss campus development with the team.
+  - name: 📖 Campus Setup Guide & Architecture Docs
+    url: https://github.com/ayushbhagat151105/secured_attendance/blob/main/docs/ARCHITECTURE.md
+    about: Read full system architecture, anti-proxy specifications, and local development guides.

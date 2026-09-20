@@ -1,0 +1,83 @@
+name: 🐛 Bug Report
+description: File a bug report or report unexpected behavior
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue in the **CHARUSAT Secured Attendance System**! Please fill out the sections below to help maintainers investigate and reproduce the bug efficiently.
+
+  - type: dropdown
+    id: workspace
+    attributes:
+      label: Impacted Workspace / Component
+      description: Select the primary module where the bug occurs.
+      options:
+        - "apps/server (Backend API, Elysia, Redis, BullMQ)"
+        - "apps/web (Teacher/Admin Dashboard, TanStack Router)"
+        - "apps/native (Student Mobile App, Camera HUD, Expo)"
+        - "packages/db (Prisma schemas, NeonDB)"
+        - "packages/auth (Better-Auth, session handling)"
+        - "CI/CD & Deployment (GitHub Actions, Docker, VPS)"
+        - "Security & Anti-Proxy (HMAC QR, Geofencing, Hardware Binding)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: Provide a clear and concise description of the bug.
+      placeholder: "When attempting to scan a dynamic QR code after resuming the app from the background..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Provide exact, reproducible steps to trigger the bug.
+      placeholder: |
+        1. Open the teacher dashboard at /teacher/sessions
+        2. Launch a new session for Lab 301
+        3. Scan the QR code using the native app
+        4. See error: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs Actual Behavior
+      description: What did you expect to happen versus what actually happened?
+      placeholder: "Expected attendance to be recorded with 200 OK, but received 400 Bad Request..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs, Stack Traces, or Screenshots
+      description: Paste any server console output, test failures, or attach screenshots.
+      render: shell
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment & Versions
+      description: OS, Bun version, Node version, Device / Android version (if mobile issue).
+      placeholder: "Fedora Linux 44 / Bun v1.4.0 / Android 14 (Pixel 7)"
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: security_check
+    attributes:
+      label: Security & Anti-Proxy Assessment
+      description: Check any critical security implications.
+      options:
+        - label: "This issue impacts anti-proxy integrity (QR replay, GPS spoofing, or device bypass)"
+          required: false
+        - label: "I have verified this bug does not disclose unredacted production secrets or student PII"
+          required: true

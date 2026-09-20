@@ -46,7 +46,13 @@
 | :--- | :--- |
 | 📖 **[Local Setup Guide](docs/SETUP_GUIDE.md)** | Step-by-step setup for Linux, macOS, and Windows WSL2, Docker containers, Expo Go, and GPS simulator |
 | 🤝 **[Contributing Guide](CONTRIBUTING.md)** | Branching rules, conventional commits, pre-PR test checklists, and code review criteria |
-| 🏗️ **[System Architecture](docs/ARCHITECTURE.md)** | Cryptographic QR design (HMAC-SHA256), Haversine geofencing, device binding, and offline sync |
+| 🏗️ **[System Architecture](docs/ARCHITECTURE.md)** | High-level system architecture, monorepo topology, and core workflows |
+| 🚀 **[VPS Deployment Guide](docs/DEPLOYMENT.md)** | Hostinger VPS operations, Docker production compose, Caddy reverse proxy, and CI/CD pipelines |
+| 📱 **[Mobile Release Guide](docs/MOBILE_RELEASE_GUIDE.md)** | Self-hosted APK distribution, GitHub Actions cloud builds, OTA updates, and permissions |
+| 📡 **[API Reference](docs/API_REFERENCE.md)** | Elysia route endpoints, role authorization models, error envelopes, and Scalar documentation |
+| 🛡️ **[Security & Anti-Proxy Audit](docs/SECURITY_AUDIT.md)** | Rotating HMAC-SHA256 tokens, single-device binding, polygon geofencing, and anti-cloning |
+| 🗄️ **[Database Architecture](docs/DATABASE_SCHEMA.md)** | Prisma 8-schema layout, entity relationship models, and NeonDB serverless pooling |
+| 🧪 **[Testing Guide](docs/TESTING_GUIDE.md)** | Zero-DB in-memory test harness, test safety guards, and E2E patterns |
 
 ---
 
