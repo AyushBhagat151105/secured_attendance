@@ -56,25 +56,25 @@ function ConfigItem({ row }: { row: ConfigRow }) {
 
 function AdminSettingsPage() {
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-8">
+    <div className="max-w-3xl space-y-6 min-w-0">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-          <IconSettings className="h-6 w-6 text-primary" />
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight flex items-center gap-2">
+          <IconSettings className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
           Settings
         </h1>
-        <p className="text-muted-foreground text-sm mt-1">
+        <p className="text-muted-foreground text-xs sm:text-sm mt-1">
           System-wide configuration and runtime defaults.
         </p>
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="p-4 sm:p-6">
           <CardTitle className="text-base">System Configuration</CardTitle>
           <CardDescription>
             Current default values enforced across all sessions and campuses.
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
           {SYSTEM_DEFAULTS.map((row) => (
             <ConfigItem key={row.label} row={row} />
           ))}

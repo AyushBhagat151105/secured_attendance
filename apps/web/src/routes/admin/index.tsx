@@ -78,13 +78,13 @@ function AdminDashboard() {
   ];
 
   return (
-    <div className="space-y-8 p-4 sm:p-8 max-w-7xl mx-auto w-full">
-      <div className="flex flex-col gap-1 border-b border-border pb-6">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">System Overview</h1>
-        <p className="text-muted-foreground text-lg">CHARUSAT Secured Attendance</p>
+    <div className="space-y-6 min-w-0 w-full">
+      <div className="flex flex-col gap-1 border-b border-border pb-4 sm:pb-6">
+        <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-foreground">System Overview</h1>
+        <p className="text-muted-foreground text-xs sm:text-base">CHARUSAT Secured Attendance</p>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-6 grid-cols-2 lg:grid-cols-4">
         {statCards.map((card) => (
           <Card key={card.title} className="shadow-none border border-border bg-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

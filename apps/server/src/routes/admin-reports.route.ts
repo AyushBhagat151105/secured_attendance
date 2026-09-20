@@ -19,14 +19,22 @@ export const adminReportModule = new Elysia({ prefix: "/reports" })
     });
 
     // Find sessions with low attendance for a "below threshold alerts" list
-    // This is an expensive query normally, but for a prototype we can fetch recent closed sessions
+    // Optimized with _count to avoid transferring thousands of nested student rows
     const recentSessions = await prisma.attendanceSession.findMany({
       where: { status: "closed" },
-      include: {
-        subject: true,
-        attendances: true,
+      select: {
+        id: true,
+        startTime: true,
+        subject: { select: { name: true } },
+        _count: { select: { attendances: true } },
         sessionDivisions: {
-          include: { division: { include: { students: true } } },
+          select: {
+            division: {
+              select: {
+                _count: { select: { students: true } },
+              },
+            },
+          },
         },
       },
       orderBy: { startTime: "desc" },
@@ -38,9 +46,11 @@ export const adminReportModule = new Elysia({ prefix: "/reports" })
     let countSessions = 0;
 
     for (const s of recentSessions) {
-      const presentCount = s.attendances.length;
+      const presentCount = s._count?.attendances ?? 0;
       let expectedCount = 0;
-      s.sessionDivisions.forEach((sd) => (expectedCount += sd.division.students.length));
+      s.sessionDivisions.forEach((sd) => {
+        expectedCount += sd.division?._count?.students ?? 0;
+      });
 
       if (expectedCount > 0) {
         const percentage = Math.round((presentCount / expectedCount) * 100);

@@ -2,7 +2,7 @@
 import { IconChartBar, IconLayoutDashboard, IconShield, IconUsers } from "@tabler/icons-react";
 import { Link, Outlet, createFileRoute, redirect, useLocation } from "@tanstack/react-router";
 
-import { authClient } from "@/lib/auth-client";
+import { getCachedSession } from "@/lib/auth-client";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -17,11 +17,11 @@ import { AppSidebar } from "@/components/app-sidebar";
 
 export const Route = createFileRoute("/admin")({
   beforeLoad: async () => {
-    const session = await authClient.getSession();
-    if (!session.data) {
+    const session = await getCachedSession();
+    if (!session) {
       throw redirect({ to: "/login" });
     }
-    const user = session.data.user as { role?: string; requiresPasswordChange?: boolean };
+    const user = session.user as { role?: string; requiresPasswordChange?: boolean };
     const role = user.role;
     if (!role || !["admin", "super_admin"].includes(role)) {
       throw redirect({ to: "/" });
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/admin")({
     if (user.requiresPasswordChange) {
       throw redirect({ to: "/reset-password" });
     }
-    return { session: session.data };
+    return { session };
   },
   component: AdminLayout,
 });
@@ -45,11 +45,11 @@ function AdminLayout() {
     <SidebarProvider>
       <AppSidebar user={{ name: user.name, email: user.email, avatar: user.image ?? "" }} />
 
-      <SidebarInset>
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+      <SidebarInset className="min-w-0 max-w-full overflow-x-hidden">
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-3 sm:px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
-          <Breadcrumb>
+          <Breadcrumb className="truncate max-w-[calc(100vw-90px)] sm:max-w-none">
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
                 <BreadcrumbLink asChild>
@@ -82,8 +82,8 @@ function AdminLayout() {
 
                 return (
                   <React.Fragment key={segment + index}>
-                    <BreadcrumbSeparator className="hidden md:block" />
-                    <BreadcrumbItem>
+                    <BreadcrumbSeparator className={index === 0 ? "hidden md:block" : ""} />
+                    <BreadcrumbItem className={!isLast ? "hidden sm:inline-flex" : ""}>
                       {isLast ? (
                         <BreadcrumbPage>{formatted}</BreadcrumbPage>
                       ) : isNonClickable ? (
@@ -101,7 +101,7 @@ function AdminLayout() {
           </Breadcrumb>
         </header>
 
-        <div className="flex flex-1 flex-col gap-4 p-6">
+        <div className="flex flex-1 flex-col gap-4 p-3 sm:p-4 md:p-6 min-w-0 max-w-full overflow-x-hidden">
           <Outlet />
         </div>
       </SidebarInset>

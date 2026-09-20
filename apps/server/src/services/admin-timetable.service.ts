@@ -246,15 +246,18 @@ export class TimetableService {
       }
 
       try {
-        // 1. Resolve or Create Academic Year
-        let academicYear = await prisma.academicYear.findUnique({
-          where: { name: row.academicYear },
+        // 1. Resolve or Create Academic Year (case-insensitive & trimmed)
+        const normalizedYear = row.academicYear.trim();
+        let academicYear = await prisma.academicYear.findFirst({
+          where: {
+            name: { equals: normalizedYear, mode: "insensitive" },
+          },
         });
         if (!academicYear) {
           const currentYear = new Date().getFullYear();
           academicYear = await prisma.academicYear.create({
             data: {
-              name: row.academicYear,
+              name: normalizedYear,
               startDate: new Date(`${currentYear}-06-01T00:00:00.000Z`),
               endDate: new Date(`${currentYear + 1}-05-31T23:59:59.999Z`),
               isCurrent: false,
@@ -262,16 +265,19 @@ export class TimetableService {
           });
         }
 
-        // 2. Resolve or Create Program
-        let program = await prisma.program.findUnique({
-          where: { code: row.programCode },
+        // 2. Resolve or Create Program (case-insensitive & trimmed)
+        const normalizedProgCode = row.programCode.trim().toLowerCase();
+        let program = await prisma.program.findFirst({
+          where: {
+            code: { equals: normalizedProgCode, mode: "insensitive" },
+          },
         });
         if (!program) {
           program = await prisma.program.create({
             data: {
-              code: row.programCode,
-              name: row.programCode.toUpperCase(),
-              shortName: row.programCode.toUpperCase(),
+              code: normalizedProgCode,
+              name: row.programCode.trim().toUpperCase(),
+              shortName: row.programCode.trim().toUpperCase(),
             },
           });
         }
@@ -298,34 +304,37 @@ export class TimetableService {
           });
         }
 
-        // 4. Resolve or Create Division
-        let division = await prisma.division.findUnique({
+        // 4. Resolve or Create Division (case-insensitive & trimmed)
+        const normalizedDivision = row.division.trim();
+        let division = await prisma.division.findFirst({
           where: {
-            programSemesterId_name: {
-              programSemesterId: programSemester.id,
-              name: row.division,
-            },
+            programSemesterId: programSemester.id,
+            name: { equals: normalizedDivision, mode: "insensitive" },
           },
         });
         if (!division) {
           division = await prisma.division.create({
             data: {
-              name: row.division,
+              name: normalizedDivision,
               programSemesterId: programSemester.id,
             },
           });
         }
 
-        // 5. Resolve or Create Subject
-        let subject = await prisma.subject.findUnique({
-          where: { code: row.subjectCode },
+        // 5. Resolve or Create Subject (case-insensitive & trimmed)
+        const normalizedSubjectCode = row.subjectCode.trim();
+        let subject = await prisma.subject.findFirst({
+          where: {
+            code: { equals: normalizedSubjectCode, mode: "insensitive" },
+            programId: program.id,
+          },
         });
         if (!subject) {
           subject = await prisma.subject.create({
             data: {
-              code: row.subjectCode,
-              name: row.subjectName || row.subjectCode,
-              shortName: row.subjectCode,
+              code: normalizedSubjectCode,
+              name: row.subjectName ? row.subjectName.trim() : normalizedSubjectCode,
+              shortName: normalizedSubjectCode,
               programId: program.id,
             },
           });

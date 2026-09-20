@@ -83,14 +83,14 @@ export function BulkImportDropzone({ onFileSelected, isLoading }: BulkImportDrop
           disabled={isLoading}
         />
 
-        <div className="flex flex-col items-center justify-center gap-3 p-10 text-center">
+        <div className="flex flex-col items-center justify-center gap-3 p-6 sm:p-10 text-center">
           {selectedFile ? (
             <>
-              <div className="rounded-full bg-emerald-500/10 p-3">
-                <IconFile className="h-8 w-8 text-emerald-500" />
+              <div className="rounded-full bg-emerald-500/10 p-2.5 sm:p-3">
+                <IconFile className="h-6 w-6 sm:h-8 sm:w-8 text-emerald-500" />
               </div>
               <div>
-                <p className="font-medium text-sm">{selectedFile}</p>
+                <p className="font-medium text-sm break-all">{selectedFile}</p>
                 <p className="text-muted-foreground text-xs mt-0.5">File ready to preview</p>
               </div>
             </>
@@ -98,23 +98,23 @@ export function BulkImportDropzone({ onFileSelected, isLoading }: BulkImportDrop
             <>
               <div
                 className={cn(
-                  "rounded-full p-3 transition-colors",
+                  "rounded-full p-2.5 sm:p-3 transition-colors",
                   isDragging ? "bg-primary/10" : "bg-muted",
                 )}
               >
                 <IconCloudUpload
                   className={cn(
-                    "h-8 w-8 transition-colors",
+                    "h-6 w-6 sm:h-8 sm:w-8 transition-colors",
                     isDragging ? "text-primary" : "text-muted-foreground",
                   )}
                 />
               </div>
               <div>
                 <p className="font-medium text-sm">
-                  {isDragging ? "Drop your CSV here" : "Drop CSV or click to browse"}
+                  {isDragging ? "Drop your CSV here" : "Tap or drop CSV to browse"}
                 </p>
                 <p className="text-muted-foreground text-xs mt-0.5">
-                  Max {MAX_FILE_SIZE_MB}MB· CSV format only
+                  Max {MAX_FILE_SIZE_MB}MB · CSV format only
                 </p>
               </div>
             </>

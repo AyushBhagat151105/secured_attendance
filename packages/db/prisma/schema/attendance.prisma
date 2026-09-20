@@ -28,6 +28,9 @@ model AttendanceSession {
 
   createdAt        DateTime @default(now())
 
+  @@index([status])
+  @@index([startTime])
+  @@index([teacherProfileId])
   @@map("attendance_session")
 }
 

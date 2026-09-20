@@ -24,8 +24,10 @@ import { Route as AdminExportRouteImport } from './routes/admin/export'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as ReportsIndexRouteImport } from './routes/reports/index'
 import { Route as SessionSessionIdRouteImport } from './routes/session/$sessionId'
+import { Route as AdminAcademicDivisionsRouteImport } from './routes/admin/academic/divisions'
 import { Route as AdminAcademicProgramsRouteImport } from './routes/admin/academic/programs'
 import { Route as AdminAcademicSubjectsRouteImport } from './routes/admin/academic/subjects'
+import { Route as AdminAcademicYearsRouteImport } from './routes/admin/academic/years'
 import { Route as AdminCampusIndexRouteImport } from './routes/admin/campus/index'
 import { Route as AdminMapSessionIdRouteImport } from './routes/admin/map/$sessionId'
 import { Route as AdminTimetableIndexRouteImport } from './routes/admin/timetable/index'
@@ -111,6 +113,11 @@ const SessionSessionIdRoute = SessionSessionIdRouteImport.update({
   path: '/session/$sessionId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAcademicDivisionsRoute = AdminAcademicDivisionsRouteImport.update({
+  id: '/academic/divisions',
+  path: '/academic/divisions',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAcademicProgramsRoute = AdminAcademicProgramsRouteImport.update({
   id: '/academic/programs',
   path: '/academic/programs',
@@ -119,6 +126,11 @@ const AdminAcademicProgramsRoute = AdminAcademicProgramsRouteImport.update({
 const AdminAcademicSubjectsRoute = AdminAcademicSubjectsRouteImport.update({
   id: '/academic/subjects',
   path: '/academic/subjects',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAcademicYearsRoute = AdminAcademicYearsRouteImport.update({
+  id: '/academic/years',
+  path: '/academic/years',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminCampusIndexRoute = AdminCampusIndexRouteImport.update({
@@ -183,8 +195,10 @@ export interface FileRoutesByFullPath {
   '/session/$sessionId': typeof SessionSessionIdRoute
   '/admin/': typeof AdminIndexRoute
   '/reports/': typeof ReportsIndexRoute
+  '/admin/academic/divisions': typeof AdminAcademicDivisionsRoute
   '/admin/academic/programs': typeof AdminAcademicProgramsRoute
   '/admin/academic/subjects': typeof AdminAcademicSubjectsRoute
+  '/admin/academic/years': typeof AdminAcademicYearsRoute
   '/admin/map/$sessionId': typeof AdminMapSessionIdRoute
   '/admin/timetable/import': typeof AdminTimetableImportRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
@@ -210,8 +224,10 @@ export interface FileRoutesByTo {
   '/session/$sessionId': typeof SessionSessionIdRoute
   '/admin': typeof AdminIndexRoute
   '/reports': typeof ReportsIndexRoute
+  '/admin/academic/divisions': typeof AdminAcademicDivisionsRoute
   '/admin/academic/programs': typeof AdminAcademicProgramsRoute
   '/admin/academic/subjects': typeof AdminAcademicSubjectsRoute
+  '/admin/academic/years': typeof AdminAcademicYearsRoute
   '/admin/map/$sessionId': typeof AdminMapSessionIdRoute
   '/admin/timetable/import': typeof AdminTimetableImportRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
@@ -239,8 +255,10 @@ export interface FileRoutesById {
   '/session/$sessionId': typeof SessionSessionIdRoute
   '/admin/': typeof AdminIndexRoute
   '/reports/': typeof ReportsIndexRoute
+  '/admin/academic/divisions': typeof AdminAcademicDivisionsRoute
   '/admin/academic/programs': typeof AdminAcademicProgramsRoute
   '/admin/academic/subjects': typeof AdminAcademicSubjectsRoute
+  '/admin/academic/years': typeof AdminAcademicYearsRoute
   '/admin/map/$sessionId': typeof AdminMapSessionIdRoute
   '/admin/timetable/import': typeof AdminTimetableImportRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
@@ -269,8 +287,10 @@ export interface FileRouteTypes {
     | '/session/$sessionId'
     | '/admin/'
     | '/reports/'
+    | '/admin/academic/divisions'
     | '/admin/academic/programs'
     | '/admin/academic/subjects'
+    | '/admin/academic/years'
     | '/admin/map/$sessionId'
     | '/admin/timetable/import'
     | '/admin/users/$userId'
@@ -296,8 +316,10 @@ export interface FileRouteTypes {
     | '/session/$sessionId'
     | '/admin'
     | '/reports'
+    | '/admin/academic/divisions'
     | '/admin/academic/programs'
     | '/admin/academic/subjects'
+    | '/admin/academic/years'
     | '/admin/map/$sessionId'
     | '/admin/timetable/import'
     | '/admin/users/$userId'
@@ -324,8 +346,10 @@ export interface FileRouteTypes {
     | '/session/$sessionId'
     | '/admin/'
     | '/reports/'
+    | '/admin/academic/divisions'
     | '/admin/academic/programs'
     | '/admin/academic/subjects'
+    | '/admin/academic/years'
     | '/admin/map/$sessionId'
     | '/admin/timetable/import'
     | '/admin/users/$userId'
@@ -458,6 +482,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SessionSessionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/academic/divisions': {
+      id: '/admin/academic/divisions'
+      path: '/academic/divisions'
+      fullPath: '/admin/academic/divisions'
+      preLoaderRoute: typeof AdminAcademicDivisionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/academic/programs': {
       id: '/admin/academic/programs'
       path: '/academic/programs'
@@ -470,6 +501,13 @@ declare module '@tanstack/react-router' {
       path: '/academic/subjects'
       fullPath: '/admin/academic/subjects'
       preLoaderRoute: typeof AdminAcademicSubjectsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/academic/years': {
+      id: '/admin/academic/years'
+      path: '/academic/years'
+      fullPath: '/admin/academic/years'
+      preLoaderRoute: typeof AdminAcademicYearsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/campus/': {
@@ -545,8 +583,10 @@ interface AdminRouteChildren {
   AdminExportRoute: typeof AdminExportRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminAcademicDivisionsRoute: typeof AdminAcademicDivisionsRoute
   AdminAcademicProgramsRoute: typeof AdminAcademicProgramsRoute
   AdminAcademicSubjectsRoute: typeof AdminAcademicSubjectsRoute
+  AdminAcademicYearsRoute: typeof AdminAcademicYearsRoute
   AdminMapSessionIdRoute: typeof AdminMapSessionIdRoute
   AdminTimetableImportRoute: typeof AdminTimetableImportRoute
   AdminUsersUserIdRoute: typeof AdminUsersUserIdRoute
@@ -563,8 +603,10 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminExportRoute: AdminExportRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminAcademicDivisionsRoute: AdminAcademicDivisionsRoute,
   AdminAcademicProgramsRoute: AdminAcademicProgramsRoute,
   AdminAcademicSubjectsRoute: AdminAcademicSubjectsRoute,
+  AdminAcademicYearsRoute: AdminAcademicYearsRoute,
   AdminMapSessionIdRoute: AdminMapSessionIdRoute,
   AdminTimetableImportRoute: AdminTimetableImportRoute,
   AdminUsersUserIdRoute: AdminUsersUserIdRoute,

@@ -133,24 +133,24 @@ function ImportPage() {
   const stepIndex = step === "upload" ? 0 : step === "preview" ? 1 : 2;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="max-w-3xl space-y-6 min-w-0">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link to="/admin/users" className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}>
           <IconArrowLeft className="h-4 w-4" />
         </Link>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Bulk Import</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Bulk Import</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">
             Import students or teachers from a CSV file
           </p>
         </div>
       </div>
 
       {/* Step indicator */}
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex items-center gap-2 text-xs sm:text-sm overflow-x-auto pb-1">
         {(["Upload", "Preview", "Done"] as const).map((label, i) => (
-          <div key={label} className="flex items-center gap-2">
+          <div key={label} className="flex items-center gap-2 shrink-0">
             <div
               className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium transition-colors ${
                 i < stepIndex
@@ -173,17 +173,17 @@ function ImportPage() {
       {/* Step content */}
       {step === "upload" && (
         <Card>
-          <CardHeader>
+          <CardHeader className="p-4 sm:p-6">
             <CardTitle className="text-base">Upload CSV</CardTitle>
             <CardDescription>
               Choose the import type and upload a CSV file matching the required format.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-5">
+          <CardContent className="space-y-5 p-4 pt-0 sm:p-6 sm:pt-0">
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Import Type</label>
               <Select value={importType} onValueChange={(v) => setImportType(v as ImportType)}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-full sm:w-48">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -206,7 +206,7 @@ function ImportPage() {
 
             <div className="space-y-1.5">
               <p className="text-xs font-medium text-muted-foreground">Expected CSV format:</p>
-              <pre className="rounded-md bg-muted p-3 text-xs overflow-x-auto">
+              <pre className="rounded-md bg-muted p-3 text-xs overflow-x-auto touch-pan-x">
                 {CSV_FORMATS[importType]}
               </pre>
             </div>
@@ -216,13 +216,13 @@ function ImportPage() {
 
       {step === "preview" && previewData && (
         <Card>
-          <CardHeader>
+          <CardHeader className="p-4 sm:p-6">
             <CardTitle className="text-base">Preview Import</CardTitle>
             <CardDescription>
               Review the parsed rows. Only valid rows will be imported.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-5">
+          <CardContent className="space-y-5 p-4 pt-0 sm:p-6 sm:pt-0">
             <BulkImportPreview
               type={previewData.type}
               rows={previewData.parsed as Parameters<typeof BulkImportPreview>[0]["rows"]}
@@ -230,11 +230,11 @@ function ImportPage() {
               invalidCount={previewData.invalidCount}
             />
 
-            <div className="flex justify-between items-center mt-6">
-              <Button variant="outline" onClick={handleReset} disabled={isImporting}>
+            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mt-6">
+              <Button variant="outline" onClick={handleReset} disabled={isImporting} className="w-full sm:w-auto">
                 Back
               </Button>
-              <div className="flex-1 px-8">
+              <div className="flex-1 px-0 sm:px-8">
                 {isImporting && (
                   <div className="space-y-1.5">
                     <Progress
@@ -250,7 +250,7 @@ function ImportPage() {
               <Button
                 onClick={handleConfirm}
                 disabled={isImporting || previewData.validCount === 0}
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
               >
                 <IconUpload className="h-4 w-4" />
                 {isImporting
@@ -264,7 +264,7 @@ function ImportPage() {
 
       {step === "done" && finalResult && (
         <Card className="border-emerald-500/30 bg-emerald-500/5">
-          <CardContent className="pt-6 text-center space-y-4">
+          <CardContent className="p-6 text-center space-y-4">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10">
               <IconCheck className="h-7 w-7 text-emerald-500" />
             </div>
@@ -279,11 +279,11 @@ function ImportPage() {
                 </p>
               )}
             </div>
-            <div className="flex justify-center gap-3">
-              <Button variant="outline" onClick={handleReset}>
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
+              <Button variant="outline" onClick={handleReset} className="w-full sm:w-auto">
                 Import More
               </Button>
-              <Link to="/admin/users" className={cn(buttonVariants())}>
+              <Link to="/admin/users" className={cn(buttonVariants(), "w-full sm:w-auto")}>
                 View Users
               </Link>
             </div>

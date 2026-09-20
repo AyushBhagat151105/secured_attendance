@@ -96,19 +96,19 @@ function AdminAnomaliesPage() {
     : anomalyList;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-8">
+    <div className="space-y-6 min-w-0">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-          <IconAlertTriangle className="h-6 w-6 text-destructive" />
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight flex items-center gap-2">
+          <IconAlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-destructive shrink-0" />
           Anomaly Detection Alerts
         </h1>
-        <p className="text-muted-foreground text-sm mt-1">
+        <p className="text-muted-foreground text-xs sm:text-sm mt-1">
           Review impossible travel and device mismatch alerts flagged by the system.
         </p>
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="p-4 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle className="text-base">Recent Anomalies</CardTitle>
@@ -118,15 +118,15 @@ function AdminAnomaliesPage() {
                   : `${filtered.length} anomal${filtered.length === 1 ? "y" : "ies"} found`}
               </CardDescription>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2">
               <Input
                 placeholder="Search name or email…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="h-8 w-48 text-sm"
+                className="h-8 w-full sm:w-48 text-sm"
               />
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-8 w-36 text-sm">
+                <SelectTrigger className="h-8 w-full sm:w-36 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -138,7 +138,7 @@ function AdminAnomaliesPage() {
                 </SelectContent>
               </Select>
               <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="h-8 w-42 text-sm">
+                <SelectTrigger className="h-8 w-full sm:w-40 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -150,7 +150,7 @@ function AdminAnomaliesPage() {
                 </SelectContent>
               </Select>
               {hasFilters && (
-                <Button variant="ghost" size="sm" className="h-8 gap-1" onClick={clearFilters}>
+                <Button variant="ghost" size="sm" className="h-8 gap-1 w-full sm:w-auto" onClick={clearFilters}>
                   <IconX className="h-3.5 w-3.5" />
                   Clear
                 </Button>
@@ -158,14 +158,14 @@ function AdminAnomaliesPage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
           {isError ? (
             <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6 text-center text-sm text-destructive">
               Failed to load anomalies. Please try refreshing the page.
             </div>
           ) : (
-            <div className="rounded-lg border">
-              <Table>
+            <div className="rounded-lg border overflow-x-auto touch-pan-x">
+              <Table className="min-w-[640px] sm:min-w-full">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Time</TableHead>

@@ -68,19 +68,19 @@ function AdminAuditLogsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-8">
+    <div className="space-y-6 min-w-0">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-          <IconHistory className="h-6 w-6 text-primary" />
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight flex items-center gap-2">
+          <IconHistory className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
           System Audit Logs
         </h1>
-        <p className="text-muted-foreground text-sm mt-1">
+        <p className="text-muted-foreground text-xs sm:text-sm mt-1">
           A tamper-evident trail of all administrative and system events.
         </p>
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="p-4 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle className="text-base">Event Log</CardTitle>
@@ -92,21 +92,21 @@ function AdminAuditLogsPage() {
                     : "No events found"}
               </CardDescription>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2">
               <Input
                 placeholder="Event type…"
                 value={eventType}
                 onChange={(e) => handleEventTypeChange(e.target.value)}
-                className="h-8 w-40 text-sm"
+                className="h-8 w-full sm:w-40 text-sm"
               />
               <Input
                 placeholder="Actor ID or name…"
                 value={actor}
                 onChange={(e) => handleActorChange(e.target.value)}
-                className="h-8 w-44 text-sm"
+                className="h-8 w-full sm:w-44 text-sm"
               />
               {hasFilters && (
-                <Button variant="ghost" size="sm" className="h-8 gap-1" onClick={clearFilters}>
+                <Button variant="ghost" size="sm" className="h-8 gap-1 w-full sm:w-auto" onClick={clearFilters}>
                   <IconX className="h-3.5 w-3.5" />
                   Clear
                 </Button>
@@ -114,15 +114,15 @@ function AdminAuditLogsPage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
           {isError ? (
             <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6 text-center text-sm text-destructive">
               Failed to load audit logs. Please try refreshing the page.
             </div>
           ) : (
             <>
-              <div className="rounded-lg border">
-                <Table>
+              <div className="rounded-lg border overflow-x-auto touch-pan-x">
+                <Table className="min-w-[640px] sm:min-w-full">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Time</TableHead>

@@ -116,7 +116,7 @@ function TimetableImportPage() {
   const stepIndex = step === "upload" ? 0 : step === "preview" ? 1 : 2;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-8">
+    <div className="max-w-4xl space-y-6 min-w-0">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link
@@ -126,17 +126,17 @@ function TimetableImportPage() {
           <IconArrowLeft className="h-4 w-4" />
         </Link>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Bulk Import Timetable</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Bulk Import Timetable</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">
             Import timetable schedules from a CSV file
           </p>
         </div>
       </div>
 
       {/* Step indicator */}
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex items-center gap-2 text-xs sm:text-sm overflow-x-auto pb-1">
         {(["Upload", "Preview", "Done"] as const).map((label, i) => (
-          <div key={label} className="flex items-center gap-2">
+          <div key={label} className="flex items-center gap-2 shrink-0">
             <div
               className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium transition-colors ${
                 i < stepIndex
@@ -159,13 +159,13 @@ function TimetableImportPage() {
       {/* Step content */}
       {step === "upload" && (
         <Card>
-          <CardHeader>
+          <CardHeader className="p-4 sm:p-6">
             <CardTitle className="text-base">Upload CSV</CardTitle>
             <CardDescription>
               Upload a CSV file matching the required timetable format.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-5">
+          <CardContent className="space-y-5 p-4 pt-0 sm:p-6 sm:pt-0">
             <BulkImportDropzone onFileSelected={handleFileSelected} isLoading={preview.isPending} />
 
             {preview.isPending && (
@@ -176,7 +176,7 @@ function TimetableImportPage() {
 
             <div className="space-y-1.5">
               <p className="text-xs font-medium text-muted-foreground">Expected CSV format:</p>
-              <pre className="rounded-md bg-muted p-3 text-xs overflow-x-auto whitespace-pre-wrap">
+              <pre className="rounded-md bg-muted p-3 text-xs overflow-x-auto touch-pan-x whitespace-pre-wrap">
                 {CSV_FORMAT}
               </pre>
             </div>
@@ -186,21 +186,21 @@ function TimetableImportPage() {
 
       {step === "preview" && previewData && (
         <Card>
-          <CardHeader>
+          <CardHeader className="p-4 sm:p-6">
             <CardTitle className="text-base">Preview Import</CardTitle>
             <CardDescription>
               Review the parsed rows. Only valid rows will be imported.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-5">
+          <CardContent className="space-y-5 p-4 pt-0 sm:p-6 sm:pt-0">
             <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-sm text-emerald-600">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs sm:text-sm text-emerald-600">
                   <IconCheck className="h-3.5 w-3.5" />
                   {previewData.validCount} valid
                 </div>
                 {previewData.invalidCount > 0 && (
-                  <div className="flex items-center gap-1.5 rounded-full bg-destructive/10 px-3 py-1 text-sm text-destructive">
+                  <div className="flex items-center gap-1.5 rounded-full bg-destructive/10 px-2.5 py-1 text-xs sm:text-sm text-destructive">
                     <IconAlertCircle className="h-3.5 w-3.5" />
                     {previewData.invalidCount} with errors
                   </div>
@@ -210,8 +210,8 @@ function TimetableImportPage() {
                 </span>
               </div>
 
-              <div className="rounded-lg border overflow-auto max-h-80">
-                <Table>
+              <div className="rounded-lg border overflow-x-auto touch-pan-x max-h-80">
+                <Table className="min-w-[620px] sm:min-w-full">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-6">#</TableHead>
@@ -270,11 +270,11 @@ function TimetableImportPage() {
               </div>
             </div>
 
-            <div className="flex justify-between items-center mt-6">
-              <Button variant="outline" onClick={handleReset} disabled={isImporting}>
+            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mt-6">
+              <Button variant="outline" onClick={handleReset} disabled={isImporting} className="w-full sm:w-auto">
                 Back
               </Button>
-              <div className="flex-1 px-8">
+              <div className="flex-1 px-0 sm:px-8">
                 {isImporting && (
                   <div className="space-y-1.5">
                     <Progress
@@ -291,7 +291,7 @@ function TimetableImportPage() {
               <Button
                 onClick={handleConfirm}
                 disabled={isImporting || previewData.validCount === 0}
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
               >
                 <IconUpload className="h-4 w-4" />
                 {isImporting ? "Importing..." : `Import ${previewData.validCount} schedules`}
@@ -303,7 +303,7 @@ function TimetableImportPage() {
 
       {step === "done" && finalResult && (
         <Card className="border-emerald-500/30 bg-emerald-500/5">
-          <CardContent className="pt-6 text-center space-y-4">
+          <CardContent className="p-6 text-center space-y-4">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10">
               <IconCheck className="h-7 w-7 text-emerald-500" />
             </div>
@@ -319,11 +319,11 @@ function TimetableImportPage() {
                 </p>
               )}
             </div>
-            <div className="flex justify-center gap-3">
-              <Button variant="outline" onClick={handleReset}>
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
+              <Button variant="outline" onClick={handleReset} className="w-full sm:w-auto">
                 Import More
               </Button>
-              <Link to="/admin/timetable" className={cn(buttonVariants())}>
+              <Link to="/admin/timetable" className={cn(buttonVariants(), "w-full sm:w-auto")}>
                 View Timetable
               </Link>
             </div>
