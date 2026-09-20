@@ -2,6 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
+  IconBuildingSkyscraper,
+  IconDoor,
+  IconPlus,
+} from "@tabler/icons-react";
+import {
   useBuildings,
   useRooms,
   useCreateBuilding,
@@ -10,9 +15,8 @@ import {
   useUpdateRoom,
   useDeleteRoom,
 } from "@/hooks/api/use-admin-campus";
+import { AdminPageHeader } from "@/components/admin";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { Spinner } from "@/components/ui/spinner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -81,20 +85,38 @@ function CampusRoute() {
   };
 
   return (
-    <div className="flex-1 space-y-4 min-w-0">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h2 className="text-xl sm:text-3xl font-bold tracking-tight">Campus Management</h2>
-        <div className="flex items-center gap-2">
-          <Button onClick={() => setIsBuildingOpen(true)} className="flex-1 sm:flex-initial">
-            <Plus className="mr-1.5 h-4 w-4" /> Add Building
-          </Button>
-          <Button variant="outline" onClick={() => setIsRoomOpen(true)} className="flex-1 sm:flex-initial">
-            <Plus className="mr-1.5 h-4 w-4" /> Add Room
-          </Button>
-        </div>
-      </div>
+    <div className="space-y-6 min-w-0 pb-10">
+      <AdminPageHeader
+        title="Campus Infrastructure"
+        subtitle="Manage physical buildings, geofenced boundaries, and classroom allocations."
+        icon={<IconBuildingSkyscraper className="size-6 text-primary" />}
+        badge={
+          buildings && rooms ? (
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+              {buildings.length} Buildings • {rooms.length} Rooms
+            </span>
+          ) : undefined
+        }
+        actions={
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => setIsRoomOpen(true)}
+              className="gap-1.5 text-xs sm:text-sm h-9 flex-1 sm:flex-initial shadow-xs"
+            >
+              <IconDoor className="size-4" /> Add Room
+            </Button>
+            <Button
+              onClick={() => setIsBuildingOpen(true)}
+              className="gap-1.5 text-xs sm:text-sm h-9 flex-1 sm:flex-initial shadow-xs"
+            >
+              <IconPlus className="size-4" /> Add Building
+            </Button>
+          </div>
+        }
+      />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-7">
         <CampusOverviewMap
           buildings={buildings}
           isLoading={isLoadingBuildings}
@@ -153,8 +175,7 @@ function CampusRoute() {
               onClick={onDeleteRoom}
               disabled={deleteRoom.isPending}
             >
-              {deleteRoom.isPending && <Spinner className="mr-2" />}
-              Delete
+              {deleteRoom.isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

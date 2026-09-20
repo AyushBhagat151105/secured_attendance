@@ -27,9 +27,10 @@ import { useDivisions } from "@/hooks/api/use-admin-academic";
 interface CreateUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  defaultRole?: "admin" | "teacher" | "student";
 }
 
-export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) {
+export function CreateUserDialog({ open, onOpenChange, defaultRole = "student" }: CreateUserDialogProps) {
   const create = useCreateUser();
   const { data: divisions } = useDivisions();
 
@@ -38,7 +39,7 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
     defaultValues: {
       name: "",
       email: "",
-      role: "student",
+      role: defaultRole,
       enrollmentNo: "",
       programCode: "",
       semester: "",

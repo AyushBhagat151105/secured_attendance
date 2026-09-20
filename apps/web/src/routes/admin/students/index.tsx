@@ -1,7 +1,5 @@
 import { useState } from "react";
 import {
-  IconChecklist,
-  IconClock,
   IconDeviceMobile,
   IconPlus,
   IconSchool,
@@ -13,9 +11,8 @@ import {
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useUsers } from "@/hooks/api/use-admin-users";
+import { AdminPageHeader, AdminKpiCard } from "@/components/admin";
 import { cn } from "@/lib/utils";
 
 import { CreateUserDialog } from "@/features/admin/users/components/create-user-dialog";
@@ -75,136 +72,85 @@ function StudentsPage() {
   return (
     <div className="space-y-6 min-w-0 pb-16">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-              Student Management
-            </h1>
-            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-              {totalStudents} Enrolled
-            </span>
-          </div>
-          <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">
-            Filter by academic program, class, semester & division, review attendance scores, and
-            manage credentials.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-          <Link
-            to="/admin/users/import"
-            className={cn(
-              buttonVariants({ variant: "outline" }),
-              "gap-1.5 text-xs sm:text-sm h-9 w-full sm:w-auto shrink-0 justify-center",
-            )}
-          >
-            <IconUpload className="size-4" />
-            Bulk Import
-          </Link>
-          <Button
-            onClick={() => setCreateOpen(true)}
-            className="gap-1.5 text-xs sm:text-sm h-9 w-full sm:w-auto shrink-0 justify-center shadow-xs"
-          >
-            <IconPlus className="size-4" />
-            New Student
-          </Button>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Student Management"
+        subtitle="Filter by academic program, class, semester & division, review attendance scores, and manage credentials."
+        icon={<IconSchool className="size-6 text-primary" />}
+        badge={
+          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+            {totalStudents} Enrolled
+          </span>
+        }
+        actions={
+          <>
+            <Link
+              to="/admin/users/import"
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "gap-1.5 text-xs sm:text-sm h-9 w-full sm:w-auto shrink-0 justify-center",
+              )}
+            >
+              <IconUpload className="size-4" />
+              Bulk Import
+            </Link>
+            <Button
+              onClick={() => setCreateOpen(true)}
+              className="gap-1.5 text-xs sm:text-sm h-9 w-full sm:w-auto shrink-0 justify-center shadow-xs"
+            >
+              <IconPlus className="size-4" />
+              New Student
+            </Button>
+          </>
+        }
+      />
 
       {/* KPI Metric Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <Card className="p-3 sm:p-4 border-border/70 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">Total Students</span>
-            <div className="rounded-lg bg-blue-500/10 p-1.5 text-blue-500">
-              <IconUsers className="size-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            {allLoading ? (
-              <Skeleton className="h-7 w-16" />
-            ) : (
-              <span className="text-2xl font-bold tracking-tight text-foreground">
-                {totalStudents}
-              </span>
-            )}
-            <span className="text-[11px] text-muted-foreground">in database</span>
-          </div>
-        </Card>
+        <AdminKpiCard
+          title="Total Students"
+          value={totalStudents}
+          subtitle="in database"
+          icon={IconUsers}
+          color="blue"
+          isLoading={allLoading}
+        />
 
-        <Card className="p-3 sm:p-4 border-border/70 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">Active & Scanning</span>
-            <div className="rounded-lg bg-emerald-500/10 p-1.5 text-emerald-500">
-              <IconUserCheck className="size-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            {activeLoading ? (
-              <Skeleton className="h-7 w-16" />
-            ) : (
-              <span className="text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
-                {activeStudents}
-              </span>
-            )}
-            <span className="text-[11px] text-muted-foreground">device bound</span>
-          </div>
-        </Card>
+        <AdminKpiCard
+          title="Active & Scanning"
+          value={activeStudents}
+          subtitle="device bound"
+          icon={IconUserCheck}
+          color="emerald"
+          isLoading={activeLoading}
+        />
 
-        <Card className="p-3 sm:p-4 border-border/70 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">Pending Activation</span>
-            <div className="rounded-lg bg-amber-500/10 p-1.5 text-amber-500">
-              <IconDeviceMobile className="size-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            {pendingLoading ? (
-              <Skeleton className="h-7 w-16" />
-            ) : (
-              <span className="text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400">
-                {pendingStudents}
-              </span>
-            )}
-            <span className="text-[11px] text-muted-foreground">awaiting phone</span>
-          </div>
-        </Card>
+        <AdminKpiCard
+          title="Pending Activation"
+          value={pendingStudents}
+          subtitle="awaiting phone"
+          icon={IconDeviceMobile}
+          color="amber"
+          isLoading={pendingLoading}
+        />
 
-        <Card className="p-3 sm:p-4 border-border/70 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">Suspended</span>
-            <div className="rounded-lg bg-rose-500/10 p-1.5 text-rose-500">
-              <IconUserX className="size-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            {suspendedLoading ? (
-              <Skeleton className="h-7 w-16" />
-            ) : (
-              <span className="text-2xl font-bold tracking-tight text-rose-600 dark:text-rose-400">
-                {suspendedStudents}
-              </span>
-            )}
-            <span className="text-[11px] text-muted-foreground">access revoked</span>
-          </div>
-        </Card>
+        <AdminKpiCard
+          title="Suspended"
+          value={suspendedStudents}
+          subtitle="access revoked"
+          icon={IconUserX}
+          color="rose"
+          isLoading={suspendedLoading}
+        />
       </div>
 
       {/* Academic Filter Toolbar */}
       <StudentFilters
         filters={filters}
-        onFilterChange={(newFilters) => {
-          setFilters(newFilters);
-          setSelectedIds([]); // Clear selection when filters change
-        }}
-        onReset={() => {
-          setFilters(defaultFilters);
-          setSelectedIds([]);
-        }}
+        onFilterChange={setFilters}
+        onReset={() => setFilters(defaultFilters)}
       />
 
-      {/* Multi-Select Student Table */}
+      {/* Student Data Table */}
       <StudentTable
         filters={filters}
         selectedIds={selectedIds}
@@ -212,7 +158,7 @@ function StudentsPage() {
         onSelectStudent={(id) => setActiveStudentId(id)}
       />
 
-      {/* Sticky Bulk Action Toolbar */}
+      {/* Floating Multi-Select Bulk Actions Toolbar */}
       <BulkActionsBar
         selectedIds={selectedIds}
         onClearSelection={() => setSelectedIds([])}
@@ -221,12 +167,16 @@ function StudentsPage() {
       {/* Slide-over Student Detail Sheet */}
       <StudentDetailSheet
         studentId={activeStudentId}
-        open={Boolean(activeStudentId)}
+        open={!!activeStudentId}
         onOpenChange={(open) => !open && setActiveStudentId(null)}
       />
 
-      {/* Create Student Dialog */}
-      <CreateUserDialog open={createOpen} onOpenChange={setCreateOpen} />
+      {/* Quick Add Student Dialog */}
+      <CreateUserDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        defaultRole="student"
+      />
     </div>
   );
 }

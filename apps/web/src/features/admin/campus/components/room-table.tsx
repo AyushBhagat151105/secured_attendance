@@ -1,4 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -8,12 +14,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import { MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { IconDots, IconPencil, IconTrash, IconDoor } from "@tabler/icons-react";
+import { TableSkeletonRows } from "@/components/admin";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -31,65 +40,95 @@ export function RoomTable({
   onDeleteRoom,
 }: RoomTableProps) {
   return (
-    <Card className="col-span-3">
-      <CardHeader>
-        <CardTitle>Rooms</CardTitle>
-        <CardDescription>All assigned rooms in campus.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex justify-center p-8">
-            <Spinner />
+    <Card className="col-span-full lg:col-span-3 rounded-xl border border-border/70 bg-card shadow-xs overflow-hidden">
+      <CardHeader className="p-4 sm:p-5 border-b border-border/60 bg-muted/20">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <IconDoor className="size-4 text-primary" /> Rooms Directory
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Configured lecture halls and classrooms.
+            </CardDescription>
           </div>
-        ) : (
+          {rooms && (
+            <Badge variant="secondary" className="font-mono text-xs">
+              {rooms.length} Rooms
+            </Badge>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-muted/40">
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Building</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead className="w-[80px]"></TableHead>
+                <TableHead className="text-xs font-semibold">Room</TableHead>
+                <TableHead className="text-xs font-semibold">Building</TableHead>
+                <TableHead className="text-xs font-semibold">Type</TableHead>
+                <TableHead className="w-12 text-right text-xs font-semibold"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rooms?.map((room) => (
-                <TableRow key={room.id}>
-                  <TableCell className="font-medium">{room.name}</TableCell>
-                  <TableCell>{room.building?.code || "-"}</TableCell>
-                  <TableCell className="capitalize">{room.type}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onEditRoom(room)}>
-                          <Edit className="mr-2 h-4 w-4" /> Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => onDeleteRoom(room)}
+              {isLoading ? (
+                <TableSkeletonRows rows={6} columns={4} hasAvatar={false} hasActions={true} />
+              ) : (
+                <>
+                  {rooms?.map((room) => (
+                    <TableRow key={room.id}>
+                      <TableCell className="font-medium text-sm text-foreground">
+                        {room.name}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="font-mono text-xs">
+                          {room.building?.code || "—"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="secondary"
+                          className="capitalize text-xs font-normal"
                         >
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {(!rooms || rooms.length === 0) && (
-                <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
-                    No rooms found.
-                  </TableCell>
-                </TableRow>
+                          {room.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <IconDots className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => onEditRoom(room)}>
+                              <IconPencil className="mr-2 size-4" /> Edit Room
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => onDeleteRoom(room)}
+                            >
+                              <IconTrash className="mr-2 size-4" /> Delete Room
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {(!rooms || rooms.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="h-28 text-center text-muted-foreground text-sm">
+                        No rooms configured in this campus.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </>
               )}
             </TableBody>
           </Table>
-        )}
+        </div>
       </CardContent>
     </Card>
   );

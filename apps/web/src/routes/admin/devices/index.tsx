@@ -22,6 +22,7 @@ import {
   useResetStudentDevice,
   useBatchRebind,
 } from "@/hooks/api/use-admin-devices";
+import { AdminPageHeader, AdminKpiCard, TableSkeletonRows } from "@/components/admin";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -178,65 +179,42 @@ function DevicesPage() {
   };
 
   return (
-    <div className="space-y-6 min-w-0">
+    <div className="space-y-6 min-w-0 pb-10">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight flex items-center gap-2">
-            <IconDeviceMobile className="h-6 w-6 text-primary" /> Device Management
-          </h1>
-          <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">
-            Audit hardware bindings, approve re-bind requests, and manage 1-device-per-student security.
-          </p>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Device Management"
+        subtitle="Audit hardware bindings, approve re-bind requests, and manage 1-device-per-student security."
+        icon={<IconDeviceMobile className="size-6 text-primary" />}
+      />
 
       {/* KPI Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="border-border/60">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Pending Re-binds
-            </CardTitle>
-            <IconAlertTriangle className="h-4 w-4 text-amber-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{pendingCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Students awaiting device authorization
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        <AdminKpiCard
+          title="Pending Re-binds"
+          value={pendingCount}
+          subtitle="awaiting authorization"
+          icon={IconAlertTriangle}
+          color="amber"
+          isLoading={isRequestsLoading}
+        />
 
-        <Card className="border-border/60">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Bound Devices
-            </CardTitle>
-            <IconDeviceMobileCheck className="h-4 w-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{boundCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Active cryptographically locked phones
-            </p>
-          </CardContent>
-        </Card>
+        <AdminKpiCard
+          title="Bound Devices"
+          value={boundCount}
+          subtitle="cryptographically locked"
+          icon={IconDeviceMobileCheck}
+          color="emerald"
+          isLoading={isInventoryLoading}
+        />
 
-        <Card className="border-border/60">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Unbound Students
-            </CardTitle>
-            <IconDeviceMobileOff className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{unboundCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Profiles ready to pair on next login
-            </p>
-          </CardContent>
-        </Card>
+        <AdminKpiCard
+          title="Unbound Students"
+          value={unboundCount}
+          subtitle="ready to pair on login"
+          icon={IconDeviceMobileOff}
+          color="muted"
+          isLoading={isInventoryLoading}
+        />
       </div>
 
       {/* Tabs */}
@@ -315,26 +293,25 @@ function DevicesPage() {
             </CardHeader>
 
             <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-              {isRequestsLoading ? (
-                <div className="flex justify-center p-8">
-                  <Spinner />
-                </div>
-              ) : (
-                <>
-                  <div className="rounded-lg border overflow-x-auto touch-pan-x">
+              <div className="rounded-xl border border-border/70 bg-card overflow-hidden shadow-xs">
+                <div className="overflow-x-auto touch-pan-x">
                   <Table className="min-w-[700px] sm:min-w-full">
-                    <TableHeader>
+                    <TableHeader className="bg-muted/40">
                       <TableRow>
-                        <TableHead>Student</TableHead>
-                        <TableHead>Hardware Transition</TableHead>
-                        <TableHead>Reason</TableHead>
-                        <TableHead>Requested Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead className="text-xs font-semibold">Student</TableHead>
+                        <TableHead className="text-xs font-semibold">Hardware Transition</TableHead>
+                        <TableHead className="text-xs font-semibold">Reason</TableHead>
+                        <TableHead className="text-xs font-semibold">Requested Date</TableHead>
+                        <TableHead className="text-xs font-semibold">Status</TableHead>
+                        <TableHead className="text-right text-xs font-semibold">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {requestsData?.items?.map((req: any) => (
+                      {isRequestsLoading ? (
+                        <TableSkeletonRows rows={6} columns={6} hasAvatar={false} hasActions={true} />
+                      ) : (
+                        <>
+                          {requestsData?.items?.map((req: any) => (
                         <TableRow key={req.id}>
                           <TableCell>
                             <div className="font-semibold text-sm">
@@ -440,43 +417,44 @@ function DevicesPage() {
                           </TableCell>
                         </TableRow>
                       )}
+                        </>
+                      )}
                     </TableBody>
                   </Table>
                 </div>
+              </div>
 
-                {/* Requests Pagination */}
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm text-muted-foreground pt-4 mt-2 border-t">
-                  <span>
-                    {requestTotal > 0
-                      ? `${(requestPage - 1) * REQUESTS_PAGE_SIZE + 1}–${Math.min(requestPage * REQUESTS_PAGE_SIZE, requestTotal)} of ${requestTotal} requests`
-                      : "0 requests"}
+              {/* Requests Pagination */}
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm text-muted-foreground pt-4 mt-2 border-t">
+                <span>
+                  {requestTotal > 0
+                    ? `${(requestPage - 1) * REQUESTS_PAGE_SIZE + 1}–${Math.min(requestPage * REQUESTS_PAGE_SIZE, requestTotal)} of ${requestTotal} requests`
+                    : "0 requests"}
+                </span>
+                <div className="flex items-center justify-between sm:justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={() => setRequestPage((p) => Math.max(1, p - 1))}
+                    disabled={requestPage <= 1 || isRequestsFetching}
+                  >
+                    Previous
+                  </Button>
+                  <span className="px-2 text-xs font-medium">
+                    Page {requestPage} of {requestTotalPages}
                   </span>
-                  <div className="flex items-center justify-between sm:justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-xs"
-                      onClick={() => setRequestPage((p) => Math.max(1, p - 1))}
-                      disabled={requestPage <= 1 || isRequestsFetching}
-                    >
-                      Previous
-                    </Button>
-                    <span className="px-2 text-xs font-medium">
-                      Page {requestPage} of {requestTotalPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-xs"
-                      onClick={() => setRequestPage((p) => Math.min(requestTotalPages, p + 1))}
-                      disabled={requestPage >= requestTotalPages || isRequestsFetching}
-                    >
-                      Next
-                    </Button>
-                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={() => setRequestPage((p) => Math.min(requestTotalPages, p + 1))}
+                    disabled={requestPage >= requestTotalPages || isRequestsFetching}
+                  >
+                    Next
+                  </Button>
                 </div>
-              </>
-            )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -555,15 +533,10 @@ function DevicesPage() {
             </CardHeader>
 
             <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-              {isInventoryLoading ? (
-                <div className="flex justify-center p-8">
-                  <Spinner />
-                </div>
-              ) : (
-                <>
-                  <div className="rounded-lg border overflow-x-auto touch-pan-x">
+              <div className="rounded-xl border border-border/70 bg-card overflow-hidden shadow-xs">
+                <div className="overflow-x-auto touch-pan-x">
                   <Table className="min-w-[700px] sm:min-w-full">
-                    <TableHeader>
+                    <TableHeader className="bg-muted/40">
                       <TableRow>
                         <TableHead className="w-10">
                           <Checkbox
@@ -571,139 +544,144 @@ function DevicesPage() {
                             onCheckedChange={handleSelectAll}
                           />
                         </TableHead>
-                        <TableHead>Student</TableHead>
-                        <TableHead>Binding Status</TableHead>
-                        <TableHead>Bound Device Model</TableHead>
-                        <TableHead>Bound Since</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead className="text-xs font-semibold">Student</TableHead>
+                        <TableHead className="text-xs font-semibold">Binding Status</TableHead>
+                        <TableHead className="text-xs font-semibold">Bound Device Model</TableHead>
+                        <TableHead className="text-xs font-semibold">Bound Since</TableHead>
+                        <TableHead className="text-right text-xs font-semibold">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {inventoryData?.items?.map((item: any) => (
-                        <TableRow key={item.id}>
-                          <TableCell>
-                            <Checkbox
-                              disabled={!item.deviceBound}
-                              checked={selectedStudentIds.includes(item.id)}
-                              onCheckedChange={(checked) =>
-                                handleSelectOne(item.id, !!checked)
-                              }
-                            />
-                          </TableCell>
+                      {isInventoryLoading ? (
+                        <TableSkeletonRows rows={6} columns={6} hasAvatar={false} hasActions={true} />
+                      ) : (
+                        <>
+                          {inventoryData?.items?.map((item: any) => (
+                            <TableRow key={item.id}>
+                              <TableCell>
+                                <Checkbox
+                                  disabled={!item.deviceBound}
+                                  checked={selectedStudentIds.includes(item.id)}
+                                  onCheckedChange={(checked) =>
+                                    handleSelectOne(item.id, !!checked)
+                                  }
+                                />
+                              </TableCell>
 
-                          <TableCell>
-                            <div className="font-semibold text-sm">
-                              {item.user?.name}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {item.enrollmentNo?.toUpperCase()} ·{" "}
-                              {item.division?.name || "No Division"}
-                            </div>
-                          </TableCell>
-
-                          <TableCell>
-                            {item.deviceBound ? (
-                              <Badge className="bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/30 gap-1">
-                                <IconShieldLock className="h-3 w-3" /> Bound
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="text-muted-foreground">
-                                Unbound
-                              </Badge>
-                            )}
-                          </TableCell>
-
-                          <TableCell>
-                            {item.deviceBound ? (
-                              <div>
-                                <div className="font-medium text-xs text-foreground">
-                                  {item.deviceModel || "Unknown Smartphone"}
+                              <TableCell>
+                                <div className="font-semibold text-sm">
+                                  {item.user?.name}
                                 </div>
-                                {item.deviceOs && (
-                                  <div className="text-[11px] text-muted-foreground">
-                                    {item.deviceOs}
-                                  </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {item.enrollmentNo?.toUpperCase()} ·{" "}
+                                  {item.division?.name || "No Division"}
+                                </div>
+                              </TableCell>
+
+                              <TableCell>
+                                {item.deviceBound ? (
+                                  <Badge className="bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/30 gap-1">
+                                    <IconShieldLock className="h-3 w-3" /> Bound
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-muted-foreground">
+                                    Unbound
+                                  </Badge>
                                 )}
-                              </div>
-                            ) : (
-                              <span className="text-xs text-muted-foreground italic">
-                                Ready to bind on next login
-                              </span>
-                            )}
-                          </TableCell>
+                              </TableCell>
 
-                          <TableCell className="text-xs text-muted-foreground">
-                            {item.deviceBoundAt
-                              ? new Date(item.deviceBoundAt).toLocaleDateString("en-IN", {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                })
-                              : "—"}
-                          </TableCell>
+                              <TableCell>
+                                {item.deviceBound ? (
+                                  <div>
+                                    <div className="font-medium text-xs text-foreground">
+                                      {item.deviceModel || "Unknown Smartphone"}
+                                    </div>
+                                    {item.deviceOs && (
+                                      <div className="text-[11px] text-muted-foreground">
+                                        {item.deviceOs}
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground italic">
+                                    Ready to bind on next login
+                                  </span>
+                                )}
+                              </TableCell>
 
-                          <TableCell className="text-right">
-                            {item.deviceBound ? (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 px-2.5 text-xs text-destructive hover:bg-destructive/10 border-destructive/30 gap-1"
-                                onClick={() => setResettingStudent(item)}
-                                disabled={resetSingleMutation.isPending}
-                              >
-                                <IconRotate className="h-3.5 w-3.5" /> Reset Binding
-                              </Button>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                              <TableCell className="text-xs text-muted-foreground">
+                                {item.deviceBoundAt
+                                  ? new Date(item.deviceBoundAt).toLocaleDateString("en-IN", {
+                                      day: "numeric",
+                                      month: "short",
+                                      year: "numeric",
+                                    })
+                                  : "—"}
+                              </TableCell>
 
-                      {(!inventoryData?.items || inventoryData.items.length === 0) && (
-                        <TableRow>
-                          <TableCell colSpan={6} className="h-28 text-center text-muted-foreground">
-                            No student profiles match your search criteria.
-                          </TableCell>
-                        </TableRow>
+                              <TableCell className="text-right">
+                                {item.deviceBound ? (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 px-2.5 text-xs text-destructive hover:bg-destructive/10 border-destructive/30 gap-1"
+                                    onClick={() => setResettingStudent(item)}
+                                    disabled={resetSingleMutation.isPending}
+                                  >
+                                    <IconRotate className="h-3.5 w-3.5" /> Reset Binding
+                                  </Button>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">—</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+
+                          {(!inventoryData?.items || inventoryData.items.length === 0) && (
+                            <TableRow>
+                              <TableCell colSpan={6} className="h-28 text-center text-muted-foreground">
+                                No student profiles match your search criteria.
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </>
                       )}
                     </TableBody>
                   </Table>
                 </div>
+              </div>
 
-                {/* Inventory Pagination */}
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm text-muted-foreground pt-4 mt-2 border-t">
-                  <span>
-                    {inventoryTotal > 0
-                      ? `${(inventoryPage - 1) * INVENTORY_PAGE_SIZE + 1}–${Math.min(inventoryPage * INVENTORY_PAGE_SIZE, inventoryTotal)} of ${inventoryTotal} students`
-                      : "0 students"}
+              {/* Inventory Pagination */}
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm text-muted-foreground pt-4 mt-2 border-t">
+                <span>
+                  {inventoryTotal > 0
+                    ? `${(inventoryPage - 1) * INVENTORY_PAGE_SIZE + 1}–${Math.min(inventoryPage * INVENTORY_PAGE_SIZE, inventoryTotal)} of ${inventoryTotal} students`
+                    : "0 students"}
+                </span>
+                <div className="flex items-center justify-between sm:justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={() => setInventoryPage((p) => Math.max(1, p - 1))}
+                    disabled={inventoryPage <= 1 || isInventoryFetching}
+                  >
+                    Previous
+                  </Button>
+                  <span className="px-2 text-xs font-medium">
+                    Page {inventoryPage} of {inventoryTotalPages}
                   </span>
-                  <div className="flex items-center justify-between sm:justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-xs"
-                      onClick={() => setInventoryPage((p) => Math.max(1, p - 1))}
-                      disabled={inventoryPage <= 1 || isInventoryFetching}
-                    >
-                      Previous
-                    </Button>
-                    <span className="px-2 text-xs font-medium">
-                      Page {inventoryPage} of {inventoryTotalPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-xs"
-                      onClick={() => setInventoryPage((p) => Math.min(inventoryTotalPages, p + 1))}
-                      disabled={inventoryPage >= inventoryTotalPages || isInventoryFetching}
-                    >
-                      Next
-                    </Button>
-                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={() => setInventoryPage((p) => Math.min(inventoryTotalPages, p + 1))}
+                    disabled={inventoryPage >= inventoryTotalPages || isInventoryFetching}
+                  >
+                    Next
+                  </Button>
                 </div>
-              </>
-            )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
