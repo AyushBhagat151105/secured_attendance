@@ -1,9 +1,11 @@
 import { Elysia, t, status } from "elysia";
-import { requireRole } from "../middlewares/guards";
+import { requireRole, authMacro } from "../middlewares/guards";
 import prisma from "@secured_attendance/db";
+import { queueAuditLog } from "../lib/audit";
 
 export const adminAnomaliesModule = new Elysia({ prefix: "/anomalies" })
   .use(requireRole(["admin", "super_admin"]))
+  .use(authMacro)
   .get(
     "/",
     async ({ query }) => {
@@ -85,6 +87,54 @@ export const adminAnomaliesModule = new Elysia({ prefix: "/anomalies" })
       return updated;
     },
     {
+      params: t.Object({
+        id: t.String(),
+      }),
+    },
+  )
+  .post(
+    "/:id/rebind-and-resolve",
+    async ({ params, user }: any) => {
+      const anomaly = await prisma.anomalyAlert.findUnique({
+        where: { id: params.id },
+      });
+      if (!anomaly) return status(404, "Anomaly not found");
+
+      await prisma.$transaction(async (tx) => {
+        if (anomaly.userId) {
+          await tx.studentProfile.updateMany({
+            where: { userId: anomaly.userId },
+            data: {
+              deviceId: null,
+              deviceModel: null,
+              deviceOs: null,
+              deviceBound: false,
+              deviceBoundAt: null,
+              biometricEnabled: false,
+            },
+          });
+        }
+
+        await tx.anomalyAlert.update({
+          where: { id: params.id },
+          data: { status: "RESOLVED" },
+        });
+      });
+
+      if (anomaly.userId) {
+        void queueAuditLog({
+          eventType: "device.rebound_from_anomaly",
+          actor: user?.id || "admin",
+          actorRole: "admin",
+          targetId: anomaly.userId,
+          details: { anomalyId: anomaly.id, anomalyType: anomaly.type },
+        });
+      }
+
+      return { success: true, message: "Device rebound and anomaly resolved" };
+    },
+    {
+      requireAuth: true,
       params: t.Object({
         id: t.String(),
       }),

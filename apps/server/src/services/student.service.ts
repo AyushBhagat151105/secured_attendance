@@ -222,4 +222,114 @@ export class StudentService {
       attendanceId: attendance.id,
     };
   }
+
+  static async requestDeviceRebind(
+    userId: string,
+    data: {
+      requestedDeviceId: string;
+      requestedDeviceModel: string;
+      requestedDeviceOs?: string;
+      reason: string;
+    },
+  ) {
+    const profile = await prisma.studentProfile.findUnique({
+      where: { userId },
+    });
+
+    if (!profile) {
+      return { success: false, error: "NOT_FOUND", message: "Student profile not found" };
+    }
+
+    if (!profile.deviceBound) {
+      return {
+        success: false,
+        error: "NOT_BOUND",
+        message: "No device currently bound to this account. You can bind directly.",
+      };
+    }
+
+    const existingPending = await prisma.deviceRebindRequest.findFirst({
+      where: {
+        studentProfileId: profile.id,
+        status: "PENDING",
+      },
+    });
+
+    if (existingPending) {
+      return {
+        success: false,
+        error: "ALREADY_PENDING",
+        message: "A device re-bind request is already pending administrator review.",
+      };
+    }
+
+    const conflict = await prisma.studentProfile.findFirst({
+      where: {
+        deviceId: data.requestedDeviceId,
+        deviceBound: true,
+        id: { not: profile.id },
+      },
+    });
+
+    if (conflict) {
+      return {
+        success: false,
+        error: "DEVICE_ALREADY_IN_USE",
+        message:
+          "This device is already registered to another student. One device per student is strictly enforced.",
+      };
+    }
+
+    const request = await prisma.deviceRebindRequest.create({
+      data: {
+        studentProfileId: profile.id,
+        currentDeviceId: profile.deviceId,
+        currentDeviceModel: profile.deviceModel,
+        requestedDeviceId: data.requestedDeviceId,
+        requestedDeviceModel: data.requestedDeviceModel,
+        requestedDeviceOs: data.requestedDeviceOs ?? null,
+        reason: data.reason.trim(),
+        status: "PENDING",
+      },
+    });
+
+    void queueAuditLog({
+      eventType: "device.rebind_requested",
+      actor: userId,
+      actorRole: "student",
+      targetId: profile.id,
+      details: {
+        requestId: request.id,
+        requestedDeviceId: data.requestedDeviceId,
+        requestedDeviceModel: data.requestedDeviceModel,
+        reason: data.reason,
+      },
+    });
+
+    return {
+      success: true,
+      request,
+    };
+  }
+
+  static async getDeviceRebindStatus(userId: string) {
+    const profile = await prisma.studentProfile.findUnique({
+      where: { userId },
+    });
+
+    if (!profile) {
+      return { success: false, error: "NOT_FOUND", message: "Student profile not found" };
+    }
+
+    const request = await prisma.deviceRebindRequest.findFirst({
+      where: { studentProfileId: profile.id },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return {
+      success: true,
+      hasPending: request?.status === "PENDING",
+      request: request ?? null,
+    };
+  }
 }

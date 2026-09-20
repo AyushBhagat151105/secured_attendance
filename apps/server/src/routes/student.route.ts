@@ -70,6 +70,47 @@ export const studentModule = new Elysia({ prefix: "/api/student" })
       return result;
     },
     { requireAuth: true, body: ScanAttendanceBody },
+  )
+
+  .post(
+    "/device/rebind-request",
+    async ({ user, body, status }: any) => {
+      const result = await StudentService.requestDeviceRebind(user.id, body);
+      if (!result.success) {
+        switch (result.error) {
+          case "NOT_FOUND":
+            return status(404, { message: result.message });
+          case "NOT_BOUND":
+          case "ALREADY_PENDING":
+          case "DEVICE_ALREADY_IN_USE":
+            return status(400, { message: result.message });
+          default:
+            return status(400, { message: result.message });
+        }
+      }
+      return result;
+    },
+    {
+      requireAuth: true,
+      body: t.Object({
+        requestedDeviceId: t.String(),
+        requestedDeviceModel: t.String(),
+        requestedDeviceOs: t.Optional(t.String()),
+        reason: t.String({ minLength: 3 }),
+      }),
+    },
+  )
+
+  .get(
+    "/device/rebind-request/status",
+    async ({ user, status }: any) => {
+      const result = await StudentService.getDeviceRebindStatus(user.id);
+      if (!result.success) {
+        return status(404, { message: result.message });
+      }
+      return result;
+    },
+    { requireAuth: true },
   );
 
 export type StudentModule = typeof studentModule;

@@ -8,6 +8,7 @@ import {
   IconBook,
   IconMapPin,
   IconCalendarTime,
+  IconDeviceMobile,
   IconBrandGithub,
   IconBrandInstagram,
   IconBrandLinkedin,
@@ -41,6 +42,10 @@ const data = {
         {
           title: "Users",
           url: "/admin/users",
+        },
+        {
+          title: "Devices",
+          url: "/admin/devices",
         },
       ],
     },
