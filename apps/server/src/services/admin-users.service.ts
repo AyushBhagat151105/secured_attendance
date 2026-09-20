@@ -324,7 +324,7 @@ export class AdminUsersService {
     return { success: true };
   }
 
-  static async rebindDevice(id: string) {
+  static async rebindDevice(id: string, server?: any) {
     const profile = await prisma.studentProfile.findFirst({
       where: { userId: id },
     });
@@ -344,6 +344,22 @@ export class AdminUsersService {
         biometricEnabled: false,
       },
     });
+
+    if (server) {
+      try {
+        server.publish(
+          `student-${id}`,
+          JSON.stringify({
+            type: "DEVICE_UNBOUND",
+            reason: "admin_user_reset",
+            studentProfileId: profile.id,
+            timestamp: Date.now(),
+          }),
+        );
+      } catch (e) {
+        logger.error("Failed to publish DEVICE_UNBOUND from user rebind", { error: e });
+      }
+    }
 
     logger.info("Device rebound by admin", { userId: id });
     void queueAuditLog({

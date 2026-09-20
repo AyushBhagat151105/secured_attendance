@@ -30,10 +30,30 @@ export async function getSessionFromRequest(request: Request) {
   }
 
   req._sessionPromise = (async () => {
-    const authKey =
+    let headers = request.headers;
+    let authKey =
       request.headers.get("x-test-user-id") ||
       request.headers.get("authorization") ||
       request.headers.get("cookie");
+
+    if (!authKey && request.url) {
+      try {
+        const url = new URL(request.url);
+        const queryCookie = url.searchParams.get("cookie");
+        const queryToken = url.searchParams.get("token");
+        if (queryCookie || queryToken) {
+          const newHeaders = new Headers(request.headers);
+          if (queryCookie && !newHeaders.has("cookie")) {
+            newHeaders.set("cookie", queryCookie);
+          }
+          if (queryToken && !newHeaders.has("authorization")) {
+            newHeaders.set("authorization", `Bearer ${queryToken}`);
+          }
+          headers = newHeaders;
+          authKey = queryCookie || queryToken;
+        }
+      } catch {}
+    }
 
     const now = Date.now();
     if (authKey) {
@@ -43,7 +63,7 @@ export async function getSessionFromRequest(request: Request) {
       }
     }
 
-    const session = await auth.api.getSession({ headers: request.headers });
+    const session = await auth.api.getSession({ headers });
 
     if (authKey && session) {
       // Bound cache size

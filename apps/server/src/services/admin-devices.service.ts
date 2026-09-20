@@ -86,7 +86,7 @@ export class AdminDevicesService {
    * 3. Resolves any open DEVICE_MISMATCH anomalies for this student
    * 4. Logs audit event
    */
-  static async approveRebindRequest(requestId: string, adminUserId: string) {
+  static async approveRebindRequest(requestId: string, adminUserId: string, server?: any) {
     const request = await prisma.deviceRebindRequest.findUnique({
       where: { id: requestId },
       include: {
@@ -142,6 +142,22 @@ export class AdminDevicesService {
       return updatedReq;
     });
 
+    if (server && request.studentProfile?.userId) {
+      try {
+        server.publish(
+          `student-${request.studentProfile.userId}`,
+          JSON.stringify({
+            type: "DEVICE_UNBOUND",
+            reason: "rebind_approved",
+            requestId,
+            timestamp: Date.now(),
+          }),
+        );
+      } catch (e) {
+        logger.error("Failed to publish DEVICE_UNBOUND event", { error: e });
+      }
+    }
+
     void queueAuditLog({
       eventType: "device.rebind_approved",
       actor: adminUserId,
@@ -167,7 +183,12 @@ export class AdminDevicesService {
   /**
    * Reject a rebind request with an optional note
    */
-  static async rejectRebindRequest(requestId: string, adminUserId: string, note?: string) {
+  static async rejectRebindRequest(
+    requestId: string,
+    adminUserId: string,
+    note?: string,
+    server?: any,
+  ) {
     const request = await prisma.deviceRebindRequest.findUnique({
       where: { id: requestId },
       include: {
@@ -196,6 +217,23 @@ export class AdminDevicesService {
         reviewNote: note?.trim() || null,
       },
     });
+
+    if (server && request.studentProfile?.userId) {
+      try {
+        server.publish(
+          `student-${request.studentProfile.userId}`,
+          JSON.stringify({
+            type: "REBIND_STATUS_CHANGED",
+            status: "REJECTED",
+            requestId,
+            note: note?.trim() || null,
+            timestamp: Date.now(),
+          }),
+        );
+      } catch (e) {
+        logger.error("Failed to publish REBIND_STATUS_CHANGED event", { error: e });
+      }
+    }
 
     void queueAuditLog({
       eventType: "device.rebind_rejected",
@@ -292,7 +330,7 @@ export class AdminDevicesService {
   /**
    * Reset binding for a single student profile
    */
-  static async resetStudentDevice(studentProfileId: string, adminUserId: string) {
+  static async resetStudentDevice(studentProfileId: string, adminUserId: string, server?: any) {
     const profile = await prisma.studentProfile.findUnique({
       where: { id: studentProfileId },
     });
@@ -324,6 +362,22 @@ export class AdminDevicesService {
       });
     });
 
+    if (server && profile.userId) {
+      try {
+        server.publish(
+          `student-${profile.userId}`,
+          JSON.stringify({
+            type: "DEVICE_UNBOUND",
+            reason: "admin_reset",
+            studentProfileId,
+            timestamp: Date.now(),
+          }),
+        );
+      } catch (e) {
+        logger.error("Failed to publish DEVICE_UNBOUND event", { error: e });
+      }
+    }
+
     void queueAuditLog({
       eventType: "device.rebound",
       actor: adminUserId,
@@ -347,7 +401,11 @@ export class AdminDevicesService {
   /**
    * Batch reset device bindings for multiple student profiles
    */
-  static async batchResetDevices(studentProfileIds: string[], adminUserId: string) {
+  static async batchResetDevices(
+    studentProfileIds: string[],
+    adminUserId: string,
+    server?: any,
+  ) {
     if (!studentProfileIds || studentProfileIds.length === 0) {
       return { success: false, error: "INVALID_INPUT", message: "No students selected" };
     }
@@ -383,6 +441,29 @@ export class AdminDevicesService {
         });
       }
     });
+
+    if (server) {
+      for (const p of profiles) {
+        if (p.userId) {
+          try {
+            server.publish(
+              `student-${p.userId}`,
+              JSON.stringify({
+                type: "DEVICE_UNBOUND",
+                reason: "batch_reset",
+                studentProfileId: p.id,
+                timestamp: Date.now(),
+              }),
+            );
+          } catch (e) {
+            logger.error("Failed to publish DEVICE_UNBOUND event in batch", {
+              error: e,
+              userId: p.userId,
+            });
+          }
+        }
+      }
+    }
 
     void queueAuditLog({
       eventType: "device.batch_rebound",

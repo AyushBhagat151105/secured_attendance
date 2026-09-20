@@ -54,6 +54,6 @@ export const adminUsersModule = new Elysia({ prefix: "/users" })
     params: UserIdParam,
   })
 
-  .post("/:id/device-rebind", async ({ params: { id } }) => AdminUsersService.rebindDevice(id), {
+  .post("/:id/device-rebind", async ({ params: { id }, server }: any) => AdminUsersService.rebindDevice(id, server), {
     params: UserIdParam,
   });

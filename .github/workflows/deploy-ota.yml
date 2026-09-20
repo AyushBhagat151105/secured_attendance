@@ -53,7 +53,9 @@ jobs:
           source: "apps/native/dist/*"
           target: "/root/secured_attendance/uploads/updates"
           strip_components: 3
-          rm: true
+          overwrite: true
+          timeout: 120s
+          command_timeout: 10m
 
       - name: Verify Updates on VPS
         uses: appleboy/ssh-action@master
@@ -61,6 +63,8 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: root
           key: ${{ secrets.VPS_SSH_KEY }}
+          timeout: 60s
+          command_timeout: 5m
           script: |
             mkdir -p /root/secured_attendance/uploads/updates
             echo "Successfully deployed OTA bundle to server updates directory!"

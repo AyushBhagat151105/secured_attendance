@@ -1,4 +1,6 @@
 import { Elysia, t } from "elysia";
+import { auth } from "@secured_attendance/auth";
+import { logger } from "../lib/logger";
 import { requireRole, authMacro } from "../middlewares/guards";
 import { StudentService } from "../services/student.service";
 import { StudentScheduleService } from "../services/student-schedule.service";
@@ -111,6 +113,41 @@ export const studentModule = new Elysia({ prefix: "/api/student" })
       return result;
     },
     { requireAuth: true },
-  );
+  )
+
+  // Real-time WebSocket connection for student device & session events
+  .ws("/ws", {
+    async open(ws) {
+      const headers = new Headers(ws.data.headers as Record<string, string>);
+      const queryCookie = (ws.data.query as any)?.cookie;
+      const queryToken = (ws.data.query as any)?.token;
+      if (queryCookie && !headers.has("cookie")) {
+        headers.set("cookie", queryCookie);
+      }
+      if (queryToken && !headers.has("authorization")) {
+        headers.set("authorization", `Bearer ${queryToken}`);
+      }
+
+      const session = await auth.api.getSession({ headers });
+      if (!session || (session.user as any).role !== "student") {
+        ws.send({ type: "ERROR", message: "Unauthorized" });
+        ws.close();
+        return;
+      }
+
+      const studentUserId = session.user.id;
+      ws.subscribe(`student-${studentUserId}`);
+      logger.info("Student connected to real-time WebSocket gateway", { userId: studentUserId });
+      ws.send({ type: "CONNECTED", userId: studentUserId, timestamp: Date.now() });
+    },
+    message(ws, message) {
+      if (typeof message === "object" && (message as any)?.type === "PING") {
+        ws.send({ type: "PONG", timestamp: Date.now() });
+      }
+    },
+    close() {
+      logger.info("Student disconnected from real-time WebSocket gateway");
+    },
+  });
 
 export type StudentModule = typeof studentModule;
