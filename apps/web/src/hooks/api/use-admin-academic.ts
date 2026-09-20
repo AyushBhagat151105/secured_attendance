@@ -42,6 +42,18 @@ export const useUpdateAcademicYear = () => {
   });
 };
 
+export const useDeleteAcademicYear = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => unwrapEden(apiClient.api.admin.academic.years({ id }).delete()),
+    onSuccess: () => {
+      toast.success("Academic year deleted");
+      queryClient.invalidateQueries({ queryKey: academicYearKeys.all });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};
+
 // ─── Programs ─────────────────────────────────────────────────────────────────
 export const programKeys = {
   all: ["programs"] as const,
@@ -118,6 +130,32 @@ export const useCreateProgramSemester = () => {
   });
 };
 
+export const useUpdateProgramSemester = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: any }) =>
+      unwrapEden(apiClient.api.admin.academic.semesters({ id }).patch(body)),
+    onSuccess: () => {
+      toast.success("Semester updated");
+      queryClient.invalidateQueries({ queryKey: semesterKeys.all });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};
+
+export const useDeleteProgramSemester = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      unwrapEden(apiClient.api.admin.academic.semesters({ id }).delete()),
+    onSuccess: () => {
+      toast.success("Semester deleted");
+      queryClient.invalidateQueries({ queryKey: semesterKeys.all });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};
+
 // ─── Divisions ────────────────────────────────────────────────────────────────
 export const divisionKeys = {
   all: ["divisions"] as const,
@@ -137,6 +175,32 @@ export const useCreateDivision = () => {
     mutationFn: (body: any) => unwrapEden(apiClient.api.admin.academic.divisions.post(body)),
     onSuccess: () => {
       toast.success("Division created");
+      queryClient.invalidateQueries({ queryKey: divisionKeys.all });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};
+
+export const useUpdateDivision = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: any }) =>
+      unwrapEden(apiClient.api.admin.academic.divisions({ id }).patch(body)),
+    onSuccess: () => {
+      toast.success("Division updated");
+      queryClient.invalidateQueries({ queryKey: divisionKeys.all });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};
+
+export const useDeleteDivision = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      unwrapEden(apiClient.api.admin.academic.divisions({ id }).delete()),
+    onSuccess: () => {
+      toast.success("Division deleted");
       queryClient.invalidateQueries({ queryKey: divisionKeys.all });
     },
     onError: (err) => toast.error(err.message),

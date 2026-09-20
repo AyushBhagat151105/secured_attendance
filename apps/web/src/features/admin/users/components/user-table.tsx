@@ -80,20 +80,20 @@ export function UserTable() {
       {/* Toolbar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full sm:w-auto">
-          <TabsList>
-            <TabsTrigger value="student">Students</TabsTrigger>
-            <TabsTrigger value="teacher">Teachers</TabsTrigger>
-            <TabsTrigger value="admin">Admins</TabsTrigger>
-            <TabsTrigger value="all">All Users</TabsTrigger>
+          <TabsList className="grid grid-cols-4 w-full sm:w-auto h-9">
+            <TabsTrigger value="student" className="text-xs sm:text-sm">Students</TabsTrigger>
+            <TabsTrigger value="teacher" className="text-xs sm:text-sm">Teachers</TabsTrigger>
+            <TabsTrigger value="admin" className="text-xs sm:text-sm">Admins</TabsTrigger>
+            <TabsTrigger value="all" className="text-xs sm:text-sm">All Users</TabsTrigger>
           </TabsList>
         </Tabs>
-        <Button onClick={() => setCreateOpen(true)} className="gap-2 shrink-0">
+        <Button onClick={() => setCreateOpen(true)} className="gap-2 shrink-0 w-full sm:w-auto">
           + New User
         </Button>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="flex flex-1 items-center gap-2">
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+        <div className="flex flex-col sm:flex-row flex-1 items-stretch sm:items-center gap-2">
           <Input
             placeholder="Search by name or email..."
             value={search}
@@ -101,7 +101,7 @@ export function UserTable() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="max-w-xs"
+            className="w-full sm:max-w-xs"
           />
           <Select
             value={status || "all"}
@@ -110,7 +110,7 @@ export function UserTable() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="w-36">
+            <SelectTrigger className="w-full sm:w-36">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -124,8 +124,8 @@ export function UserTable() {
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border">
-        <Table>
+      <div className="rounded-lg border overflow-x-auto touch-pan-x">
+        <Table className="min-w-[620px] sm:min-w-full">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -185,13 +185,13 @@ export function UserTable() {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm text-muted-foreground">
         <span>
           {data
             ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, data.pagination.total)} of ${data.pagination.total} users`
             : "Loading..."}
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between sm:justify-end gap-2">
           <Button
             variant="outline"
             size="sm"

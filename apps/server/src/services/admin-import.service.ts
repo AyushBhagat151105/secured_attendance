@@ -244,7 +244,7 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
               });
 
               const parsed = parseEnrollmentNo(row.enrollmentNo);
-              const finalProgramCode = parsed?.programCode ?? row.programCode;
+              const finalProgramCode = (parsed?.programCode ?? row.programCode).trim().toLowerCase();
 
               // 1. Resolve Academic Year
               let academicYear = await prisma.academicYear.findFirst({
@@ -267,8 +267,15 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
                 }
               }
 
-              // 2. Resolve Program
-              let program = await prisma.program.findUnique({ where: { code: finalProgramCode } });
+              // 2. Resolve Program (case-insensitive)
+              let program = await prisma.program.findFirst({
+                where: {
+                  code: {
+                    equals: finalProgramCode,
+                    mode: "insensitive",
+                  },
+                },
+              });
               if (!program) {
                 program = await prisma.program.create({
                   data: {
@@ -301,19 +308,21 @@ export const adminImportModule = new Elysia({ prefix: "/users" })
                 });
               }
 
-              // 4. Resolve Division
-              let division = await prisma.division.findUnique({
+              // 4. Resolve Division (case-insensitive & trimmed)
+              const normalizedDivisionName = row.division.trim();
+              let division = await prisma.division.findFirst({
                 where: {
-                  programSemesterId_name: {
-                    programSemesterId: programSemester.id,
-                    name: row.division,
+                  programSemesterId: programSemester.id,
+                  name: {
+                    equals: normalizedDivisionName,
+                    mode: "insensitive",
                   },
                 },
               });
               if (!division) {
                 division = await prisma.division.create({
                   data: {
-                    name: row.division,
+                    name: normalizedDivisionName,
                     programSemesterId: programSemester.id,
                   },
                 });

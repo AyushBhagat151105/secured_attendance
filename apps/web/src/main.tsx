@@ -10,6 +10,8 @@ import { routeTree } from "./routeTree.gen";
 const router = createRouter({
   routeTree,
   defaultPreload: "intent",
+  defaultPreloadDelay: 200,
+  defaultPreloadStaleTime: 30_000,
   defaultPendingComponent: () => <Loader />,
   context: {},
 });

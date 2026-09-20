@@ -57,6 +57,14 @@ const data = {
           title: "Subjects",
           url: "/admin/academic/subjects",
         },
+        {
+          title: "Academic Years",
+          url: "/admin/academic/years",
+        },
+        {
+          title: "Divisions & Batches",
+          url: "/admin/academic/divisions",
+        },
       ],
     },
     {

@@ -47,13 +47,13 @@ export function BulkImportPreview({
   return (
     <div className="space-y-4">
       {/* Summary bar */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-sm text-emerald-600 dark:text-emerald-400">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs sm:text-sm text-emerald-600 dark:text-emerald-400">
           <IconCheck className="h-3.5 w-3.5" />
           {validCount} valid
         </div>
         {invalidCount > 0 && (
-          <div className="flex items-center gap-1.5 rounded-full bg-destructive/10 px-3 py-1 text-sm text-destructive">
+          <div className="flex items-center gap-1.5 rounded-full bg-destructive/10 px-2.5 py-1 text-xs sm:text-sm text-destructive">
             <IconAlertCircle className="h-3.5 w-3.5" />
             {invalidCount} with errors
           </div>
@@ -62,8 +62,8 @@ export function BulkImportPreview({
       </div>
 
       {/* Preview table */}
-      <div className="rounded-lg border overflow-auto max-h-80">
-        <Table>
+      <div className="rounded-lg border overflow-x-auto touch-pan-x max-h-80">
+        <Table className="min-w-[600px] sm:min-w-full">
           <TableHeader>
             <TableRow>
               <TableHead className="w-6">#</TableHead>

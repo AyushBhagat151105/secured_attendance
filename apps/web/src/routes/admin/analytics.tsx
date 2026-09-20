@@ -17,18 +17,18 @@ export const Route = createFileRoute("/admin/analytics")({
 function AdminAnalyticsRoute() {
   const { data, isLoading, error } = useAdminAnalytics();
 
-  if (isLoading) return <div className="p-8">Loading analytics...</div>;
-  if (error) return <div className="p-8 text-red-500">Failed to load analytics.</div>;
+  if (isLoading) return <div className="p-4 text-sm text-muted-foreground">Loading analytics...</div>;
+  if (error) return <div className="p-4 text-sm text-red-500">Failed to load analytics.</div>;
   if (!data) return null;
 
   return (
-    <div className="space-y-8 p-4 sm:p-8 max-w-7xl mx-auto w-full">
+    <div className="space-y-6 min-w-0 w-full">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Program Analytics</h1>
-        <p className="text-muted-foreground text-lg">Overview of system-wide attendance health.</p>
+        <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-foreground">Program Analytics</h1>
+        <p className="text-muted-foreground text-xs sm:text-base">Overview of system-wide attendance health.</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-6 grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>

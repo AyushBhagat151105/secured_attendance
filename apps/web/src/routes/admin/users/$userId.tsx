@@ -69,19 +69,19 @@ function UserDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link to="/admin/users" className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}>
           <IconArrowLeft className="h-4 w-4" />
         </Link>
-        <h1 className="text-2xl font-semibold tracking-tight">User Detail</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">User Detail</h1>
       </div>
 
       {/* Profile card */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex flex-col items-center gap-4 text-center">
               <Avatar className="h-16 w-16">
                 <AvatarImage src={typedUser.image ?? undefined} />
@@ -120,7 +120,7 @@ function UserDetailPage() {
         {/* Detail tabs */}
         <Card className="md:col-span-2">
           <Tabs defaultValue="profile">
-            <CardHeader>
+            <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-4">
               <TabsList>
                 <TabsTrigger value="profile">
                   <IconUser className="mr-1.5 h-3.5 w-3.5" />
@@ -136,7 +136,7 @@ function UserDetailPage() {
             </CardHeader>
 
             <TabsContent value="profile" className="mt-0">
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 p-4 pt-2 sm:p-6 sm:pt-0">
                 <InfoRow icon={IconMail} label="Email" value={typedUser.email} />
                 <InfoRow icon={IconShield} label="Role" value={typedUser.role.replace("_", " ")} />
                 <InfoRow

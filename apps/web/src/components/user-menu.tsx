@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { authClient } from "@/lib/auth-client";
+import { authClient, invalidateSessionCache } from "@/lib/auth-client";
 import { ChangePasswordModal } from "@/components/change-password-modal";
 
 import { Button } from "./ui/button";
@@ -63,6 +63,7 @@ export default function UserMenu() {
               variant="destructive"
               className="cursor-pointer gap-2"
               onClick={() => {
+                invalidateSessionCache();
                 authClient.signOut({
                   fetchOptions: {
                     onSuccess: () => {

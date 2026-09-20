@@ -449,12 +449,12 @@ function TimetableRoute() {
   }, [entries]);
 
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Timetable Overview</h2>
+    <div className="flex-1 space-y-4 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h2 className="text-xl sm:text-3xl font-bold tracking-tight">Timetable Overview</h2>
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" /> Add Class
             </Button>
           </DialogTrigger>
@@ -662,8 +662,8 @@ function TimetableRoute() {
         </div>
       ) : (
         <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table className="w-full">
+          <div className="overflow-x-auto touch-pan-x">
+            <Table className="min-w-[700px] w-full">
               <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead className="w-20 lg:w-28 font-semibold">Time</TableHead>

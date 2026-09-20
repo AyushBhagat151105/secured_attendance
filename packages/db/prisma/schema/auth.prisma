@@ -20,6 +20,8 @@ model User {
   anomalyAlerts          AnomalyAlert[]
 
   @@unique([email])
+  @@index([role])
+  @@index([createdAt])
   @@map("user")
 }
 

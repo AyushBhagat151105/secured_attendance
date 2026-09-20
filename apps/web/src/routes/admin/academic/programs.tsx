@@ -209,13 +209,13 @@ function ProgramsRoute() {
   };
 
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Academic Programs</h2>
+    <div className="flex-1 space-y-4 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h2 className="text-xl sm:text-3xl font-bold tracking-tight">Academic Programs</h2>
         <div className="flex items-center space-x-2">
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <Plus className="mr-2 h-4 w-4" /> Add Program
               </Button>
             </DialogTrigger>
@@ -286,17 +286,18 @@ function ProgramsRoute() {
         </div>
       </div>
       <Card>
-        <CardHeader>
+        <CardHeader className="p-4 sm:p-6">
           <CardTitle>Programs List</CardTitle>
           <CardDescription>Manage degrees and programs.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
           {isLoading ? (
             <div className="flex justify-center p-8">
               <Spinner />
             </div>
           ) : (
-            <Table>
+            <div className="rounded-lg border overflow-x-auto touch-pan-x">
+              <Table className="min-w-[500px] sm:min-w-full">
               <TableHeader>
                 <TableRow>
                   <TableHead>Code</TableHead>
@@ -327,6 +328,7 @@ function ProgramsRoute() {
                 )}
               </TableBody>
             </Table>
+          </div>
           )}
         </CardContent>
       </Card>

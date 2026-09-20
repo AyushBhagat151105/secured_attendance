@@ -81,15 +81,15 @@ function CampusRoute() {
   };
 
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Campus Management</h2>
-        <div className="flex items-center space-x-2">
-          <Button onClick={() => setIsBuildingOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Add Building
+    <div className="flex-1 space-y-4 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h2 className="text-xl sm:text-3xl font-bold tracking-tight">Campus Management</h2>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setIsBuildingOpen(true)} className="flex-1 sm:flex-initial">
+            <Plus className="mr-1.5 h-4 w-4" /> Add Building
           </Button>
-          <Button variant="outline" onClick={() => setIsRoomOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Add Room
+          <Button variant="outline" onClick={() => setIsRoomOpen(true)} className="flex-1 sm:flex-initial">
+            <Plus className="mr-1.5 h-4 w-4" /> Add Room
           </Button>
         </div>
       </div>

@@ -242,13 +242,13 @@ function SubjectsRoute() {
   };
 
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Subjects</h2>
+    <div className="flex-1 space-y-4 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h2 className="text-xl sm:text-3xl font-bold tracking-tight">Subjects</h2>
         <div className="flex items-center space-x-2">
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <Plus className="mr-2 h-4 w-4" /> Add Subject
               </Button>
             </DialogTrigger>
@@ -339,47 +339,49 @@ function SubjectsRoute() {
         </div>
       </div>
       <Card>
-        <CardHeader>
+        <CardHeader className="p-4 sm:p-6">
           <CardTitle>Subjects List</CardTitle>
           <CardDescription>Manage subjects across programs.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
           {isLoadingSubjects ? (
             <div className="flex justify-center p-8">
               <Spinner />
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Short Name</TableHead>
-                  <TableHead>Program</TableHead>
-                  <TableHead className="w-12.5"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {subjects?.map((subject) => (
-                  <TableRow key={subject.id}>
-                    <TableCell className="font-medium">{subject.code}</TableCell>
-                    <TableCell>{subject.name}</TableCell>
-                    <TableCell>{subject.shortName || "-"}</TableCell>
-                    <TableCell>{subject.program?.code || "-"}</TableCell>
-                    <TableCell>
-                      <SubjectRowActions subject={subject} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {(!subjects || subjects.length === 0) && (
+            <div className="rounded-lg border overflow-x-auto touch-pan-x">
+              <Table className="min-w-[500px] sm:min-w-full">
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
-                      No subjects found.
-                    </TableCell>
+                    <TableHead>Code</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Short Name</TableHead>
+                    <TableHead>Program</TableHead>
+                    <TableHead className="w-12.5"></TableHead>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {subjects?.map((subject) => (
+                    <TableRow key={subject.id}>
+                      <TableCell className="font-medium">{subject.code}</TableCell>
+                      <TableCell>{subject.name}</TableCell>
+                      <TableCell>{subject.shortName || "-"}</TableCell>
+                      <TableCell>{subject.program?.code || "-"}</TableCell>
+                      <TableCell>
+                        <SubjectRowActions subject={subject} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {(!subjects || subjects.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-24 text-center">
+                        No subjects found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

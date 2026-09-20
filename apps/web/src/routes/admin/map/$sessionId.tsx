@@ -12,8 +12,8 @@ function AdminMapRoute() {
   const { sessionId } = Route.useParams();
   const { data, isLoading, error } = useAdminMapData(sessionId);
 
-  if (isLoading) return <div className="p-8">Loading map data...</div>;
-  if (error) return <div className="p-8 text-red-500">Failed to load map data.</div>;
+  if (isLoading) return <div className="p-4 text-sm text-muted-foreground">Loading map data...</div>;
+  if (error) return <div className="p-4 text-sm text-red-500">Failed to load map data.</div>;
   if (!data) return null;
 
   // Calculate dynamic bounds to fit both the geofence and all student check-ins
@@ -59,10 +59,10 @@ function AdminMapRoute() {
   }
 
   return (
-    <div className="space-y-6 p-4 sm:p-8 max-w-7xl mx-auto w-full h-[calc(100vh-4rem)] flex flex-col">
+    <div className="space-y-4 min-w-0 w-full h-[calc(100dvh-5rem)] flex flex-col">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">GPS Visualization</h1>
-        <p className="text-muted-foreground text-lg">
+        <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-foreground">GPS Visualization</h1>
+        <p className="text-muted-foreground text-xs sm:text-base">
           {data.sessionInfo.subject} • {data.sessionInfo.room} •{" "}
           {new Date(data.sessionInfo.date).toLocaleString()}
         </p>

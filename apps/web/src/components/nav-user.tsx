@@ -1,4 +1,4 @@
-﻿import { authClient } from "@/lib/auth-client";
+﻿import { authClient, invalidateSessionCache } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -70,6 +70,7 @@ export function NavUser({
             <DropdownMenuItem
               className="text-red-500 focus:text-red-500 cursor-pointer"
               onClick={async () => {
+                invalidateSessionCache();
                 await authClient.signOut();
                 window.location.href = "/login";
               }}

@@ -40,15 +40,15 @@ function AdminExportRoute() {
   };
 
   return (
-    <div className="space-y-8 p-4 sm:p-8 max-w-4xl mx-auto w-full">
+    <div className="space-y-6 max-w-4xl min-w-0 w-full">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Data Export</h1>
-        <p className="text-muted-foreground text-lg">
+        <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-foreground">Data Export</h1>
+        <p className="text-muted-foreground text-xs sm:text-base">
           Download system-wide attendance data for external analysis and archiving.
         </p>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 sm:grid-cols-2">
         <Card>
           <CardHeader>
             <div className="h-12 w-12 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-4">

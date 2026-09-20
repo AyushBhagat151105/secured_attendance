@@ -132,3 +132,38 @@ export const editUserSchema = z.object({
   status: z.enum(["active", "suspended", "pending"]),
 });
 export type EditUserSchema = z.infer<typeof editUserSchema>;
+
+export const createAcademicYearSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters (e.g. 2026-2027)"),
+  startDate: z.string().min(1, "Start date is required"),
+  endDate: z.string().min(1, "End date is required"),
+  isCurrent: z.boolean(),
+});
+export type CreateAcademicYearSchema = z.infer<typeof createAcademicYearSchema>;
+
+export const updateAcademicYearSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  isCurrent: z.boolean().optional(),
+});
+export type UpdateAcademicYearSchema = z.infer<typeof updateAcademicYearSchema>;
+
+export const createProgramSemesterSchema = z.object({
+  programId: z.string().min(1, "Program is required"),
+  academicYearId: z.string().min(1, "Academic Year is required"),
+  semester: z.number().int().min(1).max(10),
+});
+export type CreateProgramSemesterSchema = z.infer<typeof createProgramSemesterSchema>;
+
+export const createDivisionSchema = z.object({
+  name: z.string().min(1, "Division name is required (e.g. Div-I, Batch-A1)"),
+  programSemesterId: z.string().min(1, "Program Semester is required"),
+});
+export type CreateDivisionSchema = z.infer<typeof createDivisionSchema>;
+
+export const updateDivisionSchema = z.object({
+  name: z.string().min(1, "Division name is required"),
+});
+export type UpdateDivisionSchema = z.infer<typeof updateDivisionSchema>;
+
