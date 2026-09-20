@@ -22,6 +22,7 @@ services:
       - SUPER_ADMIN_NAME=${SUPER_ADMIN_NAME:-System Administrator}
       - DEFAULT_TEACHER_PASSWORD=${DEFAULT_TEACHER_PASSWORD:-Charusat@123}
       - DEFAULT_STUDENT_PASSWORD=${DEFAULT_STUDENT_PASSWORD:-Charusat@123}
+      - UPLOADS_DIR=/app/apps/server/uploads
     volumes:
       - ./uploads:/app/apps/server/uploads
     depends_on:

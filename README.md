@@ -13,7 +13,7 @@
 
 <p align="center">
   <a href="https://github.com/ayushbhagat151105/secured_attendance/actions/workflows/pr.yml"><img src="https://github.com/ayushbhagat151105/secured_attendance/actions/workflows/pr.yml/badge.svg" alt="CI Status" /></a>
-  <a href="https://github.com/ayushbhagat151105/secured_attendance"><img src="https://img.shields.io/badge/tests-86%20passing-brightgreen.svg" alt="Tests" /></a>
+  <a href="https://github.com/ayushbhagat151105/secured_attendance"><img src="https://img.shields.io/badge/tests-87%20passing-brightgreen.svg" alt="Tests" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/typescript-strict-blue.svg" alt="TypeScript Strict" /></a>
   <a href="https://bun.sh"><img src="https://img.shields.io/badge/runtime-bun%20v1.2+-black.svg" alt="Bun Runtime" /></a>
   <a href="https://charusat.ac.in"><img src="https://img.shields.io/badge/department-CMPICA%20CHARUSAT-red.svg" alt="CMPICA CHARUSAT" /></a>
@@ -35,7 +35,7 @@
 
 ### Core Subsystems Authored & Engineered:
 - **Anti-Proxy Security Pipeline**: Conceived and built the rotating HMAC-SHA256 QR token generator with a 45-second sliding validity window, single-device cryptographic hardware binding (`device-binding.tsx`), and polygon Haversine geofencing with dynamic concrete attenuation tolerance.
-- **Zero-DB E2E Test Suite**: Architected an in-memory database and Redis simulation harness running in ~500ms with zero live-database risk, maintaining 86 passing tests across all full attendance lifecycles, route guards, update delivery, and admin bulk CSV imports.
+- **Zero-DB E2E Test Suite**: Architected an in-memory database and Redis simulation harness running in ~500ms with zero live-database risk, maintaining 87 passing tests across all full attendance lifecycles, route guards, update delivery, and admin bulk CSV imports.
 - **Full-Stack Monorepo Platform**: Engineered the Bun/ElysiaJS high-throughput backend API, TanStack Router web dashboard with interactive Leaflet campus geofence visualizers, and React Native Expo student mobile app with offline scan queuing.
 
 ---
@@ -126,7 +126,7 @@ Before opening a Pull Request, run the 3 verification steps locally:
 # 1. Type check all 8 workspaces
 bun run check-types
 
-# 2. Run unit and isolated E2E tests (86 tests, ~500ms execution)
+# 2. Run unit and isolated E2E tests (87 tests, ~500ms execution)
 bun test
 
 # 3. Verify production compilation
@@ -141,7 +141,7 @@ The automated GitHub Actions CI pipeline (`.github/workflows/pr.yml`) runs on al
 
 | Workflow | Trigger | Description | Output Target |
 | :--- | :--- | :--- | :--- |
-| **`pr.yml`** | PR / Push to `main` | Full typecheck, 86 isolated test suite, and monorepo build verification | GitHub Actions Check |
+| **`pr.yml`** | PR / Push to `main` | Full typecheck, 87 isolated test suite, and monorepo build verification | GitHub Actions Check |
 | **`deploy-server.yml`** | Push to `apps/server/**` | Builds Docker image with multi-stage build, pushes to GHCR, restarts VPS container | Hostinger VPS Docker |
 | **`deploy-web.yml`** | Push to `apps/web/**` | Builds static TanStack web app, deploys via SCP to Caddy web root | `/var/www/secured-attendance-web` |
 | **`deploy-ota.yml`** | Push to `apps/native/src/**` | Exports Hermes JS bundle & updates manifest in ~60s | `/root/.../uploads/updates` |

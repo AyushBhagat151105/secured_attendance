@@ -202,4 +202,12 @@ describe("Application Updates System", () => {
 
     expect(response.status).toBe(404);
   });
+
+  it("GET /download/:file prevents directory traversal attacks", async () => {
+    const response = await app.handle(
+      new Request("http://localhost/download/../../package.json", { method: "GET" }),
+    );
+
+    expect(response.status).toBe(404);
+  });
 });

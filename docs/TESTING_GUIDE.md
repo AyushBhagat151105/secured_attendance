@@ -1,7 +1,7 @@
 # Zero-DB Test Harness & Integration Testing Guide
 
 > **Test Runner**: Bun Test (`bun test`)  
-> **Test Scope**: 86 passing tests covering domain algorithms, route guards, E2E attendance flows, CSV imports, and update delivery  
+> **Test Scope**: 87 passing tests covering domain algorithms, route guards, E2E attendance flows, CSV imports, and update delivery  
 > **Execution Time**: ~450ms–500ms across all workspaces  
 
 ---
