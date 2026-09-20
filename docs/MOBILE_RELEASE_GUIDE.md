@@ -77,6 +77,7 @@ When adding new native packages, modifying Android permissions, or updating the 
    ```
    - `-PreactNativeArchitectures=arm64-v8a`: Excludes unused 32-bit x86/ARM architectures, reducing APK size from ~85MB to ~32MB.
    - ProGuard/R8: Enables code minification and unused resource shrinking (`shrinkResources true`).
+   - JVM Memory: Configured with `-Xmx4096m -XX:MaxMetaspaceSize=1536m` in `gradle.properties` to prevent R8 Metaspace exhaustion across 25+ Expo and React Native modules.
 
 4. **Distribution Pipeline**:
    - Copies output APK to `release-output/secured-attendance.apk`.
